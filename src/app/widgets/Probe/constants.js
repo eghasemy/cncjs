@@ -8,23 +8,33 @@ export const {
   'MODAL_PREVIEW'
 ]);
 
-// Probe Types
-export const PROBE_TYPE_BASIC = 'basic';
-export const PROBE_TYPE_EDGE = 'edge';
+// Probe Types (removed basic, added separate external/internal edge)
+export const PROBE_TYPE_CONFIG = 'config';
+export const PROBE_TYPE_EXTERNAL_EDGE = 'external_edge';
+export const PROBE_TYPE_INTERNAL_EDGE = 'internal_edge';
 export const PROBE_TYPE_CENTER = 'center';
 export const PROBE_TYPE_ROTATION = 'rotation';
 export const PROBE_TYPE_HEIGHT_MAP = 'height_map';
 
-// Edge Probe Types
-export const EDGE_PROBE_EXTERNAL_X_POSITIVE = 'external_x_positive';
-export const EDGE_PROBE_EXTERNAL_X_NEGATIVE = 'external_x_negative';
-export const EDGE_PROBE_EXTERNAL_Y_POSITIVE = 'external_y_positive';
-export const EDGE_PROBE_EXTERNAL_Y_NEGATIVE = 'external_y_negative';
-export const EDGE_PROBE_INTERNAL_X_POSITIVE = 'internal_x_positive';
-export const EDGE_PROBE_INTERNAL_X_NEGATIVE = 'internal_x_negative';
-export const EDGE_PROBE_INTERNAL_Y_POSITIVE = 'internal_y_positive';
-export const EDGE_PROBE_INTERNAL_Y_NEGATIVE = 'internal_y_negative';
+// External Edge Probe Directions
+export const EXTERNAL_EDGE_X_POSITIVE = 'x_positive';
+export const EXTERNAL_EDGE_X_NEGATIVE = 'x_negative';
+export const EXTERNAL_EDGE_Y_POSITIVE = 'y_positive';
+export const EXTERNAL_EDGE_Y_NEGATIVE = 'y_negative';
+export const EXTERNAL_EDGE_Z_NEGATIVE = 'z_negative';
+
+// Internal Edge Probe Directions
+export const INTERNAL_EDGE_X_POSITIVE = 'x_positive';
+export const INTERNAL_EDGE_X_NEGATIVE = 'x_negative';
+export const INTERNAL_EDGE_Y_POSITIVE = 'y_positive';
+export const INTERNAL_EDGE_Y_NEGATIVE = 'y_negative';
 
 // Center Probe Types
 export const CENTER_PROBE_EXTERNAL = 'external';
 export const CENTER_PROBE_INTERNAL = 'internal';
+
+// Rotation Edges
+export const ROTATION_EDGE_LEFT = 'left';
+export const ROTATION_EDGE_RIGHT = 'right';
+export const ROTATION_EDGE_TOP = 'top';
+export const ROTATION_EDGE_BOTTOM = 'bottom';

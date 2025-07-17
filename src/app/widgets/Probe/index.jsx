@@ -35,13 +35,27 @@ import {
 import {
   MODAL_NONE,
   MODAL_PREVIEW,
-  PROBE_TYPE_BASIC,
-  PROBE_TYPE_EDGE,
+  PROBE_TYPE_CONFIG,
+  PROBE_TYPE_EXTERNAL_EDGE,
+  PROBE_TYPE_INTERNAL_EDGE,
   PROBE_TYPE_CENTER,
   PROBE_TYPE_ROTATION,
   PROBE_TYPE_HEIGHT_MAP,
-  EDGE_PROBE_EXTERNAL_X_POSITIVE,
-  CENTER_PROBE_EXTERNAL
+  EXTERNAL_EDGE_X_POSITIVE,
+  EXTERNAL_EDGE_X_NEGATIVE,
+  EXTERNAL_EDGE_Y_POSITIVE,
+  EXTERNAL_EDGE_Y_NEGATIVE,
+  EXTERNAL_EDGE_Z_NEGATIVE,
+  INTERNAL_EDGE_X_POSITIVE,
+  INTERNAL_EDGE_X_NEGATIVE,
+  INTERNAL_EDGE_Y_POSITIVE,
+  INTERNAL_EDGE_Y_NEGATIVE,
+  CENTER_PROBE_EXTERNAL,
+  CENTER_PROBE_INTERNAL,
+  ROTATION_EDGE_LEFT,
+  ROTATION_EDGE_RIGHT,
+  ROTATION_EDGE_TOP,
+  ROTATION_EDGE_BOTTOM
 } from './constants';
 import styles from './index.styl';
 
@@ -110,211 +124,210 @@ class ProbeWidget extends PureComponent {
           }
         });
       },
-      changeProbeAxis: (value) => {
-        this.setState({ probeAxis: value });
-      },
-      changeProbeCommand: (value) => {
-        this.setState({ probeCommand: value });
-      },
       changeProbeType: (value) => {
         this.setState({ probeType: value });
-      },
-      changeEdgeProbeType: (value) => {
-        this.setState({ edgeProbeType: value });
       },
       changeCenterProbeType: (value) => {
         this.setState({ centerProbeType: value });
       },
-      toggleUseTLO: () => {
-        const { useTLO } = this.state;
-        this.setState({ useTLO: !useTLO });
-      },
-      handleProbeDepthChange: (event) => {
-        const probeDepth = event.target.value;
-        this.setState({ probeDepth });
-      },
-      handleProbeFeedrateChange: (event) => {
-        const probeFeedrate = event.target.value;
-        this.setState({ probeFeedrate });
+      // Configuration tab handlers
+      handleProbeDiameterChange: (event) => {
+        const probeDiameter = event.target.value;
+        this.setState({ probeDiameter });
       },
       handleTouchPlateHeightChange: (event) => {
         const touchPlateHeight = event.target.value;
         this.setState({ touchPlateHeight });
       },
-      handleRetractionDistanceChange: (event) => {
-        const retractionDistance = event.target.value;
-        this.setState({ retractionDistance });
+      handleRapidsFeedrateChange: (event) => {
+        const rapidsFeedrate = event.target.value;
+        this.setState({ rapidsFeedrate });
+      },
+      handleSearchFeedrateChange: (event) => {
+        const searchFeedrate = event.target.value;
+        this.setState({ searchFeedrate });
+      },
+      handleLatchFeedrateChange: (event) => {
+        const latchFeedrate = event.target.value;
+        this.setState({ latchFeedrate });
+      },
+      handleProbingDistanceChange: (event) => {
+        const probingDistance = event.target.value;
+        this.setState({ probingDistance });
+      },
+      handleLatchDistanceChange: (event) => {
+        const latchDistance = event.target.value;
+        this.setState({ latchDistance });
+      },
+      handleXyClearanceChange: (event) => {
+        const xyClearing = event.target.value;
+        this.setState({ xyClearing });
+      },
+      handleProbeOffsetChange: (event) => {
+        const probeOffset = event.target.value;
+        this.setState({ probeOffset });
+      },
+      handleProbeDepthChange: (event) => {
+        const probeDepth = event.target.value;
+        this.setState({ probeDepth });
+      },
+      // External edge handlers
+      selectExternalEdge: (direction) => {
+        this.setState({ 
+          selectedExternalEdge: this.state.selectedExternalEdge === direction ? null : direction 
+        });
+      },
+      // Internal edge handlers
+      selectInternalEdge: (direction) => {
+        this.setState({ 
+          selectedInternalEdge: this.state.selectedInternalEdge === direction ? null : direction 
+        });
+      },
+      // Center probe handlers
+      toggleSetCenterAsOrigin: () => {
+        const { setCenterAsOrigin } = this.state;
+        this.setState({ setCenterAsOrigin: !setCenterAsOrigin });
+      },
+      handleCenterSizeXChange: (event) => {
+        const centerSizeX = event.target.value;
+        this.setState({ centerSizeX });
+      },
+      handleCenterSizeYChange: (event) => {
+        const centerSizeY = event.target.value;
+        this.setState({ centerSizeY });
+      },
+      handleCenterPassesChange: (event) => {
+        const centerPasses = event.target.value;
+        this.setState({ centerPasses });
+      },
+      // Rotation handlers
+      selectRotationEdge: (edge) => {
+        this.setState({ selectedRotationEdge: edge });
+      },
+      applyRotationToGcode: () => {
+        // TODO: Implement G-code rotation application
+        console.log('Apply rotation to G-code');
+      },
+      // Height map handlers
+      handleHeightMapStartXChange: (event) => {
+        const heightMapStartX = event.target.value;
+        this.setState({ heightMapStartX });
+      },
+      handleHeightMapStartYChange: (event) => {
+        const heightMapStartY = event.target.value;
+        this.setState({ heightMapStartY });
+      },
+      handleHeightMapWidthChange: (event) => {
+        const heightMapWidth = event.target.value;
+        this.setState({ heightMapWidth });
+      },
+      handleHeightMapHeightChange: (event) => {
+        const heightMapHeight = event.target.value;
+        this.setState({ heightMapHeight });
+      },
+      handleHeightMapGridSizeXChange: (event) => {
+        const heightMapGridSizeX = event.target.value;
+        this.setState({ heightMapGridSizeX });
+      },
+      handleHeightMapGridSizeYChange: (event) => {
+        const heightMapGridSizeY = event.target.value;
+        this.setState({ heightMapGridSizeY });
+      },
+      togglePauseBeforeProbing: () => {
+        const { pauseBeforeProbing } = this.state;
+        this.setState({ pauseBeforeProbing: !pauseBeforeProbing });
+      },
+      toggleSetZZeroAtOrigin: () => {
+        const { setZZeroAtOrigin } = this.state;
+        this.setState({ setZZeroAtOrigin: !setZZeroAtOrigin });
+      },
+      autoDetectHeightMapArea: () => {
+        // TODO: Implement auto-detection from program limits
+        console.log('Auto-detect height map area from program limits');
+      },
+      applyHeightMapToGcode: () => {
+        // TODO: Implement height map application to G-code
+        console.log('Apply height map to G-code');
+      },
+      // Probe control
+      stopProbing: () => {
+        // TODO: Implement probe stop functionality
+        controller.command('feedhold');
+        controller.command('reset');
       },
       populateProbeCommands: () => {
-        const {
-          probeAxis,
-          probeCommand,
-          probeType,
-          useTLO,
-          probeDepth,
-          probeFeedrate,
-          touchPlateHeight,
-          retractionDistance
-        } = this.state;
+        const { probeType } = this.state;
 
-        // Handle basic probing (existing functionality)
-        if (probeType === PROBE_TYPE_BASIC) {
-          const wcs = this.getWorkCoordinateSystem();
-          const mapWCSToP = (wcs) => ({
-            'G54': 1,
-            'G55': 2,
-            'G56': 3,
-            'G57': 4,
-            'G58': 5,
-            'G59': 6
-          }[wcs] || 0);
-          const towardWorkpiece = includes(['G38.2', 'G38.3'], probeCommand);
-          const posname = `pos${probeAxis.toLowerCase()}`;
-          const tloProbeCommands = [
-            gcode('; Cancel tool length offset'),
-            // Cancel tool length offset
-            gcode('G49'),
-
-            // Probe (use relative distance mode)
-            gcode(`; ${probeAxis}-Probe`),
-            gcode('G91'),
-            gcode(probeCommand, {
-              [probeAxis]: towardWorkpiece ? -probeDepth : probeDepth,
-              F: probeFeedrate
-            }),
-            // Use absolute distance mode
-            gcode('G90'),
-
-            // Dwell
-            gcode('; A dwell time of one second'),
-            gcode('G4 P1'),
-
-            // Apply touch plate height with tool length offset
-            gcode('; Set tool length offset'),
-            gcode('G43.1', {
-              [probeAxis]: towardWorkpiece ? `[${posname}-${touchPlateHeight}]` : `[${posname}+${touchPlateHeight}]`
-            }),
-
-            // Retract from the touch plate (use relative distance mode)
-            gcode('; Retract from the touch plate'),
-            gcode('G91'),
-            gcode('G0', {
-              [probeAxis]: retractionDistance
-            }),
-            // Use asolute distance mode
-            gcode('G90')
-          ];
-          const wcsProbeCommands = [
-            // Probe (use relative distance mode)
-            gcode(`; ${probeAxis}-Probe`),
-            gcode('G91'),
-            gcode(probeCommand, {
-              [probeAxis]: towardWorkpiece ? -probeDepth : probeDepth,
-              F: probeFeedrate
-            }),
-            // Use absolute distance mode
-            gcode('G90'),
-
-            // Set the WCS 0 offset
-            gcode(`; Set the active WCS ${probeAxis}0`),
-            gcode('G10', {
-              L: 20,
-              P: mapWCSToP(wcs),
-              [probeAxis]: touchPlateHeight
-            }),
-
-            // Retract from the touch plate (use relative distance mode)
-            gcode('; Retract from the touch plate'),
-            gcode('G91'),
-            gcode('G0', {
-              [probeAxis]: retractionDistance
-            }),
-            // Use absolute distance mode
-            gcode('G90')
-          ];
-
-          return useTLO ? tloProbeCommands : wcsProbeCommands;
+        // Handle different probe types
+        if (probeType === PROBE_TYPE_EXTERNAL_EDGE) {
+          return this.generateExternalEdgeProbeCommands();
         }
 
-        // Handle edge probing
-        if (probeType === PROBE_TYPE_EDGE) {
-          return this.generateEdgeProbeCommands();
+        if (probeType === PROBE_TYPE_INTERNAL_EDGE) {
+          return this.generateInternalEdgeProbeCommands();
         }
 
-        // Handle center probing
         if (probeType === PROBE_TYPE_CENTER) {
           return this.generateCenterProbeCommands();
         }
 
-        // Handle rotation probing
         if (probeType === PROBE_TYPE_ROTATION) {
           return this.generateRotationProbeCommands();
         }
 
-        // Handle height mapping
         if (probeType === PROBE_TYPE_HEIGHT_MAP) {
           return this.generateHeightMapProbeCommands();
         }
 
-        // Default to basic probing commands
+        // Default to empty commands for config tab
         return [];
       },
-      generateEdgeProbeCommands: () => {
+      generateExternalEdgeProbeCommands: () => {
         const {
-          edgeProbeType,
-          probeDepth,
-          probeFeedrate,
+          selectedExternalEdge,
+          probingDistance,
+          searchFeedrate,
           touchPlateHeight,
-          retractionDistance
+          xyClearing
         } = this.state;
 
+        if (!selectedExternalEdge) {
+          return [];
+        }
+
         const commands = [
-          gcode('; Edge Probing Sequence'),
-          gcode('; Save current position'),
+          gcode('; External Edge Probing Sequence'),
           gcode('G90'), // Absolute positioning
           gcode('#1 = [posx]'), // Store current X position
           gcode('#2 = [posy]'), // Store current Y position
           gcode('#3 = [posz]'), // Store current Z position
         ];
 
-        // Determine probe direction based on edge type
+        // Determine probe direction and axis based on selection
         let probeAxis, probeDirection;
-        switch (edgeProbeType) {
-        case 'external_x_positive':
+        switch (selectedExternalEdge) {
+        case EXTERNAL_EDGE_X_POSITIVE:
           probeAxis = 'X';
-          probeDirection = probeDepth;
+          probeDirection = probingDistance;
           break;
-        case 'external_x_negative':
+        case EXTERNAL_EDGE_X_NEGATIVE:
           probeAxis = 'X';
-          probeDirection = -probeDepth;
+          probeDirection = -probingDistance;
           break;
-        case 'external_y_positive':
+        case EXTERNAL_EDGE_Y_POSITIVE:
           probeAxis = 'Y';
-          probeDirection = probeDepth;
+          probeDirection = probingDistance;
           break;
-        case 'external_y_negative':
+        case EXTERNAL_EDGE_Y_NEGATIVE:
           probeAxis = 'Y';
-          probeDirection = -probeDepth;
+          probeDirection = -probingDistance;
           break;
-        case 'internal_x_positive':
-          probeAxis = 'X';
-          probeDirection = probeDepth;
-          break;
-        case 'internal_x_negative':
-          probeAxis = 'X';
-          probeDirection = -probeDepth;
-          break;
-        case 'internal_y_positive':
-          probeAxis = 'Y';
-          probeDirection = probeDepth;
-          break;
-        case 'internal_y_negative':
-          probeAxis = 'Y';
-          probeDirection = -probeDepth;
+        case EXTERNAL_EDGE_Z_NEGATIVE:
+          probeAxis = 'Z';
+          probeDirection = -probingDistance;
           break;
         default:
-          probeAxis = 'X';
-          probeDirection = probeDepth;
+          return [];
         }
 
         commands.push(
@@ -323,7 +336,7 @@ class ProbeWidget extends PureComponent {
           gcode('G91'), // Relative positioning
           gcode('G38.2', {
             [probeAxis]: probeDirection,
-            F: probeFeedrate
+            F: searchFeedrate
           }),
           gcode('G90'), // Absolute positioning
 
@@ -339,7 +352,80 @@ class ProbeWidget extends PureComponent {
           gcode('; Retract from edge'),
           gcode('G91'), // Relative positioning
           gcode('G0', {
-            [probeAxis]: probeDirection > 0 ? -retractionDistance : retractionDistance
+            [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
+          }),
+          gcode('G90') // Absolute positioning
+        );
+
+        return commands;
+      },
+      generateInternalEdgeProbeCommands: () => {
+        const {
+          selectedInternalEdge,
+          probingDistance,
+          searchFeedrate,
+          touchPlateHeight,
+          xyClearing
+        } = this.state;
+
+        if (!selectedInternalEdge) {
+          return [];
+        }
+
+        const commands = [
+          gcode('; Internal Edge Probing Sequence'),
+          gcode('G90'), // Absolute positioning
+          gcode('#1 = [posx]'), // Store current X position
+          gcode('#2 = [posy]'), // Store current Y position
+          gcode('#3 = [posz]'), // Store current Z position
+        ];
+
+        // Determine probe direction and axis based on selection
+        let probeAxis, probeDirection;
+        switch (selectedInternalEdge) {
+        case INTERNAL_EDGE_X_POSITIVE:
+          probeAxis = 'X';
+          probeDirection = probingDistance;
+          break;
+        case INTERNAL_EDGE_X_NEGATIVE:
+          probeAxis = 'X';
+          probeDirection = -probingDistance;
+          break;
+        case INTERNAL_EDGE_Y_POSITIVE:
+          probeAxis = 'Y';
+          probeDirection = probingDistance;
+          break;
+        case INTERNAL_EDGE_Y_NEGATIVE:
+          probeAxis = 'Y';
+          probeDirection = -probingDistance;
+          break;
+        default:
+          return [];
+        }
+
+        commands.push(
+          // Probe toward internal edge
+          gcode(`; Probe ${probeAxis} axis toward internal edge`),
+          gcode('G91'), // Relative positioning
+          gcode('G38.2', {
+            [probeAxis]: probeDirection,
+            F: searchFeedrate
+          }),
+          gcode('G90'), // Absolute positioning
+
+          // Set work coordinate
+          gcode(`; Set work coordinate for ${probeAxis} axis`),
+          gcode('G10', {
+            L: 20,
+            P: 1, // G54 coordinate system
+            [probeAxis]: touchPlateHeight
+          }),
+
+          // Retract from edge
+          gcode('; Retract from edge'),
+          gcode('G91'), // Relative positioning
+          gcode('G0', {
+            [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
           }),
           gcode('G90') // Absolute positioning
         );
@@ -349,9 +435,13 @@ class ProbeWidget extends PureComponent {
       generateCenterProbeCommands: () => {
         const {
           centerProbeType,
-          probeDepth,
-          probeFeedrate,
-          retractionDistance
+          setCenterAsOrigin,
+          centerSizeX,
+          centerSizeY,
+          centerPasses,
+          probingDistance,
+          searchFeedrate,
+          xyClearing
         } = this.state;
 
         const commands = [
@@ -362,85 +452,89 @@ class ProbeWidget extends PureComponent {
           gcode('#3 = [posz]'), // Store current Z position
         ];
 
-        if (centerProbeType === CENTER_PROBE_EXTERNAL) {
-          // External center finding - probe from outside toward center
+        // Multi-pass center finding
+        for (let pass = 0; pass < centerPasses; pass++) {
+          const passDistance = probingDistance * (1 - pass * 0.1); // Reduce distance each pass
+
+          if (centerProbeType === CENTER_PROBE_EXTERNAL) {
+            // External center finding - probe from outside toward center
+            commands.push(
+              gcode(`; External center finding - pass ${pass + 1}`),
+
+              // Probe X positive direction
+              gcode('; Probe X+ direction'),
+              gcode('G91'),
+              gcode('G38.2', { X: passDistance, F: searchFeedrate }),
+              gcode(`#${4 + pass * 4} = [posx]`), // Store X+ probe result
+              gcode('G0', { X: -xyClearing }), // Retract
+              gcode('G0', { X: '#1' }), // Return to center X
+
+              // Probe X negative direction
+              gcode('; Probe X- direction'),
+              gcode('G38.2', { X: -passDistance, F: searchFeedrate }),
+              gcode(`#${5 + pass * 4} = [posx]`), // Store X- probe result
+              gcode('G0', { X: xyClearing }), // Retract
+              gcode('G0', { X: '#1' }), // Return to center X
+
+              // Probe Y positive direction
+              gcode('; Probe Y+ direction'),
+              gcode('G38.2', { Y: passDistance, F: searchFeedrate }),
+              gcode(`#${6 + pass * 4} = [posy]`), // Store Y+ probe result
+              gcode('G0', { Y: -xyClearing }), // Retract
+              gcode('G0', { Y: '#2' }), // Return to center Y
+
+              // Probe Y negative direction
+              gcode('; Probe Y- direction'),
+              gcode('G38.2', { Y: -passDistance, F: searchFeedrate }),
+              gcode(`#${7 + pass * 4} = [posy]`), // Store Y- probe result
+              gcode('G0', { Y: xyClearing }), // Retract
+              gcode('G90') // Absolute positioning
+            );
+          } else {
+            // Internal center finding - probe from inside toward edges
+            commands.push(
+              gcode(`; Internal center finding - pass ${pass + 1}`),
+              // Similar logic but probing outward from center
+              gcode('; Probe X+ direction'),
+              gcode('G91'),
+              gcode('G38.2', { X: passDistance, F: searchFeedrate }),
+              gcode(`#${4 + pass * 4} = [posx]`),
+              gcode('G0', { X: -xyClearing }),
+              gcode('G0', { X: '#1' }),
+
+              gcode('; Probe X- direction'),
+              gcode('G38.2', { X: -passDistance, F: searchFeedrate }),
+              gcode(`#${5 + pass * 4} = [posx]`),
+              gcode('G0', { X: xyClearing }),
+              gcode('G0', { X: '#1' }),
+
+              gcode('; Probe Y+ direction'),
+              gcode('G38.2', { Y: passDistance, F: searchFeedrate }),
+              gcode(`#${6 + pass * 4} = [posy]`),
+              gcode('G0', { Y: -xyClearing }),
+              gcode('G0', { Y: '#2' }),
+
+              gcode('; Probe Y- direction'),
+              gcode('G38.2', { Y: -passDistance, F: searchFeedrate }),
+              gcode(`#${7 + pass * 4} = [posy]`),
+              gcode('G0', { Y: xyClearing }),
+              gcode('G90')
+            );
+          }
+        }
+
+        // Calculate center from final pass
+        const finalPassOffset = (centerPasses - 1) * 4;
+        commands.push(
+          gcode('; Calculate and move to center'),
+          gcode(`#100 = [[#${4 + finalPassOffset} + #${5 + finalPassOffset}] / 2]`), // Calculate X center
+          gcode(`#101 = [[#${6 + finalPassOffset} + #${7 + finalPassOffset}] / 2]`), // Calculate Y center
+          gcode('G0', { X: '#100', Y: '#101' })
+        );
+
+        if (setCenterAsOrigin) {
           commands.push(
-            gcode('; External center finding - probe 4 directions'),
-
-            // Probe X positive direction
-            gcode('; Probe X+ direction'),
-            gcode('G91'),
-            gcode('G38.2', { X: probeDepth, F: probeFeedrate }),
-            gcode('#4 = [posx]'), // Store X+ probe result
-            gcode('G0', { X: -retractionDistance }), // Retract
-            gcode('G0', { X: '#1' }), // Return to center X
-
-            // Probe X negative direction
-            gcode('; Probe X- direction'),
-            gcode('G38.2', { X: -probeDepth, F: probeFeedrate }),
-            gcode('#5 = [posx]'), // Store X- probe result
-            gcode('G0', { X: retractionDistance }), // Retract
-            gcode('G0', { X: '#1' }), // Return to center X
-
-            // Probe Y positive direction
-            gcode('; Probe Y+ direction'),
-            gcode('G38.2', { Y: probeDepth, F: probeFeedrate }),
-            gcode('#6 = [posy]'), // Store Y+ probe result
-            gcode('G0', { Y: -retractionDistance }), // Retract
-            gcode('G0', { Y: '#2' }), // Return to center Y
-
-            // Probe Y negative direction
-            gcode('; Probe Y- direction'),
-            gcode('G38.2', { Y: -probeDepth, F: probeFeedrate }),
-            gcode('#7 = [posy]'), // Store Y- probe result
-            gcode('G0', { Y: retractionDistance }), // Retract
-            gcode('G90'), // Absolute positioning
-
-            // Calculate center and move there
-            gcode('; Calculate and move to center'),
-            gcode('#8 = [[#4 + #5] / 2]'), // Calculate X center
-            gcode('#9 = [[#6 + #7] / 2]'), // Calculate Y center
-            gcode('G0', { X: '#8', Y: '#9' }),
-
-            // Set work coordinate to center
-            gcode('G10', { L: 20, P: 1, X: 0, Y: 0 })
-          );
-        } else {
-          // Internal center finding - probe from inside toward edges
-          commands.push(
-            gcode('; Internal center finding - probe 4 directions'),
-
-            // Similar logic but probing outward from center
-            gcode('; Probe X+ direction'),
-            gcode('G91'),
-            gcode('G38.2', { X: probeDepth, F: probeFeedrate }),
-            gcode('#4 = [posx]'),
-            gcode('G0', { X: -retractionDistance }),
-            gcode('G0', { X: '#1' }),
-
-            gcode('; Probe X- direction'),
-            gcode('G38.2', { X: -probeDepth, F: probeFeedrate }),
-            gcode('#5 = [posx]'),
-            gcode('G0', { X: retractionDistance }),
-            gcode('G0', { X: '#1' }),
-
-            gcode('; Probe Y+ direction'),
-            gcode('G38.2', { Y: probeDepth, F: probeFeedrate }),
-            gcode('#6 = [posy]'),
-            gcode('G0', { Y: -retractionDistance }),
-            gcode('G0', { Y: '#2' }),
-
-            gcode('; Probe Y- direction'),
-            gcode('G38.2', { Y: -probeDepth, F: probeFeedrate }),
-            gcode('#7 = [posy]'),
-            gcode('G0', { Y: retractionDistance }),
-            gcode('G90'),
-
-            gcode('; Calculate and move to center'),
-            gcode('#8 = [[#4 + #5] / 2]'),
-            gcode('#9 = [[#6 + #7] / 2]'),
-            gcode('G0', { X: '#8', Y: '#9' }),
-
+            gcode('; Set center as coordinate origin'),
             gcode('G10', { L: 20, P: 1, X: 0, Y: 0 })
           );
         }
@@ -449,36 +543,66 @@ class ProbeWidget extends PureComponent {
       },
       generateRotationProbeCommands: () => {
         const {
-          probeDepth,
-          probeFeedrate,
-          retractionDistance
+          selectedRotationEdge,
+          probingDistance,
+          searchFeedrate,
+          xyClearing
         } = this.state;
 
-        return [
+        if (!selectedRotationEdge) {
+          return [];
+        }
+
+        const commands = [
           gcode('; Rotation Finding Sequence'),
           gcode('G90'), // Absolute positioning
           gcode('#1 = [posx]'), // Store current X position
           gcode('#2 = [posy]'), // Store current Y position
+        ];
 
+        // Determine probe direction based on selected edge
+        let probeDirection, moveDirection;
+        switch (selectedRotationEdge) {
+        case ROTATION_EDGE_LEFT:
+          probeDirection = { X: probingDistance };
+          moveDirection = { Y: 10 }; // Move 10mm in Y direction for second probe
+          break;
+        case ROTATION_EDGE_RIGHT:
+          probeDirection = { X: -probingDistance };
+          moveDirection = { Y: 10 };
+          break;
+        case ROTATION_EDGE_TOP:
+          probeDirection = { Y: -probingDistance };
+          moveDirection = { X: 10 };
+          break;
+        case ROTATION_EDGE_BOTTOM:
+          probeDirection = { Y: probingDistance };
+          moveDirection = { X: 10 };
+          break;
+        default:
+          return [];
+        }
+
+        commands.push(
           // Probe first point
           gcode('; Probe first point'),
           gcode('G91'),
-          gcode('G38.2', { Y: -probeDepth, F: probeFeedrate }),
+          gcode('G38.2', { ...probeDirection, F: searchFeedrate }),
           gcode('#3 = [posx]'), // Store first probe X
           gcode('#4 = [posy]'), // Store first probe Y
-          gcode('G0', { Y: retractionDistance }), // Retract
+          gcode('G0', { ...Object.fromEntries(Object.entries(probeDirection).map(([k, v]) => [k, -v * 0.1])) }), // Small retract
 
           // Move to second probe position
           gcode('G90'),
-          gcode('G0', { X: '#1 + 10' }), // Move 10mm in X direction
+          gcode('G0', moveDirection),
 
           // Probe second point
           gcode('; Probe second point'),
           gcode('G91'),
-          gcode('G38.2', { Y: -probeDepth, F: probeFeedrate }),
+          gcode('G38.2', { ...probeDirection, F: searchFeedrate }),
           gcode('#5 = [posx]'), // Store second probe X
           gcode('#6 = [posy]'), // Store second probe Y
-          gcode('G0', { Y: retractionDistance }), // Retract
+          gcode('G0', { ...Object.fromEntries(Object.entries(probeDirection).map(([k, v]) => [k, -v * 0.1])) }), // Small retract
 
           // Calculate rotation angle
           gcode('G90'),
@@ -487,24 +611,30 @@ class ProbeWidget extends PureComponent {
           gcode('#8 = [#5 - #3]'), // Delta X
           gcode('#9 = [ATAN[#7]/[#8]]'), // Angle in radians
 
-          // Apply coordinate system rotation
+          // Apply coordinate system rotation using X0, Y0 as center
           gcode('; Apply rotation to coordinate system'),
-          gcode('G68 X[#3] Y[#4] R[#9 * 180 / 3.14159]'), // Rotate coordinate system
+          gcode('G68 X0 Y0 R[#9 * 180 / 3.14159]'), // Rotate coordinate system
 
           // Return to original position
           gcode('G0', { X: '#1', Y: '#2' })
-        ];
+        );
+
+        return commands;
       },
       generateHeightMapProbeCommands: () => {
         const {
-          probeDepth,
-          probeFeedrate,
-          retractionDistance
+          heightMapStartX,
+          heightMapStartY,
+          heightMapWidth,
+          heightMapHeight,
+          heightMapGridSizeX,
+          heightMapGridSizeY,
+          pauseBeforeProbing,
+          setZZeroAtOrigin,
+          probingDistance,
+          searchFeedrate,
+          xyClearing
         } = this.state;
-
-        // Simple 3x3 height map for demonstration
-        const gridSize = 3;
-        const stepSize = 10; // 10mm steps
 
         const commands = [
           gcode('; Height Mapping Sequence'),
@@ -514,23 +644,53 @@ class ProbeWidget extends PureComponent {
           gcode('#3 = [posz]'), // Store start Z position
         ];
 
+        if (pauseBeforeProbing) {
+          commands.push(
+            gcode('; Pause before probing'),
+            gcode('M0')
+          );
+        }
+
+        // Calculate step sizes
+        const xStep = heightMapWidth / (heightMapGridSizeX - 1);
+        const yStep = heightMapHeight / (heightMapGridSizeY - 1);
+
         // Generate probe points in a grid pattern
-        for (let row = 0; row < gridSize; row++) {
-          for (let col = 0; col < gridSize; col++) {
-            const pointNum = row * gridSize + col + 4; // Start variables from #4
-            const xOffset = col * stepSize;
-            const yOffset = row * stepSize;
+        let variableNum = 10; // Start variables from #10
+        for (let row = 0; row < heightMapGridSizeY; row++) {
+          for (let col = 0; col < heightMapGridSizeX; col++) {
+            const xOffset = col * xStep;
+            const yOffset = row * yStep;
 
             commands.push(
               gcode(`; Probe point ${row + 1},${col + 1}`),
-              gcode('G0', { X: `#1 + ${xOffset}`, Y: `#2 + ${yOffset}`, Z: '#3' }),
+              gcode('G0', { 
+                X: heightMapStartX + xOffset, 
+                Y: heightMapStartY + yOffset, 
+                Z: '#3' 
+              }),
               gcode('G91'),
-              gcode('G38.2', { Z: -probeDepth, F: probeFeedrate }),
-              gcode(`#${pointNum} = [posz]`), // Store probe Z result
-              gcode('G0', { Z: retractionDistance }), // Retract
+              gcode('G38.2', { Z: -probingDistance, F: searchFeedrate }),
+              gcode(`#${variableNum} = [posz]`), // Store probe Z result
+              gcode('G0', { Z: xyClearing }), // Retract
               gcode('G90')
             );
+            variableNum++;
           }
+        }
+
+        if (setZZeroAtOrigin) {
+          commands.push(
+            gcode('; Set Z=0 at X0Y0 based on probe at origin'),
+            gcode('G10', { L: 20, P: 1, Z: '#10' }) // Use first probe point as Z reference
+          );
+        } else {
+          // Use center point as reference
+          const centerIndex = Math.floor(heightMapGridSizeY / 2) * heightMapGridSizeX + Math.floor(heightMapGridSizeX / 2);
+          commands.push(
+            gcode('; Set Z=0 at center point'),
+            gcode('G10', { L: 20, P: 1, Z: `#${10 + centerIndex}` })
+          );
         }
 
         commands.push(
@@ -614,10 +774,23 @@ class ProbeWidget extends PureComponent {
             type: type,
             state: state
           },
-          probeDepth: mapValueToUnits(this.config.get('probeDepth'), units),
-          probeFeedrate: mapValueToUnits(this.config.get('probeFeedrate'), units),
+          // Convert all measurement values to current units
+          probeDiameter: mapValueToUnits(this.config.get('probeDiameter'), units),
           touchPlateHeight: mapValueToUnits(this.config.get('touchPlateHeight'), units),
-          retractionDistance: mapValueToUnits(this.config.get('retractionDistance'), units)
+          rapidsFeedrate: mapValueToUnits(this.config.get('rapidsFeedrate'), units),
+          searchFeedrate: mapValueToUnits(this.config.get('searchFeedrate'), units),
+          latchFeedrate: mapValueToUnits(this.config.get('latchFeedrate'), units),
+          probingDistance: mapValueToUnits(this.config.get('probingDistance'), units),
+          latchDistance: mapValueToUnits(this.config.get('latchDistance'), units),
+          xyClearing: mapValueToUnits(this.config.get('xyClearing'), units),
+          probeOffset: mapValueToUnits(this.config.get('probeOffset'), units),
+          probeDepth: mapValueToUnits(this.config.get('probeDepth'), units),
+          centerSizeX: mapValueToUnits(this.config.get('centerSizeX'), units),
+          centerSizeY: mapValueToUnits(this.config.get('centerSizeY'), units),
+          heightMapStartX: mapValueToUnits(this.config.get('heightMapStartX'), units),
+          heightMapStartY: mapValueToUnits(this.config.get('heightMapStartY'), units),
+          heightMapWidth: mapValueToUnits(this.config.get('heightMapWidth'), units),
+          heightMapHeight: mapValueToUnits(this.config.get('heightMapHeight'), units)
         });
       }
     };
@@ -645,31 +818,86 @@ class ProbeWidget extends PureComponent {
         return;
       }
 
-      const { units, probeCommand, probeType, edgeProbeType, centerProbeType, useTLO } = this.state;
-      this.config.set('probeCommand', probeCommand);
+      const { 
+        units, 
+        probeType, 
+        centerProbeType, 
+        selectedExternalEdge,
+        selectedInternalEdge,
+        setCenterAsOrigin,
+        centerPasses,
+        selectedRotationEdge,
+        pauseBeforeProbing,
+        setZZeroAtOrigin
+      } = this.state;
+      
+      // Save non-numeric config
       this.config.set('probeType', probeType);
-      this.config.set('edgeProbeType', edgeProbeType);
       this.config.set('centerProbeType', centerProbeType);
-      this.config.set('useTLO', useTLO);
+      this.config.set('selectedExternalEdge', selectedExternalEdge);
+      this.config.set('selectedInternalEdge', selectedInternalEdge);
+      this.config.set('setCenterAsOrigin', setCenterAsOrigin);
+      this.config.set('centerPasses', centerPasses);
+      this.config.set('selectedRotationEdge', selectedRotationEdge);
+      this.config.set('pauseBeforeProbing', pauseBeforeProbing);
+      this.config.set('setZZeroAtOrigin', setZZeroAtOrigin);
 
       let {
-        probeDepth,
-        probeFeedrate,
+        probeDiameter,
         touchPlateHeight,
-        retractionDistance
+        rapidsFeedrate,
+        searchFeedrate,
+        latchFeedrate,
+        probingDistance,
+        latchDistance,
+        xyClearing,
+        probeOffset,
+        probeDepth,
+        centerSizeX,
+        centerSizeY,
+        heightMapStartX,
+        heightMapStartY,
+        heightMapWidth,
+        heightMapHeight
       } = this.state;
 
       // To save in mm
       if (units === IMPERIAL_UNITS) {
-        probeDepth = in2mm(probeDepth);
-        probeFeedrate = in2mm(probeFeedrate);
+        probeDiameter = in2mm(probeDiameter);
         touchPlateHeight = in2mm(touchPlateHeight);
-        retractionDistance = in2mm(retractionDistance);
+        rapidsFeedrate = in2mm(rapidsFeedrate);
+        searchFeedrate = in2mm(searchFeedrate);
+        latchFeedrate = in2mm(latchFeedrate);
+        probingDistance = in2mm(probingDistance);
+        latchDistance = in2mm(latchDistance);
+        xyClearing = in2mm(xyClearing);
+        probeOffset = in2mm(probeOffset);
+        probeDepth = in2mm(probeDepth);
+        centerSizeX = in2mm(centerSizeX);
+        centerSizeY = in2mm(centerSizeY);
+        heightMapStartX = in2mm(heightMapStartX);
+        heightMapStartY = in2mm(heightMapStartY);
+        heightMapWidth = in2mm(heightMapWidth);
+        heightMapHeight = in2mm(heightMapHeight);
       }
-      this.config.set('probeDepth', Number(probeDepth));
-      this.config.set('probeFeedrate', Number(probeFeedrate));
+      
+      // Save numeric config in mm
+      this.config.set('probeDiameter', Number(probeDiameter));
       this.config.set('touchPlateHeight', Number(touchPlateHeight));
-      this.config.set('retractionDistance', Number(retractionDistance));
+      this.config.set('rapidsFeedrate', Number(rapidsFeedrate));
+      this.config.set('searchFeedrate', Number(searchFeedrate));
+      this.config.set('latchFeedrate', Number(latchFeedrate));
+      this.config.set('probingDistance', Number(probingDistance));
+      this.config.set('latchDistance', Number(latchDistance));
+      this.config.set('xyClearing', Number(xyClearing));
+      this.config.set('probeOffset', Number(probeOffset));
+      this.config.set('probeDepth', Number(probeDepth));
+      this.config.set('centerSizeX', Number(centerSizeX));
+      this.config.set('centerSizeY', Number(centerSizeY));
+      this.config.set('heightMapStartX', Number(heightMapStartX));
+      this.config.set('heightMapStartY', Number(heightMapStartY));
+      this.config.set('heightMapWidth', Number(heightMapWidth));
+      this.config.set('heightMapHeight', Number(heightMapHeight));
     }
 
     getInitialState() {
@@ -690,16 +918,46 @@ class ProbeWidget extends PureComponent {
           name: MODAL_NONE,
           params: {}
         },
-        probeAxis: this.config.get('probeAxis', 'Z'),
-        probeCommand: this.config.get('probeCommand', 'G38.2'),
-        probeType: this.config.get('probeType', PROBE_TYPE_BASIC),
-        edgeProbeType: this.config.get('edgeProbeType', EDGE_PROBE_EXTERNAL_X_POSITIVE),
-        centerProbeType: this.config.get('centerProbeType', CENTER_PROBE_EXTERNAL),
-        useTLO: this.config.get('useTLO'),
-        probeDepth: Number(this.config.get('probeDepth') || 0).toFixed(3) * 1,
-        probeFeedrate: Number(this.config.get('probeFeedrate') || 0).toFixed(3) * 1,
+        // Probe type selection - start with configuration tab
+        probeType: this.config.get('probeType', PROBE_TYPE_CONFIG),
+        
+        // Configuration parameters
+        probeDiameter: Number(this.config.get('probeDiameter') || 0).toFixed(3) * 1,
         touchPlateHeight: Number(this.config.get('touchPlateHeight') || 0).toFixed(3) * 1,
-        retractionDistance: Number(this.config.get('retractionDistance') || 0).toFixed(3) * 1
+        rapidsFeedrate: Number(this.config.get('rapidsFeedrate') || 1000).toFixed(3) * 1,
+        searchFeedrate: Number(this.config.get('searchFeedrate') || 100).toFixed(3) * 1,
+        latchFeedrate: Number(this.config.get('latchFeedrate') || 20).toFixed(3) * 1,
+        probingDistance: Number(this.config.get('probingDistance') || 10).toFixed(3) * 1,
+        latchDistance: Number(this.config.get('latchDistance') || 1).toFixed(3) * 1,
+        xyClearing: Number(this.config.get('xyClearing') || 2).toFixed(3) * 1,
+        probeOffset: Number(this.config.get('probeOffset') || 0).toFixed(3) * 1,
+        probeDepth: Number(this.config.get('probeDepth') || 10).toFixed(3) * 1,
+        
+        // External edge probing
+        selectedExternalEdge: this.config.get('selectedExternalEdge', null),
+        
+        // Internal edge probing
+        selectedInternalEdge: this.config.get('selectedInternalEdge', null),
+        
+        // Center probing
+        centerProbeType: this.config.get('centerProbeType', CENTER_PROBE_EXTERNAL),
+        setCenterAsOrigin: this.config.get('setCenterAsOrigin', true),
+        centerSizeX: Number(this.config.get('centerSizeX') || 0).toFixed(3) * 1,
+        centerSizeY: Number(this.config.get('centerSizeY') || 0).toFixed(3) * 1,
+        centerPasses: Number(this.config.get('centerPasses') || 1),
+        
+        // Rotation probing
+        selectedRotationEdge: this.config.get('selectedRotationEdge', null),
+        
+        // Height mapping
+        heightMapStartX: Number(this.config.get('heightMapStartX') || 0).toFixed(3) * 1,
+        heightMapStartY: Number(this.config.get('heightMapStartY') || 0).toFixed(3) * 1,
+        heightMapWidth: Number(this.config.get('heightMapWidth') || 20).toFixed(3) * 1,
+        heightMapHeight: Number(this.config.get('heightMapHeight') || 20).toFixed(3) * 1,
+        heightMapGridSizeX: Number(this.config.get('heightMapGridSizeX') || 3),
+        heightMapGridSizeY: Number(this.config.get('heightMapGridSizeY') || 3),
+        pauseBeforeProbing: this.config.get('pauseBeforeProbing', false),
+        setZZeroAtOrigin: this.config.get('setZZeroAtOrigin', true)
       };
     }
 
