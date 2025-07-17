@@ -790,7 +790,10 @@ class ProbeWidget extends PureComponent {
           heightMapStartX: mapValueToUnits(this.config.get('heightMapStartX'), units),
           heightMapStartY: mapValueToUnits(this.config.get('heightMapStartY'), units),
           heightMapWidth: mapValueToUnits(this.config.get('heightMapWidth'), units),
-          heightMapHeight: mapValueToUnits(this.config.get('heightMapHeight'), units)
+          heightMapHeight: mapValueToUnits(this.config.get('heightMapHeight'), units),
+          // Grid sizes don't need unit conversion
+          heightMapGridSizeX: this.config.get('heightMapGridSizeX') || 3,
+          heightMapGridSizeY: this.config.get('heightMapGridSizeY') || 3
         });
       }
     };
@@ -828,7 +831,9 @@ class ProbeWidget extends PureComponent {
         centerPasses,
         selectedRotationEdge,
         pauseBeforeProbing,
-        setZZeroAtOrigin
+        setZZeroAtOrigin,
+        heightMapGridSizeX,
+        heightMapGridSizeY
       } = this.state;
       
       // Save non-numeric config
@@ -841,6 +846,8 @@ class ProbeWidget extends PureComponent {
       this.config.set('selectedRotationEdge', selectedRotationEdge);
       this.config.set('pauseBeforeProbing', pauseBeforeProbing);
       this.config.set('setZZeroAtOrigin', setZZeroAtOrigin);
+      this.config.set('heightMapGridSizeX', heightMapGridSizeX);
+      this.config.set('heightMapGridSizeY', heightMapGridSizeY);
 
       let {
         probeDiameter,
@@ -922,7 +929,7 @@ class ProbeWidget extends PureComponent {
         probeType: this.config.get('probeType', PROBE_TYPE_CONFIG),
         
         // Configuration parameters
-        probeDiameter: Number(this.config.get('probeDiameter') || 0).toFixed(3) * 1,
+        probeDiameter: Number(this.config.get('probeDiameter') || 3).toFixed(3) * 1,
         touchPlateHeight: Number(this.config.get('touchPlateHeight') || 0).toFixed(3) * 1,
         rapidsFeedrate: Number(this.config.get('rapidsFeedrate') || 1000).toFixed(3) * 1,
         searchFeedrate: Number(this.config.get('searchFeedrate') || 100).toFixed(3) * 1,
