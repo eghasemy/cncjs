@@ -80,6 +80,49 @@ class GamepadWidget extends PureComponent {
                     currentProfile: ids[0] || ''
                 };
             });
+        },
+        exportProfile: () => {
+            const { profiles, currentProfile } = this.state;
+            const data = profiles[currentProfile];
+            if (!data) {
+                return;
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.name || 'profile'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+        importProfile: (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    const id = shortid.generate();
+                    this.setState(state => ({
+                        profiles: {
+                            ...state.profiles,
+                            [id]: {
+                                name: data.name || 'Imported',
+                                buttonMap: data.buttonMap || {},
+                                axisMap: data.axisMap || {},
+                                gamepadId: data.gamepadId || null
+                            }
+                        },
+                        currentProfile: id
+                    }));
+                } catch (err) {
+                    // ignore
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
         }
     };
 
@@ -279,26 +322,6 @@ class GamepadWidget extends PureComponent {
                     }));
                     actions.closeModal();
                   }}
-                  onDelete={actions.deleteProfile}
-                  onExport={(data) => {
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${data.name || 'profile'}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                  onImport={(data) => {
-                    const id = shortid.generate();
-                    this.setState(state => ({
-                      profiles: {
-                        ...state.profiles,
-                        [id]: { name: data.name || 'Imported', buttonMap: data.buttonMap || {}, axisMap: data.axisMap || {}, gamepadId: data.gamepadId || null }
-                      },
-                      currentProfile: id
-                    }));
-                  }}
                   onCancel={actions.closeModal}
                 />
               )}
@@ -308,7 +331,15 @@ class GamepadWidget extends PureComponent {
                     <option key={id} value={id}>{profiles[id].name}</option>
                   ))}
                 </select>
-                <button className="btn btn-default" style={{ marginTop: 5 }} onClick={actions.newProfile}>{i18n._('New')}</button>
+                <div style={{ marginTop: 5 }}>
+                  <button type="button" className="btn btn-default" onClick={actions.newProfile}>{i18n._('New')}</button>
+                  <label className="btn btn-default btn-file" style={{ marginLeft: 5 }}>
+                    {i18n._('Import Config')}
+                    <input type="file" style={{ display: 'none' }} onChange={actions.importProfile} />
+                  </label>
+                  <button type="button" className="btn btn-default" style={{ marginLeft: 5 }} onClick={actions.exportProfile}>{i18n._('Export Config')}</button>
+                  <button type="button" className="btn btn-default" style={{ marginLeft: 5 }} onClick={actions.deleteProfile}>{i18n._('Remove')}</button>
+                </div>
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
             </Widget.Content>

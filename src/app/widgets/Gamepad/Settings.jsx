@@ -29,10 +29,7 @@ class Settings extends PureComponent {
         gamepadIndex: PropTypes.number,
         onChangeName: PropTypes.func,
         onSave: PropTypes.func,
-        onCancel: PropTypes.func,
-        onExport: PropTypes.func,
-        onImport: PropTypes.func,
-        onDelete: PropTypes.func
+        onCancel: PropTypes.func
     };
 
     static defaultProps = {
@@ -42,10 +39,7 @@ class Settings extends PureComponent {
         gamepadIndex: 0,
         onChangeName: () => {},
         onSave: () => {},
-        onCancel: () => {},
-        onExport: () => {},
-        onImport: () => {},
-        onDelete: () => {}
+        onCancel: () => {}
     };
 
     state = this.getInitialState();
@@ -123,34 +117,6 @@ class Settings extends PureComponent {
             buttonMap: this.state.buttonMap,
             axisMap: this.state.axisMap
         });
-    };
-
-    handleExport = () => {
-        const { onExport } = this.props;
-        onExport({
-            name: this.state.name,
-            buttonMap: this.state.buttonMap,
-            axisMap: this.state.axisMap
-        });
-    };
-
-    handleImport = (e) => {
-        const { onImport } = this.props;
-        const file = e.target.files[0];
-        if (!file) {
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-            try {
-                const data = JSON.parse(reader.result);
-                onImport(data);
-            } catch (err) {
-                // ignore parse errors
-            }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
     };
 
     render() {
@@ -256,12 +222,6 @@ class Settings extends PureComponent {
                     )}
             </Modal.Body>
             <Modal.Footer>
-              <label className="btn btn-default btn-file">
-                {i18n._('Import Config')}
-                <input type="file" style={{ display: 'none' }} onChange={this.handleImport} />
-              </label>
-              <Button onClick={this.handleExport}>{i18n._('Export Config')}</Button>
-              <Button onClick={this.props.onDelete}>{i18n._('Remove')}</Button>
               <Button onClick={onCancel}>{i18n._('Cancel')}</Button>
               <Button btnStyle="primary" onClick={this.handleSave}>{i18n._('Save Changes')}</Button>
             </Modal.Footer>
