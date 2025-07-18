@@ -64,7 +64,12 @@ class Settings extends PureComponent {
         if (pad) {
             const activeButtons = pad.buttons.map(btn => btn.pressed);
             const activeAxes = pad.axes.slice();
-            this.setState({ activeButtons, activeAxes });
+            this.setState(state => ({
+                activeButtons,
+                activeAxes,
+                buttons: pad.buttons.length || state.buttons,
+                axes: pad.axes.length || state.axes
+            }));
         } else {
             this.setState({ activeButtons: [], activeAxes: [] });
         }
