@@ -286,11 +286,6 @@ class GamepadWidget extends PureComponent {
             controller.command('macro:run', id, controller.context, () => {});
             return;
         }
-        if (action.startsWith('load-macro-')) {
-            const id = action.substring('load-macro-'.length);
-            controller.command('macro:load', id, controller.context, () => {});
-            return;
-        }
         switch (action) {
             case 'jog-x+':
                 controller.command('gcode', 'G91');

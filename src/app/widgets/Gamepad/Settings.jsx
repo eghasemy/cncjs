@@ -22,10 +22,10 @@ const getActions = (macros = []) => {
         { value: 'resume', label: i18n._('Resume') },
         { value: 'reset', label: i18n._('Reset') }
     ];
-    const macroActions = macros.flatMap(macro => ([
-        { value: `run-macro-${macro.id}`, label: `${i18n._('Run Macro')}: ${macro.name}` },
-        { value: `load-macro-${macro.id}`, label: `${i18n._('Load Macro')}: ${macro.name}` }
-    ]));
+    const macroActions = macros.map(macro => ({
+        value: `run-macro-${macro.id}`,
+        label: `${i18n._('Run Macro')}: ${macro.name}`
+    }));
     return base.concat(macroActions);
 };
 
