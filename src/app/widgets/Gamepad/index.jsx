@@ -63,6 +63,9 @@ class GamepadWidget extends PureComponent {
             this.setState({ minimized: !minimized });
         },
         openModal: (name = MODAL_NONE) => {
+            if (name === MODAL_SETTINGS) {
+                this.fetchMacros();
+            }
             this.setState({ modal: name });
         },
         closeModal: () => {
