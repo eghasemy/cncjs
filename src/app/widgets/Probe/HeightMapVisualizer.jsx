@@ -33,21 +33,23 @@ class HeightMapVisualizer extends PureComponent {
     if (minHeight === maxHeight) {
       return 'rgb(128, 128, 128)'; // Gray for flat surface
     }
-    
+
     // Normalize height to 0-1 range
     const normalized = (height - minHeight) / (maxHeight - minHeight);
-    
+
     // Create color gradient from blue (low) to red (high)
     const red = Math.floor(255 * normalized);
     const blue = Math.floor(255 * (1 - normalized));
     const green = Math.floor(128 * (1 - Math.abs(normalized - 0.5) * 2));
-    
+
     return `rgb(${red}, ${green}, ${blue})`;
   };
 
   drawHeightMap = () => {
     const canvas = this.canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
     const { heightMapData, gridSizeX, gridSizeY, width, height } = this.props;
@@ -69,7 +71,7 @@ class HeightMapVisualizer extends PureComponent {
     // Find min and max heights
     let minHeight = Infinity;
     let maxHeight = -Infinity;
-    
+
     heightMapData.forEach(row => {
       row.forEach(height => {
         if (height !== null && height !== undefined) {
@@ -87,7 +89,7 @@ class HeightMapVisualizer extends PureComponent {
     for (let row = 0; row < gridSizeY; row++) {
       for (let col = 0; col < gridSizeX; col++) {
         const heightValue = heightMapData[row] && heightMapData[row][col];
-        
+
         if (heightValue !== null && heightValue !== undefined) {
           const color = this.getColorForHeight(heightValue, minHeight, maxHeight);
           ctx.fillStyle = color;
@@ -97,14 +99,14 @@ class HeightMapVisualizer extends PureComponent {
 
         const x = col * cellWidth;
         const y = row * cellHeight;
-        
+
         ctx.fillRect(x, y, cellWidth, cellHeight);
-        
+
         // Draw cell border
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, cellWidth, cellHeight);
-        
+
         // Draw height value text
         if (heightValue !== null && heightValue !== undefined) {
           ctx.fillStyle = '#fff';
@@ -129,10 +131,10 @@ class HeightMapVisualizer extends PureComponent {
     const gradient = ctx.createLinearGradient(0, legendY, 0, legendY + legendHeight);
     gradient.addColorStop(0, this.getColorForHeight(maxHeight, minHeight, maxHeight));
     gradient.addColorStop(1, this.getColorForHeight(minHeight, minHeight, maxHeight));
-    
+
     ctx.fillStyle = gradient;
     ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
-    
+
     ctx.strokeStyle = '#333';
     ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
 

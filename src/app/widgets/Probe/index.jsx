@@ -226,14 +226,14 @@ class ProbeWidget extends PureComponent {
       },
       handleHeightMapGridSizeXChange: (event) => {
         const heightMapGridSizeX = event.target.value;
-        this.setState({ 
+        this.setState({
           heightMapGridSizeX,
           heightMapData: [] // Clear existing data when grid size changes
         });
       },
       handleHeightMapGridSizeYChange: (event) => {
         const heightMapGridSizeY = event.target.value;
-        this.setState({ 
+        this.setState({
           heightMapGridSizeY,
           heightMapData: [] // Clear existing data when grid size changes
         });
@@ -256,21 +256,21 @@ class ProbeWidget extends PureComponent {
       },
       generateSampleHeightMapData: () => {
         const { heightMapGridSizeX, heightMapGridSizeY } = this.state;
-        
+
         // Generate sample height map data for demonstration
         const heightMapData = [];
         for (let row = 0; row < heightMapGridSizeY; row++) {
           const rowData = [];
           for (let col = 0; col < heightMapGridSizeX; col++) {
             // Create a sample height variation (simulating a slightly uneven surface)
-            const height = Math.sin((row * Math.PI) / (heightMapGridSizeY - 1)) * 
+            const height = Math.sin((row * Math.PI) / (heightMapGridSizeY - 1)) *
                           Math.cos((col * Math.PI) / (heightMapGridSizeX - 1)) * 0.5 +
                           (Math.random() - 0.5) * 0.2;
             rowData.push(height);
           }
           heightMapData.push(rowData);
         }
-        
+
         this.setState({ heightMapData });
       },
       // Probe control
