@@ -1,8 +1,7 @@
-import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import i18n from 'app/lib/i18n';
 
-const Gamepad = ({}) => {
+const Gamepad = () => {
     const [gamepads, setGamepads] = useState([]);
 
     const updateGamepads = () => {
@@ -40,7 +39,6 @@ const Gamepad = ({}) => {
     );
 };
 
-Gamepad.propTypes = {
-};
+// No props are currently used
 
 export default Gamepad;
