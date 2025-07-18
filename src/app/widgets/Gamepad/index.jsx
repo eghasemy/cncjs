@@ -135,16 +135,18 @@ class GamepadWidget extends PureComponent {
             modal: MODAL_NONE,
             profiles,
             currentProfile,
-            selectedGamepad: this.config.get('selectedGamepad', 0)
+            selectedGamepad: this.config.get('selectedGamepad', 0),
+            continuousJog: this.config.get('continuousJog', false)
         };
     }
 
     componentDidUpdate() {
-        const { minimized, profiles, currentProfile, selectedGamepad } = this.state;
+        const { minimized, profiles, currentProfile, selectedGamepad, continuousJog } = this.state;
         this.config.set('minimized', minimized);
         this.config.replace('profiles', profiles);
         this.config.set('currentProfile', currentProfile);
         this.config.set('selectedGamepad', selectedGamepad);
+        this.config.set('continuousJog', continuousJog);
     }
 
     componentDidMount() {
@@ -156,7 +158,7 @@ class GamepadWidget extends PureComponent {
     }
 
     loop = () => {
-        const { profiles, currentProfile, selectedGamepad } = this.state;
+        const { profiles, currentProfile, selectedGamepad, continuousJog } = this.state;
         const profile = profiles[currentProfile] || {};
         const pad = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads()[selectedGamepad] : null;
         if (pad) {
@@ -170,11 +172,34 @@ class GamepadWidget extends PureComponent {
             pad.axes.forEach((val, i) => {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
-                if (map.positive && val > 0.5 && prev <= 0.5) {
-                    this.handleAction(map.positive);
+                const now = Date.now();
+                const posKey = `${i}-pos`;
+                const negKey = `${i}-neg`;
+                if (map.positive && val > 0.5) {
+                    if (continuousJog) {
+                        if (!this.lastJogTime) {
+                            this.lastJogTime = {};
+                        }
+                        if (now - (this.lastJogTime[posKey] || 0) > 200) {
+                            this.handleAction(map.positive);
+                            this.lastJogTime[posKey] = now;
+                        }
+                    } else if (prev <= 0.5) {
+                        this.handleAction(map.positive);
+                    }
                 }
-                if (map.negative && val < -0.5 && prev >= -0.5) {
-                    this.handleAction(map.negative);
+                if (map.negative && val < -0.5) {
+                    if (continuousJog) {
+                        if (!this.lastJogTime) {
+                            this.lastJogTime = {};
+                        }
+                        if (now - (this.lastJogTime[negKey] || 0) > 200) {
+                            this.handleAction(map.negative);
+                            this.lastJogTime[negKey] = now;
+                        }
+                    } else if (prev >= -0.5) {
+                        this.handleAction(map.negative);
+                    }
                 }
                 this.prevAxes[i] = val;
             });
@@ -213,6 +238,9 @@ class GamepadWidget extends PureComponent {
                 controller.command('gcode', 'G91');
                 controller.command('gcode', 'G0 Z-1');
                 controller.command('gcode', 'G90');
+                break;
+            case 'toggle-continuous-jog':
+                this.setState(state => ({ continuousJog: !state.continuousJog }));
                 break;
             case 'coolant-on':
                 controller.command('gcode', 'M8');

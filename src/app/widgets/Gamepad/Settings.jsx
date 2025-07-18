@@ -12,6 +12,7 @@ const getActions = () => [
     { value: 'jog-y-', label: i18n._('Jog -Y') },
     { value: 'jog-z+', label: i18n._('Jog +Z') },
     { value: 'jog-z-', label: i18n._('Jog -Z') },
+    { value: 'toggle-continuous-jog', label: i18n._('Continuous Jogging') },
     { value: 'coolant-on', label: i18n._('Coolant On') },
     { value: 'coolant-off', label: i18n._('Coolant Off') },
     { value: 'step-inc', label: i18n._('Increase Step') },
