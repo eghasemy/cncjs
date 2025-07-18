@@ -6,6 +6,19 @@ import Widget from 'app/components/Widget';
 import i18n from 'app/lib/i18n';
 import shortid from 'shortid';
 import controller from 'app/lib/controller';
+import store from 'app/store';
+import { ensureArray } from 'ensure-type';
+import { limit } from 'app/lib/normalize-range';
+import {
+    IMPERIAL_UNITS,
+    METRIC_UNITS,
+    IMPERIAL_STEPS,
+    METRIC_STEPS,
+    GRBL,
+    MARLIN,
+    SMOOTHIE,
+    TINYG
+} from 'app/constants';
 import WidgetConfig from '../WidgetConfig';
 import Gamepad from './Gamepad';
 import Settings from './Settings';
@@ -157,6 +170,72 @@ class GamepadWidget extends PureComponent {
         cancelAnimationFrame(this.raf);
     }
 
+    getUnits = () => {
+        const type = controller.type;
+        const state = controller.state || {};
+        if (type === GRBL) {
+            const modal = (state.parserstate || {}).modal || {};
+            return { 'G20': IMPERIAL_UNITS, 'G21': METRIC_UNITS }[modal.units] || METRIC_UNITS;
+        }
+        if (type === MARLIN) {
+            const modal = state.modal || {};
+            return { 'G20': IMPERIAL_UNITS, 'G21': METRIC_UNITS }[modal.units] || METRIC_UNITS;
+        }
+        if (type === SMOOTHIE) {
+            const modal = (state.parserstate || {}).modal || {};
+            return { 'G20': IMPERIAL_UNITS, 'G21': METRIC_UNITS }[modal.units] || METRIC_UNITS;
+        }
+        if (type === TINYG) {
+            const modal = ((state.sr || {}).modal) || {};
+            return { 'G20': IMPERIAL_UNITS, 'G21': METRIC_UNITS }[modal.units] || METRIC_UNITS;
+        }
+        return METRIC_UNITS;
+    };
+
+    getJogDistance = () => {
+        const units = this.getUnits();
+        if (units === IMPERIAL_UNITS) {
+            const step = store.get('widgets.axes.jog.imperial.step');
+            const custom = ensureArray(store.get('widgets.axes.jog.imperial.distances', []));
+            const steps = [...custom, ...IMPERIAL_STEPS];
+            return Number(steps[step]) || 0;
+        }
+        const step = store.get('widgets.axes.jog.metric.step');
+        const custom = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
+        const steps = [...custom, ...METRIC_STEPS];
+        return Number(steps[step]) || 0;
+    };
+
+    stepForward = () => {
+        const units = this.getUnits();
+        if (units === IMPERIAL_UNITS) {
+            const step = Number(store.get('widgets.axes.jog.imperial.step'));
+            const distances = ensureArray(store.get('widgets.axes.jog.imperial.distances', []));
+            const steps = [...distances, ...IMPERIAL_STEPS];
+            store.set('widgets.axes.jog.imperial.step', limit(step + 1, 0, steps.length - 1));
+        } else {
+            const step = Number(store.get('widgets.axes.jog.metric.step'));
+            const distances = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
+            const steps = [...distances, ...METRIC_STEPS];
+            store.set('widgets.axes.jog.metric.step', limit(step + 1, 0, steps.length - 1));
+        }
+    };
+
+    stepBackward = () => {
+        const units = this.getUnits();
+        if (units === IMPERIAL_UNITS) {
+            const step = Number(store.get('widgets.axes.jog.imperial.step'));
+            const distances = ensureArray(store.get('widgets.axes.jog.imperial.distances', []));
+            const steps = [...distances, ...IMPERIAL_STEPS];
+            store.set('widgets.axes.jog.imperial.step', limit(step - 1, 0, steps.length - 1));
+        } else {
+            const step = Number(store.get('widgets.axes.jog.metric.step'));
+            const distances = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
+            const steps = [...distances, ...METRIC_STEPS];
+            store.set('widgets.axes.jog.metric.step', limit(step - 1, 0, steps.length - 1));
+        }
+    };
+
     loop = () => {
         const { profiles, currentProfile, selectedGamepad, continuousJog } = this.state;
         const profile = profiles[currentProfile] || {};
@@ -211,36 +290,42 @@ class GamepadWidget extends PureComponent {
         switch (action) {
             case 'jog-x+':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 X1');
+                controller.command('gcode', `G0 X${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'jog-x-':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 X-1');
+                controller.command('gcode', `G0 X-${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'jog-y+':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 Y1');
+                controller.command('gcode', `G0 Y${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'jog-y-':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 Y-1');
+                controller.command('gcode', `G0 Y-${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'jog-z+':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 Z1');
+                controller.command('gcode', `G0 Z${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'jog-z-':
                 controller.command('gcode', 'G91');
-                controller.command('gcode', 'G0 Z-1');
+                controller.command('gcode', `G0 Z-${this.getJogDistance()}`);
                 controller.command('gcode', 'G90');
                 break;
             case 'toggle-continuous-jog':
                 this.setState(state => ({ continuousJog: !state.continuousJog }));
+                break;
+            case 'step-inc':
+                this.stepForward();
+                break;
+            case 'step-dec':
+                this.stepBackward();
                 break;
             case 'coolant-on':
                 controller.command('gcode', 'M8');
