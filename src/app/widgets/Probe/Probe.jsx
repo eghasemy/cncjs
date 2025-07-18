@@ -390,7 +390,7 @@ class Probe extends PureComponent {
                     <label>
                       <input
                         type="checkbox"
-                        checked={state.showProbeModal}
+                        checked={showProbeModal}
                         onChange={actions.toggleShowProbeModal}
                       />
                       {i18n._('Show probe preview modal before starting')}
@@ -915,8 +915,7 @@ class Probe extends PureComponent {
             <p className="help-block">
               {rotationMethod === ROTATION_METHOD_G68
                 ? i18n._('Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.')
-                : i18n._('Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.')
-              }
+                : i18n._('Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.')}
             </p>
           </div>
 

@@ -462,7 +462,6 @@
   "X- Edge": "X- Edge",
   "X+ Edge": "X+ Edge",
   "Y- Edge": "Y- Edge",
-  "Z- Edge": "Z- Edge",
   "X- Y+ Corner": "X- Y+ Corner",
   "X+ Y+ Corner": "X+ Y+ Corner",
   "X- Y- Corner": "X- Y- Corner",
@@ -489,7 +488,6 @@
   "Right Edge": "Right Edge",
   "Top Edge": "Top Edge",
   "Bottom Edge": "Bottom Edge",
-  "Rotation will be calculated using X0 and Y0 as the rotation center and applied to the loaded G-code.": "Rotation will be calculated using X0 and Y0 as the rotation center and applied to the loaded G-code.",
   "Apply Rotation to G-code": "Apply Rotation to G-code",
   "Area to Probe": "Area to Probe",
   "X Starting Point": "X Starting Point",
@@ -640,7 +638,14 @@
   "Connect to the controller to view the tool probe commands.": "Connect to the controller to view the tool probe commands.",
   "Manual Tool Change (Custom Probing)": "Manual Tool Change (Custom Probing)",
   "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process.": "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process.",
-  "Manage Additional Widgets": "Manage Additional Widgets",
   "Height Map Preview": "Height Map Preview",
-  "Generate Sample Data": "Generate Sample Data"
+  "Generate Sample Data": "Generate Sample Data",
+  "Z- Probe": "Z- Probe",
+  "Rotation Method": "Rotation Method",
+  "Apply G68 style rotation": "Apply G68 style rotation",
+  "G68 Style": "G68 Style",
+  "Calculate with 2D rotation matrix on loaded G-code": "Calculate with 2D rotation matrix on loaded G-code",
+  "2D Matrix": "2D Matrix",
+  "Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.": "Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.",
+  "Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.": "Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center."
 }

@@ -237,21 +237,21 @@ class ProbeWidget extends PureComponent {
         // The angle is calculated and stored in variable #9 during probe execution
         // For now, we'll get it from the modal state or provide a way to input it
         // In a production system, this would be extracted from the controller's variable state
-        
+
         // Since we can't directly access CNC variables from here in real-time,
         // we'll need to store the angle when the probe completes or ask user to input it
         // For now, let's use a reasonable default or get it from state
-        
+
         let rotationAngleRadians = 0;
-        
+
         // Try to get the angle from recent probe results or prompt user
         // This is a simplified approach - in practice you'd store this during probe execution
         if (this.lastCalculatedRotationAngle !== undefined) {
           rotationAngleRadians = this.lastCalculatedRotationAngle;
         } else {
-          // Fallback: prompt for angle or use a small default
-          const angleDegrees = prompt('Enter rotation angle in degrees (or OK for 0):') || '0';
-          rotationAngleRadians = parseFloat(angleDegrees) * Math.PI / 180;
+          // Fallback: use zero angle if no stored angle available
+          console.warn('No rotation angle available. Using 0 degrees. Set this.lastCalculatedRotationAngle to apply rotation.');
+          rotationAngleRadians = 0;
         }
 
         if (Math.abs(rotationAngleRadians) < 0.0001) {
@@ -327,7 +327,7 @@ class ProbeWidget extends PureComponent {
         // Reload the transformed G-code
         const name = sender.name || 'program.nc';
         const rotatedName = name.replace(/\.(nc|gcode|g)$/i, '_rotated.$1') || `${name}_rotated`;
-        
+
         // Use the same mechanism as the workspace to reload G-code
         pubsub.publish('gcode:load', { name: rotatedName, gcode: transformedGcode });
 
@@ -911,7 +911,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Apply rotation to coordinate system'),
             gcode('G68 X0 Y0 R[#9 * 180 / 3.14159]') // Rotate coordinate system
           );
-        } else {
+        } else if (rotationMethod === ROTATION_METHOD_MATRIX) {
           // For matrix method, we need to calculate and apply the transformation after probe completion
           // Add a special command that will trigger the matrix application after angle calculation
           commands.push(
@@ -1058,7 +1058,6 @@ class ProbeWidget extends PureComponent {
             probeType === PROBE_TYPE_INTERNAL_EDGE ||
             probeType === PROBE_TYPE_CENTER ||
             probeType === PROBE_TYPE_ROTATION) {
-
           commands.push(
             gcode('; Move to XY clearance position'),
             gcode('G91'), // Relative positioning
