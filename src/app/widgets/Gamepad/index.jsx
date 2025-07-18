@@ -8,7 +8,7 @@ import shortid from 'shortid';
 import controller from 'app/lib/controller';
 import store from 'app/store';
 import { ensureArray } from 'ensure-type';
-import { limit } from 'app/lib/normalize-range';
+import combokeys from 'app/lib/combokeys';
 import {
     IMPERIAL_UNITS,
     METRIC_UNITS,
@@ -207,33 +207,11 @@ class GamepadWidget extends PureComponent {
     };
 
     stepForward = () => {
-        const units = this.getUnits();
-        if (units === IMPERIAL_UNITS) {
-            const step = Number(store.get('widgets.axes.jog.imperial.step'));
-            const distances = ensureArray(store.get('widgets.axes.jog.imperial.distances', []));
-            const steps = [...distances, ...IMPERIAL_STEPS];
-            store.set('widgets.axes.jog.imperial.step', limit(step + 1, 0, steps.length - 1));
-        } else {
-            const step = Number(store.get('widgets.axes.jog.metric.step'));
-            const distances = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
-            const steps = [...distances, ...METRIC_STEPS];
-            store.set('widgets.axes.jog.metric.step', limit(step + 1, 0, steps.length - 1));
-        }
+        combokeys.emit('JOG_LEVER_SWITCH', null, { key: '+' });
     };
 
     stepBackward = () => {
-        const units = this.getUnits();
-        if (units === IMPERIAL_UNITS) {
-            const step = Number(store.get('widgets.axes.jog.imperial.step'));
-            const distances = ensureArray(store.get('widgets.axes.jog.imperial.distances', []));
-            const steps = [...distances, ...IMPERIAL_STEPS];
-            store.set('widgets.axes.jog.imperial.step', limit(step - 1, 0, steps.length - 1));
-        } else {
-            const step = Number(store.get('widgets.axes.jog.metric.step'));
-            const distances = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
-            const steps = [...distances, ...METRIC_STEPS];
-            store.set('widgets.axes.jog.metric.step', limit(step - 1, 0, steps.length - 1));
-        }
+        combokeys.emit('JOG_LEVER_SWITCH', null, { key: '-' });
     };
 
     loop = () => {
