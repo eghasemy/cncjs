@@ -6,6 +6,8 @@ import Widget from 'app/components/Widget';
 import i18n from 'app/lib/i18n';
 import WidgetConfig from '../WidgetConfig';
 import Gamepad from './Gamepad';
+import Settings from './Settings';
+import { MODAL_NONE, MODAL_SETTINGS } from './constants';
 import styles from './index.styl';
 
 class GamepadWidget extends PureComponent {
@@ -39,19 +41,30 @@ class GamepadWidget extends PureComponent {
         toggleMinimized: () => {
             const { minimized } = this.state;
             this.setState({ minimized: !minimized });
+        },
+        openModal: (name = MODAL_NONE) => {
+            this.setState({ modal: name });
+        },
+        closeModal: () => {
+            this.setState({ modal: MODAL_NONE });
         }
     };
 
     getInitialState() {
         return {
             minimized: this.config.get('minimized', false),
-            isFullscreen: false
+            isFullscreen: false,
+            modal: MODAL_NONE,
+            buttonMap: this.config.get('buttonMap', {}),
+            axisMap: this.config.get('axisMap', {})
         };
     }
 
     componentDidUpdate() {
-        const { minimized } = this.state;
+        const { minimized, buttonMap, axisMap } = this.state;
         this.config.set('minimized', minimized);
+        this.config.set('buttonMap', buttonMap);
+        this.config.set('axisMap', axisMap);
     }
 
     render() {
@@ -72,6 +85,12 @@ class GamepadWidget extends PureComponent {
                 {i18n._('Gamepad')}
               </Widget.Title>
               <Widget.Controls className={this.props.sortable.filterClassName}>
+                <Widget.Button
+                  title={i18n._('Edit')}
+                  onClick={() => actions.openModal(MODAL_SETTINGS)}
+                >
+                  <i className="fa fa-cog" />
+                </Widget.Button>
                 <Widget.Button
                   disabled={isFullscreen}
                   title={minimized ? i18n._('Expand') : i18n._('Collapse')}
@@ -111,6 +130,17 @@ class GamepadWidget extends PureComponent {
               </Widget.Controls>
             </Widget.Header>
             <Widget.Content className={cx(styles.widgetContent, { [styles.hidden]: minimized })}>
+              {this.state.modal === MODAL_SETTINGS && (
+                <Settings
+                  buttonMap={this.state.buttonMap}
+                  axisMap={this.state.axisMap}
+                  onSave={({ buttonMap, axisMap }) => {
+                    this.setState({ buttonMap, axisMap });
+                    actions.closeModal();
+                  }}
+                  onCancel={actions.closeModal}
+                />
+              )}
               <Gamepad />
             </Widget.Content>
           </Widget>
