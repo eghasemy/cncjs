@@ -142,7 +142,7 @@ class GamepadWidget extends PureComponent {
     componentDidUpdate() {
         const { minimized, profiles, currentProfile, selectedGamepad } = this.state;
         this.config.set('minimized', minimized);
-        this.config.set('profiles', profiles);
+        this.config.replace('profiles', profiles);
         this.config.set('currentProfile', currentProfile);
         this.config.set('selectedGamepad', selectedGamepad);
     }
