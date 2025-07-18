@@ -47,6 +47,16 @@ class AdditionalWidgets extends PureComponent {
     this.setState({ widgets: this.state.widgets });
   };
 
+  forkWidget = (widgetId) => () => {
+    // Fork widget through parent handler
+    this.props.onForkWidget(widgetId);
+  };
+
+  removeWidget = (widgetId) => () => {
+    // Remove widget through parent handler  
+    this.props.onRemoveWidget(widgetId);
+  };
+
   render() {
     const { className } = this.props;
     const { widgets } = this.state;
@@ -54,10 +64,12 @@ class AdditionalWidgets extends PureComponent {
       <div data-widget-id={widgetId} key={widgetId}>
         <Widget
           widgetId={widgetId}
-          onForkWidget={this.props.onForkWidget}
-          onRemoveWidget={this.props.onRemoveWidget}
-          onDragStart={this.props.onDragStart}
-          onDragEnd={this.props.onDragEnd}
+          onFork={this.forkWidget(widgetId)}
+          onRemove={this.removeWidget(widgetId)}
+          sortable={{
+            handleClassName: 'sortable-handle',
+            filterClassName: 'sortable-filter'
+          }}
         />
       </div>
     ));
