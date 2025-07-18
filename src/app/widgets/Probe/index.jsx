@@ -463,7 +463,6 @@ class ProbeWidget extends PureComponent {
         ];
 
         // Determine probe direction and positioning based on selection
-        let isCornerProbe = false;
 
         switch (selectedExternalEdge) {
         case EXTERNAL_EDGE_X_POSITIVE:
@@ -572,7 +571,6 @@ class ProbeWidget extends PureComponent {
           break;
         case EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
           // Top-Right Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Top-Right Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -611,8 +609,7 @@ class ProbeWidget extends PureComponent {
           );
           break;
         case EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
-          // Bottom-Right Corner  
-          isCornerProbe = true;
+          // Bottom-Right Corner
           commands.push(
             gcode('; Probe Bottom-Right Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -652,7 +649,6 @@ class ProbeWidget extends PureComponent {
           break;
         case EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
           // Top-Left Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Top-Left Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -692,7 +688,6 @@ class ProbeWidget extends PureComponent {
           break;
         case EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
           // Bottom-Left Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Bottom-Left Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -760,7 +755,6 @@ class ProbeWidget extends PureComponent {
         ];
 
         // Internal probing logic - probe from inside outward to edges
-        let isCornerProbe = false;
 
         switch (selectedInternalEdge) {
         case INTERNAL_EDGE_X_POSITIVE:
@@ -857,7 +851,6 @@ class ProbeWidget extends PureComponent {
           break;
         case INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
           // Top-Right Internal Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Internal Top-Right Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -896,8 +889,7 @@ class ProbeWidget extends PureComponent {
           );
           break;
         case INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
-          // Bottom-Right Internal Corner  
-          isCornerProbe = true;
+          // Bottom-Right Internal Corner
           commands.push(
             gcode('; Probe Internal Bottom-Right Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -937,7 +929,6 @@ class ProbeWidget extends PureComponent {
           break;
         case INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
           // Top-Left Internal Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Internal Top-Left Corner'),
             gcode('(--- 1 PROBE X ---)'),
@@ -977,7 +968,6 @@ class ProbeWidget extends PureComponent {
           break;
         case INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
           // Bottom-Left Internal Corner
-          isCornerProbe = true;
           commands.push(
             gcode('; Probe Internal Bottom-Left Corner'),
             gcode('(--- 1 PROBE X ---)'),
