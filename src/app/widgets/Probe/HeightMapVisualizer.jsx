@@ -150,7 +150,9 @@ class HeightMapVisualizer extends PureComponent {
     return (
       <div className={styles.heightMapVisualizer}>
         <canvas
-          ref={(canvas) => { this.canvas = canvas; }}
+          ref={(canvas) => {
+            this.canvas = canvas;
+          }}
           width={width}
           height={height}
           className={styles.canvas}
