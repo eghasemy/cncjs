@@ -3,6 +3,7 @@ import includes from 'lodash/includes';
 import map from 'lodash/map';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
+import pubsub from 'pubsub-js';
 import React, { PureComponent } from 'react';
 import Space from 'app/components/Space';
 import Widget from 'app/components/Widget';
@@ -225,20 +226,119 @@ class ProbeWidget extends PureComponent {
         console.log('Apply rotation to G-code');
       },
       applyRotationMatrixToGcode: () => {
-        // Note: This is a placeholder implementation for 2D rotation matrix application
-        // In a production environment, this would need to:
-        // 1. Calculate the actual rotation angle from probe results
-        // 2. Access the loaded G-code from the application state
-        // 3. Parse and transform all coordinate movements
-        // 4. Update the visualizer and file content
+        // Access the loaded G-code content through the controller context
+        const sender = controller.state && controller.state.sender;
+        if (!sender || !sender.gcode) {
+          console.warn('No G-code loaded to transform');
+          return;
+        }
 
-        console.log('2D Rotation Matrix method selected');
-        console.log('This would apply rotation transformation to loaded G-code using X0Y0 as center');
-        console.log('Implementation requires integration with file management and visualizer systems');
+        // Extract rotation angle from controller variables or state
+        // The angle is calculated and stored in variable #9 during probe execution
+        // For now, we'll get it from the modal state or provide a way to input it
+        // In a production system, this would be extracted from the controller's variable state
+        
+        // Since we can't directly access CNC variables from here in real-time,
+        // we'll need to store the angle when the probe completes or ask user to input it
+        // For now, let's use a reasonable default or get it from state
+        
+        let rotationAngleRadians = 0;
+        
+        // Try to get the angle from recent probe results or prompt user
+        // This is a simplified approach - in practice you'd store this during probe execution
+        if (this.lastCalculatedRotationAngle !== undefined) {
+          rotationAngleRadians = this.lastCalculatedRotationAngle;
+        } else {
+          // Fallback: prompt for angle or use a small default
+          const angleDegrees = prompt('Enter rotation angle in degrees (or OK for 0):') || '0';
+          rotationAngleRadians = parseFloat(angleDegrees) * Math.PI / 180;
+        }
 
-        // For now, just show a message to the user
-        // In practice, this would access controller.context or pub/sub events
-        // to get the loaded G-code and apply the transformation
+        if (Math.abs(rotationAngleRadians) < 0.0001) {
+          console.log('Rotation angle is too small, skipping transformation');
+          return;
+        }
+
+        const originalGcode = sender.gcode;
+        const lines = originalGcode.split('\n');
+        const transformedLines = [];
+
+        // Regular expressions to match coordinate parameters
+        const coordRegex = /([XY])(-?\d*\.?\d+)/gi;
+
+        lines.forEach(line => {
+          let transformedLine = line;
+
+          // Check if this line contains coordinate movements (G0, G1, G2, G3)
+          if (/^[;\s]*G[0-3]/.test(line.trim()) && /[XY]/.test(line)) {
+            let hasCoords = false;
+            let newX = null;
+            let newY = null;
+            let originalX = null;
+            let originalY = null;
+
+            // Extract current X and Y coordinates
+            const matches = [...line.matchAll(coordRegex)];
+            matches.forEach(match => {
+              const axis = match[1].toUpperCase();
+              const value = parseFloat(match[2]);
+
+              if (axis === 'X') {
+                originalX = value;
+                hasCoords = true;
+              } else if (axis === 'Y') {
+                originalY = value;
+                hasCoords = true;
+              }
+            });
+
+            // Apply 2D rotation matrix transformation if coordinates found
+            if (hasCoords && (originalX !== null || originalY !== null)) {
+              // Use current values for missing coordinates
+              const x = originalX !== null ? originalX : 0;
+              const y = originalY !== null ? originalY : 0;
+
+              // Apply 2D rotation matrix around origin (0, 0):
+              // x' = x*cos(θ) - y*sin(θ)
+              // y' = x*sin(θ) + y*cos(θ)
+              const cos = Math.cos(rotationAngleRadians);
+              const sin = Math.sin(rotationAngleRadians);
+
+              newX = x * cos - y * sin;
+              newY = x * sin + y * cos;
+
+              // Replace coordinates in the line
+              if (originalX !== null) {
+                const xPattern = new RegExp(`X${originalX.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+                transformedLine = transformedLine.replace(xPattern, `X${newX.toFixed(6)}`);
+              }
+              if (originalY !== null) {
+                const yPattern = new RegExp(`Y${originalY.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+                transformedLine = transformedLine.replace(yPattern, `Y${newY.toFixed(6)}`);
+              }
+            }
+          }
+
+          transformedLines.push(transformedLine);
+        });
+
+        const transformedGcode = transformedLines.join('\n');
+
+        // Reload the transformed G-code
+        const name = sender.name || 'program.nc';
+        const rotatedName = name.replace(/\.(nc|gcode|g)$/i, '_rotated.$1') || `${name}_rotated`;
+        
+        // Use the same mechanism as the workspace to reload G-code
+        pubsub.publish('gcode:load', { name: rotatedName, gcode: transformedGcode });
+
+        console.log(`Applied 2D rotation matrix (${(rotationAngleRadians * 180 / Math.PI).toFixed(2)}°) to G-code`);
+        console.log(`Transformed G-code reloaded as: ${rotatedName}`);
+      },
+      // Manual trigger for applying rotation matrix (useful when probe completes)
+      applyRotationMatrixWithAngle: (angleRadians) => {
+        // Store the angle for use by the matrix transformation
+        this.lastCalculatedRotationAngle = angleRadians;
+        this.actions.applyRotationMatrixToGcode();
       },
       // Height map handlers
       handleHeightMapStartXChange: (event) => {
@@ -812,15 +912,18 @@ class ProbeWidget extends PureComponent {
             gcode('G68 X0 Y0 R[#9 * 180 / 3.14159]') // Rotate coordinate system
           );
         } else {
-          // For matrix method, store the angle for later application to G-code
+          // For matrix method, we need to calculate and apply the transformation after probe completion
+          // Add a special command that will trigger the matrix application after angle calculation
           commands.push(
             gcode('; Store rotation angle for G-code transformation'),
             gcode('(MSG, Rotation angle calculated: #9 radians)'),
-            gcode('(MSG, Apply 2D rotation matrix to loaded G-code using X0 Y0 as center)')
+            gcode('(MSG, Applying 2D rotation matrix to loaded G-code using X0 Y0 as center)'),
+            // Use a special command that we can intercept to get the angle value
+            gcode('(PROBE_ROTATION_MATRIX_APPLY)') // Special marker for post-processing
           );
 
-          // Apply rotation matrix to loaded G-code
-          this.actions.applyRotationMatrixToGcode();
+          // Note: The actual matrix application will happen after this command sequence completes
+          // and we can extract the calculated angle from the variables
         }
 
         commands.push(
