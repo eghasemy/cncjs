@@ -226,11 +226,17 @@ class ProbeWidget extends PureComponent {
       },
       handleHeightMapGridSizeXChange: (event) => {
         const heightMapGridSizeX = event.target.value;
-        this.setState({ heightMapGridSizeX });
+        this.setState({ 
+          heightMapGridSizeX,
+          heightMapData: [] // Clear existing data when grid size changes
+        });
       },
       handleHeightMapGridSizeYChange: (event) => {
         const heightMapGridSizeY = event.target.value;
-        this.setState({ heightMapGridSizeY });
+        this.setState({ 
+          heightMapGridSizeY,
+          heightMapData: [] // Clear existing data when grid size changes
+        });
       },
       togglePauseBeforeProbing: () => {
         const { pauseBeforeProbing } = this.state;
@@ -247,6 +253,25 @@ class ProbeWidget extends PureComponent {
       applyHeightMapToGcode: () => {
         // TODO: Implement height map application to G-code
         console.log('Apply height map to G-code');
+      },
+      generateSampleHeightMapData: () => {
+        const { heightMapGridSizeX, heightMapGridSizeY } = this.state;
+        
+        // Generate sample height map data for demonstration
+        const heightMapData = [];
+        for (let row = 0; row < heightMapGridSizeY; row++) {
+          const rowData = [];
+          for (let col = 0; col < heightMapGridSizeX; col++) {
+            // Create a sample height variation (simulating a slightly uneven surface)
+            const height = Math.sin((row * Math.PI) / (heightMapGridSizeY - 1)) * 
+                          Math.cos((col * Math.PI) / (heightMapGridSizeX - 1)) * 0.5 +
+                          (Math.random() - 0.5) * 0.2;
+            rowData.push(height);
+          }
+          heightMapData.push(rowData);
+        }
+        
+        this.setState({ heightMapData });
       },
       // Probe control
       stopProbing: () => {
@@ -959,6 +984,7 @@ class ProbeWidget extends PureComponent {
         heightMapHeight: Number(this.config.get('heightMapHeight') || 20).toFixed(3) * 1,
         heightMapGridSizeX: Number(this.config.get('heightMapGridSizeX') || 3),
         heightMapGridSizeY: Number(this.config.get('heightMapGridSizeY') || 3),
+        heightMapData: [], // Initialize empty height map data
         pauseBeforeProbing: this.config.get('pauseBeforeProbing', false),
         setZZeroAtOrigin: this.config.get('setZZeroAtOrigin', true)
       };

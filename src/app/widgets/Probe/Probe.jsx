@@ -29,6 +29,7 @@ import {
   ROTATION_EDGE_TOP,
   ROTATION_EDGE_BOTTOM
 } from './constants';
+import HeightMapVisualizer from './HeightMapVisualizer';
 
 class Probe extends PureComponent {
     static propTypes = {
@@ -902,6 +903,28 @@ class Probe extends PureComponent {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Height Map Visualization */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Height Map Preview')}</label>
+            <HeightMapVisualizer
+              heightMapData={state.heightMapData || []}
+              gridSizeX={heightMapGridSizeX}
+              gridSizeY={heightMapGridSizeY}
+              width={320}
+              height={200}
+            />
+            <div style={{ marginTop: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-info"
+                onClick={actions.generateSampleHeightMapData}
+                disabled={!canClick}
+              >
+                {i18n._('Generate Sample Data')}
+              </button>
             </div>
           </div>
 
