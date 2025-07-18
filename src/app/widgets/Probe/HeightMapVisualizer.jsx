@@ -19,8 +19,6 @@ class HeightMapVisualizer extends PureComponent {
     height: 200
   };
 
-  canvasRef = React.createRef();
-
   componentDidMount() {
     this.drawHeightMap();
   }
@@ -46,7 +44,7 @@ class HeightMapVisualizer extends PureComponent {
   };
 
   drawHeightMap = () => {
-    const canvas = this.canvasRef.current;
+    const canvas = this.canvas;
     if (!canvas) {
       return;
     }
@@ -152,7 +150,7 @@ class HeightMapVisualizer extends PureComponent {
     return (
       <div className={styles.heightMapVisualizer}>
         <canvas
-          ref={this.canvasRef}
+          ref={(canvas) => { this.canvas = canvas; }}
           width={width}
           height={height}
           className={styles.canvas}
