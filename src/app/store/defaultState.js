@@ -238,7 +238,8 @@ const defaultState = {
       muted: false
     },
     gamepad: {
-      minimized: false
+      minimized: false,
+      continuousJog: false
     }
   }
 };

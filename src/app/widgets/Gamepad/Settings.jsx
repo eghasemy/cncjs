@@ -4,22 +4,30 @@ import { Button } from 'app/components/Buttons';
 import Modal from 'app/components/Modal';
 import i18n from 'app/lib/i18n';
 
-const getActions = () => [
-    { value: '', label: i18n._('None') },
-    { value: 'jog-x+', label: i18n._('Jog +X') },
-    { value: 'jog-x-', label: i18n._('Jog -X') },
-    { value: 'jog-y+', label: i18n._('Jog +Y') },
-    { value: 'jog-y-', label: i18n._('Jog -Y') },
-    { value: 'jog-z+', label: i18n._('Jog +Z') },
-    { value: 'jog-z-', label: i18n._('Jog -Z') },
-    { value: 'coolant-on', label: i18n._('Coolant On') },
-    { value: 'coolant-off', label: i18n._('Coolant Off') },
-    { value: 'step-inc', label: i18n._('Increase Step') },
-    { value: 'step-dec', label: i18n._('Decrease Step') },
-    { value: 'feedhold', label: i18n._('Feed Hold') },
-    { value: 'resume', label: i18n._('Resume') },
-    { value: 'reset', label: i18n._('Reset') }
-];
+const getActions = (macros = []) => {
+    const base = [
+        { value: '', label: i18n._('None') },
+        { value: 'jog-x+', label: i18n._('Jog +X') },
+        { value: 'jog-x-', label: i18n._('Jog -X') },
+        { value: 'jog-y+', label: i18n._('Jog +Y') },
+        { value: 'jog-y-', label: i18n._('Jog -Y') },
+        { value: 'jog-z+', label: i18n._('Jog +Z') },
+        { value: 'jog-z-', label: i18n._('Jog -Z') },
+        { value: 'toggle-continuous-jog', label: i18n._('Continuous Jogging') },
+        { value: 'coolant-on', label: i18n._('Coolant On') },
+        { value: 'coolant-off', label: i18n._('Coolant Off') },
+        { value: 'step-inc', label: i18n._('Increase Step') },
+        { value: 'step-dec', label: i18n._('Decrease Step') },
+        { value: 'feedhold', label: i18n._('Feed Hold') },
+        { value: 'resume', label: i18n._('Resume') },
+        { value: 'reset', label: i18n._('Reset') }
+    ];
+    const macroActions = macros.map(macro => ({
+        value: `run-macro-${macro.id}`,
+        label: `${i18n._('Run Macro')}: ${macro.name}`
+    }));
+    return base.concat(macroActions);
+};
 
 class Settings extends PureComponent {
     static propTypes = {
@@ -29,7 +37,8 @@ class Settings extends PureComponent {
         gamepadIndex: PropTypes.number,
         onChangeName: PropTypes.func,
         onSave: PropTypes.func,
-        onCancel: PropTypes.func
+        onCancel: PropTypes.func,
+        macros: PropTypes.array
     };
 
     static defaultProps = {
@@ -39,7 +48,8 @@ class Settings extends PureComponent {
         gamepadIndex: 0,
         onChangeName: () => {},
         onSave: () => {},
-        onCancel: () => {}
+        onCancel: () => {},
+        macros: []
     };
 
     state = this.getInitialState();
@@ -120,9 +130,9 @@ class Settings extends PureComponent {
     };
 
     render() {
-        const { onCancel } = this.props;
+        const { onCancel, macros } = this.props;
         const { buttons, axes, buttonMap, axisMap, name, activeButtons, activeAxes } = this.state;
-        const baseActions = getActions();
+        const baseActions = getActions(macros);
         const usedActions = new Set();
         Object.keys(buttonMap).forEach(idx => {
             const val = buttonMap[idx];
