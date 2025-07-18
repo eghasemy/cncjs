@@ -36,8 +36,8 @@ class Gamepad extends PureComponent {
         const pads = Array.from(navigator.getGamepads()).filter(pad => pad);
         this.setState({ gamepads: pads });
         const { selectedIndex, onSelectIndex } = this.props;
-        if (selectedIndex >= pads.length) {
-            onSelectIndex(pads.length ? 0 : -1);
+        if (!pads.some(p => p.index === selectedIndex)) {
+            onSelectIndex(pads.length ? pads[0].index : -1);
         }
     };
 
@@ -56,8 +56,8 @@ class Gamepad extends PureComponent {
                           value={selectedIndex}
                           onChange={e => onSelectIndex(Number(e.target.value))}
                         >
-                          {gamepads.map((pad, i) => (
-                              <option key={pad.index} value={i}>{pad.id}</option>
+                          {gamepads.map(pad => (
+                              <option key={pad.index} value={pad.index}>{pad.id}</option>
                           ))}
                         </select>
                     </div>
