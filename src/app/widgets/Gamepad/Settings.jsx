@@ -156,7 +156,23 @@ class Settings extends PureComponent {
     render() {
         const { onCancel } = this.props;
         const { buttons, axes, buttonMap, axisMap, name, activeButtons, activeAxes } = this.state;
-        const actions = getActions();
+        const baseActions = getActions();
+        const usedActions = new Set();
+        Object.keys(buttonMap).forEach(idx => {
+            const val = buttonMap[idx];
+            if (val) {
+                usedActions.add(val);
+            }
+        });
+        Object.values(axisMap).forEach(map => {
+            if (map.negative) {
+                usedActions.add(map.negative);
+            }
+            if (map.positive) {
+                usedActions.add(map.positive);
+            }
+        });
+        const getAvailable = current => baseActions.filter(a => !usedActions.has(a.value) || a.value === current);
         return (
           <Modal disableOverlay size="sm" onClose={onCancel}>
             <Modal.Header>
@@ -185,9 +201,9 @@ class Settings extends PureComponent {
                             value={buttonMap[i] || ''}
                             onChange={e => this.handleChangeButton(i, e.target.value)}
                           >
-                            {actions.map(opt => (
+                            {getAvailable(buttonMap[i] || '').map(opt => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                ))}
+                            ))}
                           </select>
                         </td>
                       </tr>
@@ -216,9 +232,9 @@ class Settings extends PureComponent {
                                             value={map.negative || ''}
                                             onChange={e => this.handleChangeAxis(i, 'negative', e.target.value)}
                                           >
-                                            {actions.map(opt => (
+                                            {getAvailable(map.negative || '').map(opt => (
                                               <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
+                                            ))}
                                           </select>
                                         </td>
                                         <td style={{ backgroundColor: (activeAxes[i] || 0) > 0.2 ? '#ffeeba' : 'transparent' }}>
@@ -227,9 +243,9 @@ class Settings extends PureComponent {
                                             value={map.positive || ''}
                                             onChange={e => this.handleChangeAxis(i, 'positive', e.target.value)}
                                           >
-                                            {actions.map(opt => (
+                                            {getAvailable(map.positive || '').map(opt => (
                                               <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
+                                            ))}
                                           </select>
                                         </td>
                                       </tr>
