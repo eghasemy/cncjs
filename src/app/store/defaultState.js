@@ -24,6 +24,9 @@ const defaultState = {
         widgets: [
           'axes', 'gcode', 'macro', 'probe', 'tool', 'spindle', 'laser',
         ]
+      },
+      additional: {
+        widgets: []
       }
     },
     machineProfile: {

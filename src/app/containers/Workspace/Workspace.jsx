@@ -18,6 +18,7 @@ import * as widgetManager from './WidgetManager';
 import DefaultWidgets from './DefaultWidgets';
 import PrimaryWidgets from './PrimaryWidgets';
 import SecondaryWidgets from './SecondaryWidgets';
+import AdditionalWidgets from './AdditionalWidgets';
 import FeederPaused from './modals/FeederPaused';
 import FeederWait from './modals/FeederWait';
 import ServerDisconnected from './modals/ServerDisconnected';
@@ -108,6 +109,8 @@ class Workspace extends PureComponent {
     primaryWidgets = null;
 
     secondaryWidgets = null;
+
+    additionalWidgets = null;
 
     defaultContainer = null;
 
@@ -371,6 +374,31 @@ class Workspace extends PureComponent {
       });
     };
 
+    updateWidgetsForAdditionalContainer = () => {
+      widgetManager.show((activeWidgets, inactiveWidgets) => {
+        const widgets = Object.keys(store.get('widgets', {}))
+          .filter(widgetId => {
+            // e.g. "webcam" or "webcam:d8e6352f-80a9-475f-a4f5-3e9197a48a23"
+            const name = widgetId.split(':')[0];
+            return _.includes(activeWidgets, name);
+          });
+
+        const defaultWidgets = store.get('workspace.container.default.widgets');
+        const sortableWidgets = _.difference(widgets, defaultWidgets);
+        let primaryWidgets = store.get('workspace.container.primary.widgets');
+        let secondaryWidgets = store.get('workspace.container.secondary.widgets');
+        let additionalWidgets = store.get('workspace.container.additional.widgets');
+
+        additionalWidgets = sortableWidgets.slice();
+        _.pullAll(additionalWidgets, primaryWidgets);
+        _.pullAll(additionalWidgets, secondaryWidgets);
+        pubsub.publish('updateAdditionalWidgets', additionalWidgets);
+
+        // Update inactive count
+        this.setState({ inactiveCount: _.size(inactiveWidgets) });
+      });
+    };
+
     componentDidMount() {
       this.addControllerEvents();
       this.addResizeEventListener();
@@ -610,7 +638,63 @@ class Workspace extends PureComponent {
                     styles.fixed
                   )}
                 >
-                  <DefaultWidgets />
+                  <div className={styles.visualizerSection}>
+                    <DefaultWidgets />
+                  </div>
+                  <div className={styles.additionalWidgetsSection}>
+                    <div className={styles.additionalWidgetsHeader}>
+                      <ButtonToolbar style={{ margin: '5px 0' }}>
+                        <ButtonGroup
+                          style={{ marginLeft: 0, marginRight: 10 }}
+                          btnSize="sm"
+                          btnStyle="flat"
+                        >
+                          <Button
+                            style={{ width: 200 }}
+                            onClick={this.updateWidgetsForAdditionalContainer}
+                          >
+                            <i className="fa fa-list-alt" />
+                            {i18n._('Manage Additional Widgets')}
+                          </Button>
+                        </ButtonGroup>
+                        <ButtonGroup
+                          style={{ marginLeft: 0, marginRight: 0 }}
+                          btnSize="sm"
+                          btnStyle="flat"
+                        >
+                          <Button
+                            style={{ minWidth: 30 }}
+                            compact
+                            title={i18n._('Collapse All')}
+                            onClick={event => {
+                              this.additionalWidgets && this.additionalWidgets.collapseAll();
+                            }}
+                          >
+                            <i className="fa fa-chevron-up" style={{ fontSize: 14 }} />
+                          </Button>
+                          <Button
+                            style={{ minWidth: 30 }}
+                            compact
+                            title={i18n._('Expand All')}
+                            onClick={event => {
+                              this.additionalWidgets && this.additionalWidgets.expandAll();
+                            }}
+                          >
+                            <i className="fa fa-chevron-down" style={{ fontSize: 14 }} />
+                          </Button>
+                        </ButtonGroup>
+                      </ButtonToolbar>
+                    </div>
+                    <AdditionalWidgets
+                      ref={node => {
+                        this.additionalWidgets = node;
+                      }}
+                      onForkWidget={this.widgetEventHandler.onForkWidget}
+                      onRemoveWidget={this.widgetEventHandler.onRemoveWidget}
+                      onDragStart={this.widgetEventHandler.onDragStart}
+                      onDragEnd={this.widgetEventHandler.onDragEnd}
+                    />
+                  </div>
                 </div>
                 {hideSecondaryContainer && (
                   <div
