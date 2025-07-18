@@ -389,7 +389,7 @@ class ProbeWidget extends PureComponent {
           // Corner probing sequence - probe both X and Y edges
           commands.push(
             gcode('; External Corner Probing Sequence'),
-            
+
             // Probe X edge first
             gcode('; Probe X edge for corner'),
             gcode('G91'), // Relative positioning
@@ -399,12 +399,12 @@ class ProbeWidget extends PureComponent {
             }),
             gcode('G90'), // Absolute positioning
             gcode('#4 = [posx]'), // Store X edge position
-            
+
             // Retract from X edge
             gcode('G91'),
             gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
             gcode('G90'),
-            
+
             // Probe Y edge
             gcode('; Probe Y edge for corner'),
             gcode('G91'), // Relative positioning
@@ -414,7 +414,7 @@ class ProbeWidget extends PureComponent {
             }),
             gcode('G90'), // Absolute positioning
             gcode('#5 = [posy]'), // Store Y edge position
-            
+
             // Set work coordinates to corner position
             gcode('; Set work coordinates to corner'),
             gcode('G10', {
@@ -423,7 +423,7 @@ class ProbeWidget extends PureComponent {
               X: '#4',
               Y: '#5'
             }),
-            
+
             // Return to safe position
             gcode('; Return to safe position'),
             gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
@@ -531,7 +531,7 @@ class ProbeWidget extends PureComponent {
           // Internal corner probing sequence - probe both X and Y edges
           commands.push(
             gcode('; Internal Corner Probing Sequence'),
-            
+
             // Probe X edge first
             gcode('; Probe X edge for internal corner'),
             gcode('G91'), // Relative positioning
@@ -541,12 +541,12 @@ class ProbeWidget extends PureComponent {
             }),
             gcode('G90'), // Absolute positioning
             gcode('#4 = [posx]'), // Store X edge position
-            
+
             // Retract from X edge
             gcode('G91'),
             gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
             gcode('G90'),
-            
+
             // Probe Y edge
             gcode('; Probe Y edge for internal corner'),
             gcode('G91'), // Relative positioning
@@ -556,7 +556,7 @@ class ProbeWidget extends PureComponent {
             }),
             gcode('G90'), // Absolute positioning
             gcode('#5 = [posy]'), // Store Y edge position
-            
+
             // Set work coordinates to corner position
             gcode('; Set work coordinates to internal corner'),
             gcode('G10', {
@@ -565,7 +565,7 @@ class ProbeWidget extends PureComponent {
               X: '#4',
               Y: '#5'
             }),
-            
+
             // Return to safe position
             gcode('; Return to safe position'),
             gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
