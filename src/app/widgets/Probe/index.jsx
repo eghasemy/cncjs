@@ -444,8 +444,12 @@ class ProbeWidget extends PureComponent {
           selectedExternalEdge,
           probingDistance,
           searchFeedrate,
-          touchPlateHeight,
-          xyClearing
+          latchFeedrate,
+          latchDistance,
+          rapidsFeedrate,
+          probeDiameter,
+          xyClearing,
+          probeDepth
         } = this.state;
 
         if (!selectedExternalEdge) {
@@ -454,133 +458,280 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; External Edge Probing Sequence'),
-          gcode('G90'), // Absolute positioning
-          gcode('#1 = [posx]'), // Store current X position
-          gcode('#2 = [posy]'), // Store current Y position
-          gcode('#3 = [posz]'), // Store current Z position
+          gcode(`#<_probe_clearance> = [${xyClearing}] - [${probeDiameter} / 2]`),
+          gcode('G91') // Relative mode
         ];
 
-        // Determine probe direction and axis based on selection
-        let probeAxis, probeDirection;
+        // Determine probe direction and positioning based on selection
         let isCornerProbe = false;
-        let xDirection, yDirection;
 
         switch (selectedExternalEdge) {
         case EXTERNAL_EDGE_X_POSITIVE:
-          probeAxis = 'X';
-          probeDirection = probingDistance;
+          // Right Edge - probe from right to left (X-)
+          commands.push(
+            gcode('; Probe Right-Edge'),
+            gcode(`; Pull away from edge in X+ by ${xyClearing}`),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to edge'),
+            gcode('G1', { X: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_EDGE_X_NEGATIVE:
-          probeAxis = 'X';
-          probeDirection = -probingDistance;
+          // Left Edge - probe from left to right (X+)
+          commands.push(
+            gcode('; Probe Left-Edge'),
+            gcode(`; Pull away from edge in X- by ${xyClearing}`),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to edge'),
+            gcode('G1', { X: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_EDGE_Y_POSITIVE:
-          probeAxis = 'Y';
-          probeDirection = probingDistance;
+          // Top Edge - probe from top to bottom (Y-)
+          commands.push(
+            gcode('; Probe Top-Edge'),
+            gcode(`; Pull away from edge in Y+ by ${xyClearing}`),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 Y0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_EDGE_Y_NEGATIVE:
-          probeAxis = 'Y';
-          probeDirection = -probingDistance;
+          // Bottom Edge - probe from bottom to top (Y+)
+          commands.push(
+            gcode('; Probe Bottom-Edge'),
+            gcode(`; Pull away from edge in Y- by ${xyClearing}`),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 Y0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_EDGE_Z_NEGATIVE:
-          probeAxis = 'Z';
-          probeDirection = -probingDistance;
+          // Z- probing (height/surface probing)
+          commands.push(
+            gcode('; Probe Z- Surface'),
+            gcode('G38.2', { Z: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Z: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Z: -latchDistance, F: latchFeedrate }),
+            gcode('G10 L20 P0 Z0'),
+            gcode('G1', { Z: xyClearing, F: rapidsFeedrate }),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
+          // Top-Right Corner
           isCornerProbe = true;
-          xDirection = probingDistance;
-          yDirection = probingDistance;
+          commands.push(
+            gcode('; Probe Top-Right Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X+ Y+ by xyClearing'),
+            gcode('G1', { X: xyClearing, Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: '#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
+          // Bottom-Right Corner  
           isCornerProbe = true;
-          xDirection = probingDistance;
-          yDirection = -probingDistance;
+          commands.push(
+            gcode('; Probe Bottom-Right Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X+ Y- by xyClearing'),
+            gcode('G1', { X: xyClearing, Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: '#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
+          // Top-Left Corner
           isCornerProbe = true;
-          xDirection = -probingDistance;
-          yDirection = probingDistance;
+          commands.push(
+            gcode('; Probe Top-Left Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X- Y+ by xyClearing'),
+            gcode('G1', { X: -xyClearing, Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -'#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
+          // Bottom-Left Corner
           isCornerProbe = true;
-          xDirection = -probingDistance;
-          yDirection = -probingDistance;
+          commands.push(
+            gcode('; Probe Bottom-Left Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X- Y- by xyClearing'),
+            gcode('G1', { X: -xyClearing, Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -'#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         default:
           return [];
-        }
-
-        if (isCornerProbe) {
-          // Corner probing sequence - probe both X and Y edges
-          commands.push(
-            gcode('; External Corner Probing Sequence'),
-
-            // Probe X edge first
-            gcode('; Probe X edge for corner'),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              X: xDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-            gcode('#4 = [posx]'), // Store X edge position
-
-            // Retract from X edge
-            gcode('G91'),
-            gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
-            gcode('G90'),
-
-            // Probe Y edge
-            gcode('; Probe Y edge for corner'),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              Y: yDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-            gcode('#5 = [posy]'), // Store Y edge position
-
-            // Set work coordinates to corner position
-            gcode('; Set work coordinates to corner'),
-            gcode('G10', {
-              L: 20,
-              P: 1, // G54 coordinate system
-              X: '#4',
-              Y: '#5'
-            }),
-
-            // Return to safe position
-            gcode('; Return to safe position'),
-            gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
-          );
-        } else {
-          // Single edge probing
-          commands.push(
-            // Probe toward edge
-            gcode(`; Probe ${probeAxis} axis toward edge`),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              [probeAxis]: probeDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-
-            // Set work coordinate
-            gcode(`; Set work coordinate for ${probeAxis} axis`),
-            gcode('G10', {
-              L: 20,
-              P: 1, // G54 coordinate system
-              [probeAxis]: touchPlateHeight
-            }),
-
-            // Retract from edge
-            gcode('; Retract from edge'),
-            gcode('G91'), // Relative positioning
-            gcode('G0', {
-              [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
-            }),
-            gcode('G90') // Absolute positioning
-          );
         }
 
         return commands;
@@ -590,8 +741,12 @@ class ProbeWidget extends PureComponent {
           selectedInternalEdge,
           probingDistance,
           searchFeedrate,
-          touchPlateHeight,
-          xyClearing
+          latchFeedrate,
+          latchDistance,
+          rapidsFeedrate,
+          probeDiameter,
+          xyClearing,
+          probeDepth
         } = this.state;
 
         if (!selectedInternalEdge) {
@@ -600,129 +755,268 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; Internal Edge Probing Sequence'),
-          gcode('G90'), // Absolute positioning
-          gcode('#1 = [posx]'), // Store current X position
-          gcode('#2 = [posy]'), // Store current Y position
-          gcode('#3 = [posz]'), // Store current Z position
+          gcode(`#<_probe_clearance> = [${xyClearing}] - [${probeDiameter} / 2]`),
+          gcode('G91') // Relative mode
         ];
 
-        // Determine probe direction and axis based on selection
-        let probeAxis, probeDirection;
+        // Internal probing logic - probe from inside outward to edges
         let isCornerProbe = false;
-        let xDirection, yDirection;
 
         switch (selectedInternalEdge) {
         case INTERNAL_EDGE_X_POSITIVE:
-          probeAxis = 'X';
-          probeDirection = probingDistance;
+          // Right Internal Edge - probe from inside toward right wall (X+)
+          commands.push(
+            gcode('; Probe Internal Right-Edge'),
+            gcode(`; Pull away from edge in X- by ${xyClearing}`),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to edge'),
+            gcode('G1', { X: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_EDGE_X_NEGATIVE:
-          probeAxis = 'X';
-          probeDirection = -probingDistance;
+          // Left Internal Edge - probe from inside toward left wall (X-)
+          commands.push(
+            gcode('; Probe Internal Left-Edge'),
+            gcode(`; Pull away from edge in X+ by ${xyClearing}`),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to edge'),
+            gcode('G1', { X: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_EDGE_Y_POSITIVE:
-          probeAxis = 'Y';
-          probeDirection = probingDistance;
+          // Top Internal Edge - probe from inside toward top wall (Y+)
+          commands.push(
+            gcode('; Probe Internal Top-Edge'),
+            gcode(`; Pull away from edge in Y- by ${xyClearing}`),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 Y0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_EDGE_Y_NEGATIVE:
-          probeAxis = 'Y';
-          probeDirection = -probingDistance;
+          // Bottom Internal Edge - probe from inside toward bottom wall (Y-)
+          commands.push(
+            gcode('; Probe Internal Bottom-Edge'),
+            gcode(`; Pull away from edge in Y+ by ${xyClearing}`),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 Y0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
+          // Top-Right Internal Corner
           isCornerProbe = true;
-          xDirection = probingDistance;
-          yDirection = probingDistance;
+          commands.push(
+            gcode('; Probe Internal Top-Right Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X- Y- by xyClearing'),
+            gcode('G1', { X: -xyClearing, Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: '#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
+          // Bottom-Right Internal Corner  
           isCornerProbe = true;
-          xDirection = probingDistance;
-          yDirection = -probingDistance;
+          commands.push(
+            gcode('; Probe Internal Bottom-Right Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X- Y+ by xyClearing'),
+            gcode('G1', { X: -xyClearing, Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X+ (search + latch)'),
+            gcode('G38.2', { X: probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: '#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
+          // Top-Left Internal Corner
           isCornerProbe = true;
-          xDirection = -probingDistance;
-          yDirection = probingDistance;
+          commands.push(
+            gcode('; Probe Internal Top-Left Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X+ Y- by xyClearing'),
+            gcode('G1', { X: xyClearing, Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y+'),
+            gcode('G38.2', { Y: probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: -latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: -xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -'#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         case INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
+          // Bottom-Left Internal Corner
           isCornerProbe = true;
-          xDirection = -probingDistance;
-          yDirection = -probingDistance;
+          commands.push(
+            gcode('; Probe Internal Bottom-Left Corner'),
+            gcode('(--- 1 PROBE X ---)'),
+            gcode('; Pull away from corner in X+ Y+ by xyClearing'),
+            gcode('G1', { X: xyClearing, Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z down by probing depth'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe X- (search + latch)'),
+            gcode('G38.2', { X: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { X: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { X: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract X'),
+            gcode('G1', { X: xyClearing, F: rapidsFeedrate }),
+            gcode('; Move Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('(--- 2 PROBE Y ---)'),
+            gcode('; Pull away again'),
+            gcode('G1', { Y: -xyClearing * 2, F: rapidsFeedrate }),
+            gcode('; Z down'),
+            gcode('G1', { Z: -probeDepth, F: rapidsFeedrate }),
+            gcode('; Probe Y-'),
+            gcode('G38.2', { Y: -probingDistance, F: searchFeedrate }),
+            gcode('G1', { Y: latchDistance, F: rapidsFeedrate }),
+            gcode('G38.2', { Y: -latchDistance, F: latchFeedrate }),
+            gcode('; Retract'),
+            gcode('G1', { Y: xyClearing, F: rapidsFeedrate }),
+            gcode('; Z up'),
+            gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
+            gcode('; Return to corner'),
+            gcode('G1', { X: -'#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            gcode('; Finally zero out'),
+            gcode('G10 L20 P0 X0 Y0'),
+            gcode('G90')
+          );
           break;
         default:
           return [];
-        }
-
-        if (isCornerProbe) {
-          // Internal corner probing sequence - probe both X and Y edges
-          commands.push(
-            gcode('; Internal Corner Probing Sequence'),
-
-            // Probe X edge first
-            gcode('; Probe X edge for internal corner'),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              X: xDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-            gcode('#4 = [posx]'), // Store X edge position
-
-            // Retract from X edge
-            gcode('G91'),
-            gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
-            gcode('G90'),
-
-            // Probe Y edge
-            gcode('; Probe Y edge for internal corner'),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              Y: yDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-            gcode('#5 = [posy]'), // Store Y edge position
-
-            // Set work coordinates to corner position
-            gcode('; Set work coordinates to internal corner'),
-            gcode('G10', {
-              L: 20,
-              P: 1, // G54 coordinate system
-              X: '#4',
-              Y: '#5'
-            }),
-
-            // Return to safe position
-            gcode('; Return to safe position'),
-            gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
-          );
-        } else {
-          // Single edge probing
-          commands.push(
-            // Probe toward internal edge
-            gcode(`; Probe ${probeAxis} axis toward internal edge`),
-            gcode('G91'), // Relative positioning
-            gcode('G38.2', {
-              [probeAxis]: probeDirection,
-              F: searchFeedrate
-            }),
-            gcode('G90'), // Absolute positioning
-
-            // Set work coordinate
-            gcode(`; Set work coordinate for ${probeAxis} axis`),
-            gcode('G10', {
-              L: 20,
-              P: 1, // G54 coordinate system
-              [probeAxis]: touchPlateHeight
-            }),
-
-            // Retract from edge
-            gcode('; Retract from edge'),
-            gcode('G91'), // Relative positioning
-            gcode('G0', {
-              [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
-            }),
-            gcode('G90') // Absolute positioning
-          );
         }
 
         return commands;
