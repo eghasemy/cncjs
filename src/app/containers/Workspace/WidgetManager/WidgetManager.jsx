@@ -133,6 +133,13 @@ class WidgetManager extends PureComponent {
         details: i18n._('This widget lets you monitor a webcam.'),
         visible: true,
         disabled: false
+      },
+      {
+        id: 'gamepad',
+        caption: i18n._('Gamepad Widget'),
+        details: i18n._('This widget allows you to connect a gamepad and configure its buttons.'),
+        visible: true,
+        disabled: false
       }
     ];
 
