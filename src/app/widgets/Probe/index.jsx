@@ -292,23 +292,23 @@ class ProbeWidget extends PureComponent {
 
         // Handle different probe types
         if (probeType === PROBE_TYPE_EXTERNAL_EDGE) {
-          return this.generateExternalEdgeProbeCommands();
+          return this.actions.generateExternalEdgeProbeCommands();
         }
 
         if (probeType === PROBE_TYPE_INTERNAL_EDGE) {
-          return this.generateInternalEdgeProbeCommands();
+          return this.actions.generateInternalEdgeProbeCommands();
         }
 
         if (probeType === PROBE_TYPE_CENTER) {
-          return this.generateCenterProbeCommands();
+          return this.actions.generateCenterProbeCommands();
         }
 
         if (probeType === PROBE_TYPE_ROTATION) {
-          return this.generateRotationProbeCommands();
+          return this.actions.generateRotationProbeCommands();
         }
 
         if (probeType === PROBE_TYPE_HEIGHT_MAP) {
-          return this.generateHeightMapProbeCommands();
+          return this.actions.generateHeightMapProbeCommands();
         }
 
         // Default to empty commands for config tab
