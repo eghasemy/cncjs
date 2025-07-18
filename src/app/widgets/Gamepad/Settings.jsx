@@ -78,9 +78,10 @@ class Settings extends PureComponent {
 
     getInitialState() {
         const { buttonMap, axisMap, name } = this.props;
-        const pads = (typeof navigator.getGamepads === 'function') ? Array.from(navigator.getGamepads()).filter(p => p)[this.props.gamepadIndex] : null;
-        const buttons = pads ? pads.buttons.length : Object.keys(buttonMap).length;
-        const axes = pads ? pads.axes.length : Object.keys(axisMap).length;
+        const pads = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads() : [];
+        const pad = pads[this.props.gamepadIndex];
+        const buttons = pad ? pad.buttons.length : Object.keys(buttonMap).length;
+        const axes = pad ? pad.axes.length : Object.keys(axisMap).length;
         return {
             buttons,
             axes,
