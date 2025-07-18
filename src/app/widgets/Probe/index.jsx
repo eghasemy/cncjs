@@ -62,7 +62,9 @@ import {
   ROTATION_EDGE_LEFT,
   ROTATION_EDGE_RIGHT,
   ROTATION_EDGE_TOP,
-  ROTATION_EDGE_BOTTOM
+  ROTATION_EDGE_BOTTOM,
+  ROTATION_METHOD_G68,
+  ROTATION_METHOD_MATRIX
 } from './constants';
 import styles from './index.styl';
 
@@ -210,6 +212,9 @@ class ProbeWidget extends PureComponent {
       // Rotation handlers
       selectRotationEdge: (edge) => {
         this.setState({ selectedRotationEdge: edge });
+      },
+      changeRotationMethod: (method) => {
+        this.setState({ rotationMethod: method });
       },
       applyRotationToGcode: () => {
         // TODO: Implement G-code rotation application
@@ -869,6 +874,60 @@ class ProbeWidget extends PureComponent {
       },
       runProbeCommands: (commands) => {
         controller.command('gcode', commands);
+      },
+      startProbing: () => {
+        // Get positioning commands first
+        const positioningCommands = this.actions.generatePositioningCommands();
+        // Get probe commands based on current probe type
+        const probeCommands = this.actions.populateProbeCommands();
+        // Combine positioning and probe commands
+        const allCommands = [...positioningCommands, ...probeCommands];
+        // Execute all commands
+        controller.command('gcode', allCommands);
+      },
+      generatePositioningCommands: () => {
+        const {
+          probeType,
+          xyClearing,
+          probeDepth
+        } = this.state;
+
+        // Skip positioning for height map as it manages its own positioning
+        if (probeType === PROBE_TYPE_HEIGHT_MAP) {
+          return [];
+        }
+
+        const commands = [
+          gcode('; Positioning for probing'),
+          gcode('G90'), // Absolute positioning
+          gcode('#1 = [posx]'), // Store current X position
+          gcode('#2 = [posy]'), // Store current Y position  
+          gcode('#3 = [posz]'), // Store current Z position
+        ];
+
+        // For edge, center, and rotation probing, move to XY clearance position
+        if (probeType === PROBE_TYPE_EXTERNAL_EDGE || 
+            probeType === PROBE_TYPE_INTERNAL_EDGE ||
+            probeType === PROBE_TYPE_CENTER ||
+            probeType === PROBE_TYPE_ROTATION) {
+          
+          commands.push(
+            gcode('; Move to XY clearance position'),
+            gcode('G91'), // Relative positioning
+            gcode('G0', { X: xyClearing, Y: xyClearing }), // Move to clearance position
+            gcode('G90'), // Back to absolute positioning
+          );
+        }
+
+        // Move down by probe depth (clearance from surface)
+        commands.push(
+          gcode('; Move down to probing depth'),
+          gcode('G91'), // Relative positioning
+          gcode('G0', { Z: -probeDepth }), // Move down by probe depth
+          gcode('G90') // Back to absolute positioning
+        );
+
+        return commands;
       }
     };
 
@@ -997,6 +1056,7 @@ class ProbeWidget extends PureComponent {
         setCenterAsOrigin,
         centerPasses,
         selectedRotationEdge,
+        rotationMethod,
         pauseBeforeProbing,
         setZZeroAtOrigin,
         heightMapGridSizeX,
@@ -1011,6 +1071,7 @@ class ProbeWidget extends PureComponent {
       this.config.set('setCenterAsOrigin', setCenterAsOrigin);
       this.config.set('centerPasses', centerPasses);
       this.config.set('selectedRotationEdge', selectedRotationEdge);
+      this.config.set('rotationMethod', rotationMethod);
       this.config.set('pauseBeforeProbing', pauseBeforeProbing);
       this.config.set('setZZeroAtOrigin', setZZeroAtOrigin);
       this.config.set('heightMapGridSizeX', heightMapGridSizeX);
@@ -1122,6 +1183,7 @@ class ProbeWidget extends PureComponent {
 
         // Rotation probing
         selectedRotationEdge: this.config.get('selectedRotationEdge', null),
+        rotationMethod: this.config.get('rotationMethod', ROTATION_METHOD_G68),
 
         // Height mapping
         heightMapStartX: Number(this.config.get('heightMapStartX') || 0).toFixed(3) * 1,

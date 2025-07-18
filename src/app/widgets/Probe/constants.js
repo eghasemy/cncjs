@@ -50,3 +50,7 @@ export const ROTATION_EDGE_LEFT = 'left';
 export const ROTATION_EDGE_RIGHT = 'right';
 export const ROTATION_EDGE_TOP = 'top';
 export const ROTATION_EDGE_BOTTOM = 'bottom';
+
+// Rotation Methods
+export const ROTATION_METHOD_G68 = 'g68';
+export const ROTATION_METHOD_MATRIX = 'matrix';

@@ -35,7 +35,9 @@ import {
   ROTATION_EDGE_LEFT,
   ROTATION_EDGE_RIGHT,
   ROTATION_EDGE_TOP,
-  ROTATION_EDGE_BOTTOM
+  ROTATION_EDGE_BOTTOM,
+  ROTATION_METHOD_G68,
+  ROTATION_METHOD_MATRIX
 } from './constants';
 import HeightMapVisualizer from './HeightMapVisualizer';
 
@@ -796,7 +798,7 @@ class Probe extends PureComponent {
     }
 
     renderRotationTab(state, actions, canClick) {
-      const { selectedRotationEdge } = state;
+      const { selectedRotationEdge, rotationMethod } = state;
 
       return (
         <div>
@@ -857,8 +859,43 @@ class Probe extends PureComponent {
           </div>
 
           <div className="form-group">
+            <label className="control-label">{i18n._('Rotation Method')}</label>
+            <div className="btn-toolbar" role="toolbar" style={{ marginBottom: 5 }}>
+              <div className="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': rotationMethod === ROTATION_METHOD_G68 }
+                  )}
+                  title={i18n._('Apply G68 style rotation')}
+                  onClick={() => actions.changeRotationMethod(ROTATION_METHOD_G68)}
+                >
+                  {i18n._('G68 Style')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': rotationMethod === ROTATION_METHOD_MATRIX }
+                  )}
+                  title={i18n._('Calculate with 2D rotation matrix on loaded G-code')}
+                  onClick={() => actions.changeRotationMethod(ROTATION_METHOD_MATRIX)}
+                >
+                  {i18n._('2D Matrix')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
             <p className="help-block">
-              {i18n._('Rotation will be calculated using X0 and Y0 as the rotation center and applied to the loaded G-code.')}
+              {rotationMethod === ROTATION_METHOD_G68 
+                ? i18n._('Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.')
+                : i18n._('Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.')
+              }
             </p>
           </div>
 
@@ -1093,9 +1130,7 @@ class Probe extends PureComponent {
             <button
               type="button"
               className="btn btn-sm btn-primary"
-              onClick={() => {
-                actions.openModal(MODAL_PREVIEW);
-              }}
+              onClick={actions.startProbing}
               disabled={!canClick}
             >
               {i18n._('Start')}
