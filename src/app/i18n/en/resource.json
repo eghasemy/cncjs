@@ -629,5 +629,8 @@
   "Warning: No custom tool probe commands are defined": "Warning: No custom tool probe commands are defined",
   "Connect to the controller to view the tool probe commands.": "Connect to the controller to view the tool probe commands.",
   "Manual Tool Change (Custom Probing)": "Manual Tool Change (Custom Probing)",
-  "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process.": "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process."
+  "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process.": "This option skips the M6 command and pauses controller operations, giving you full manual control over the tool change process.",
+  "Manage Additional Widgets": "Manage Additional Widgets",
+  "Height Map Preview": "Height Map Preview",
+  "Generate Sample Data": "Generate Sample Data"
 }

@@ -629,5 +629,8 @@
   "Pause before probing": "",
   "Set Z = 0 at X0Y0": "",
   "Apply Height Map to G-code": "",
-  "Start": ""
+  "Start": "",
+  "Manage Additional Widgets": "",
+  "Height Map Preview": "",
+  "Generate Sample Data": ""
 }
