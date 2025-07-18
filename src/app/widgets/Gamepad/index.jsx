@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 import Space from 'app/components/Space';
 import Widget from 'app/components/Widget';
 import i18n from 'app/lib/i18n';
+import shortid from 'shortid';
 import WidgetConfig from '../WidgetConfig';
 import Gamepad from './Gamepad';
 import Settings from './Settings';
@@ -47,29 +48,61 @@ class GamepadWidget extends PureComponent {
         },
         closeModal: () => {
             this.setState({ modal: MODAL_NONE });
+        },
+        selectGamepad: (index) => {
+            this.setState({ selectedGamepad: index });
+        },
+        selectProfile: (id) => {
+            this.setState({ currentProfile: id });
+        },
+        newProfile: () => {
+            const id = shortid.generate();
+            this.setState(state => ({
+                profiles: {
+                    ...state.profiles,
+                    [id]: { name: 'Profile', buttonMap: {}, axisMap: {}, gamepadId: null }
+                },
+                currentProfile: id
+            }));
+        },
+        deleteProfile: () => {
+            this.setState(state => {
+                const profiles = { ...state.profiles };
+                delete profiles[state.currentProfile];
+                const ids = Object.keys(profiles);
+                return {
+                    profiles,
+                    currentProfile: ids[0] || ''
+                };
+            });
         }
     };
 
     getInitialState() {
+        const profiles = this.config.get('profiles', {});
+        const currentProfile = this.config.get('currentProfile', Object.keys(profiles)[0] || '');
         return {
             minimized: this.config.get('minimized', false),
             isFullscreen: false,
             modal: MODAL_NONE,
-            buttonMap: this.config.get('buttonMap', {}),
-            axisMap: this.config.get('axisMap', {})
+            profiles,
+            currentProfile,
+            selectedGamepad: this.config.get('selectedGamepad', 0)
         };
     }
 
     componentDidUpdate() {
-        const { minimized, buttonMap, axisMap } = this.state;
+        const { minimized, profiles, currentProfile, selectedGamepad } = this.state;
         this.config.set('minimized', minimized);
-        this.config.set('buttonMap', buttonMap);
-        this.config.set('axisMap', axisMap);
+        this.config.set('profiles', profiles);
+        this.config.set('currentProfile', currentProfile);
+        this.config.set('selectedGamepad', selectedGamepad);
     }
 
     render() {
         const { widgetId } = this.props;
-        const { minimized, isFullscreen } = this.state;
+        const { minimized, isFullscreen, profiles, currentProfile, selectedGamepad } = this.state;
+        const current = profiles[currentProfile] || { name: '', buttonMap: {}, axisMap: {} };
         const isForkedWidget = widgetId.match(/\w+:[\w\-]+/);
         const actions = { ...this.actions };
 
@@ -132,16 +165,60 @@ class GamepadWidget extends PureComponent {
             <Widget.Content className={cx(styles.widgetContent, { [styles.hidden]: minimized })}>
               {this.state.modal === MODAL_SETTINGS && (
                 <Settings
-                  buttonMap={this.state.buttonMap}
-                  axisMap={this.state.axisMap}
+                  name={current.name}
+                  buttonMap={current.buttonMap}
+                  axisMap={current.axisMap}
+                  gamepadIndex={selectedGamepad}
+                  onChangeName={(name) => {
+                    this.setState(state => ({
+                      profiles: {
+                        ...state.profiles,
+                        [state.currentProfile]: { ...current, name }
+                      }
+                    }));
+                  }}
                   onSave={({ buttonMap, axisMap }) => {
-                    this.setState({ buttonMap, axisMap });
+                    const pad = navigator.getGamepads ? navigator.getGamepads()[selectedGamepad] : null;
+                    this.setState(state => ({
+                      profiles: {
+                        ...state.profiles,
+                        [state.currentProfile]: { ...current, buttonMap, axisMap, gamepadId: pad ? pad.id : null }
+                      }
+                    }));
                     actions.closeModal();
+                  }}
+                  onDelete={actions.deleteProfile}
+                  onExport={(data) => {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${data.name || 'profile'}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  onImport={(data) => {
+                    const id = shortid.generate();
+                    this.setState(state => ({
+                      profiles: {
+                        ...state.profiles,
+                        [id]: { name: data.name || 'Imported', buttonMap: data.buttonMap || {}, axisMap: data.axisMap || {}, gamepadId: data.gamepadId || null }
+                      },
+                      currentProfile: id
+                    }));
                   }}
                   onCancel={actions.closeModal}
                 />
               )}
-              <Gamepad />
+              <div style={{ marginBottom: 10 }}>
+                <select className="form-control" value={currentProfile} onChange={e => actions.selectProfile(e.target.value)}>
+                  {Object.keys(profiles).map(id => (
+                    <option key={id} value={id}>{profiles[id].name}</option>
+                  ))}
+                </select>
+                <button className="btn btn-default" style={{ marginTop: 5 }} onClick={actions.newProfile}>{i18n._('New')}</button>
+              </div>
+              <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
             </Widget.Content>
           </Widget>
         );

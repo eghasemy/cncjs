@@ -1,7 +1,17 @@
+import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import i18n from 'app/lib/i18n';
 
 class Gamepad extends PureComponent {
+    static propTypes = {
+        selectedIndex: PropTypes.number,
+        onSelectIndex: PropTypes.func
+    };
+
+    static defaultProps = {
+        selectedIndex: 0,
+        onSelectIndex: () => {}
+    };
     state = {
         gamepads: []
     };
@@ -25,14 +35,32 @@ class Gamepad extends PureComponent {
 
         const pads = Array.from(navigator.getGamepads()).filter(pad => pad);
         this.setState({ gamepads: pads });
+        const { selectedIndex, onSelectIndex } = this.props;
+        if (selectedIndex >= pads.length) {
+            onSelectIndex(pads.length ? 0 : -1);
+        }
     };
 
     render() {
         const { gamepads } = this.state;
+        const { selectedIndex, onSelectIndex } = this.props;
         return (
             <div>
                 {gamepads.length === 0 && (
                     <div>{i18n._('No gamepad connected')}</div>
+                )}
+                {gamepads.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                        <select
+                          className="form-control"
+                          value={selectedIndex}
+                          onChange={e => onSelectIndex(Number(e.target.value))}
+                        >
+                          {gamepads.map((pad, i) => (
+                              <option key={pad.index} value={i}>{pad.id}</option>
+                          ))}
+                        </select>
+                    </div>
                 )}
                 {gamepads.map(pad => (
                     <div key={pad.index} style={{ marginBottom: 10 }}>
@@ -45,7 +73,5 @@ class Gamepad extends PureComponent {
         );
     }
 }
-
-// No props are currently used
 
 export default Gamepad;
