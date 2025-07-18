@@ -450,7 +450,20 @@ class Probe extends PureComponent {
                 >
                   ←
                 </button>
-                <span style={{ display: 'inline-block', width: '60px', height: '60px', margin: '5px', lineHeight: '60px', fontSize: '24px' }}>○</span>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_Z_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Z- Probe')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Z_NEGATIVE)}
+                >
+                  Z-
+                </button>
                 <button
                   type="button"
                   className={classNames(
@@ -509,23 +522,6 @@ class Probe extends PureComponent {
                   onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE)}
                 >
                   ↘
-                </button>
-              </div>
-              {/* Z direction */}
-              <div style={{ marginTop: '20px' }}>
-                <button
-                  type="button"
-                  className={classNames(
-                    'btn',
-                    'btn-default',
-                    'btn-lg',
-                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_Z_NEGATIVE }
-                  )}
-                  style={{ margin: '5px', width: '80px', height: '40px', fontSize: '16px' }}
-                  title={i18n._('Z- Edge')}
-                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Z_NEGATIVE)}
-                >
-                  Z-
                 </button>
               </div>
             </div>
