@@ -5,6 +5,7 @@ import Space from 'app/components/Space';
 import Widget from 'app/components/Widget';
 import i18n from 'app/lib/i18n';
 import shortid from 'shortid';
+import controller from 'app/lib/controller';
 import WidgetConfig from '../WidgetConfig';
 import Gamepad from './Gamepad';
 import Settings from './Settings';
@@ -30,6 +31,10 @@ class GamepadWidget extends PureComponent {
     config = new WidgetConfig(this.props.widgetId);
 
     state = this.getInitialState();
+
+    prevButtons = [];
+    prevAxes = [];
+    raf = 0;
 
     actions = {
         toggleFullscreen: () => {
@@ -97,6 +102,93 @@ class GamepadWidget extends PureComponent {
         this.config.set('profiles', profiles);
         this.config.set('currentProfile', currentProfile);
         this.config.set('selectedGamepad', selectedGamepad);
+    }
+
+    componentDidMount() {
+        this.loop();
+    }
+
+    componentWillUnmount() {
+        cancelAnimationFrame(this.raf);
+    }
+
+    loop = () => {
+        const { profiles, currentProfile, selectedGamepad } = this.state;
+        const profile = profiles[currentProfile] || {};
+        const pad = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads()[selectedGamepad] : null;
+        if (pad) {
+            pad.buttons.forEach((btn, i) => {
+                const action = (profile.buttonMap || {})[i];
+                if (action && btn.pressed && !this.prevButtons[i]) {
+                    this.handleAction(action);
+                }
+                this.prevButtons[i] = btn.pressed;
+            });
+            pad.axes.forEach((val, i) => {
+                const map = (profile.axisMap || {})[i] || {};
+                const prev = this.prevAxes[i] || 0;
+                if (map.positive && val > 0.5 && prev <= 0.5) {
+                    this.handleAction(map.positive);
+                }
+                if (map.negative && val < -0.5 && prev >= -0.5) {
+                    this.handleAction(map.negative);
+                }
+                this.prevAxes[i] = val;
+            });
+        }
+        this.raf = requestAnimationFrame(this.loop);
+    };
+
+    handleAction(action) {
+        switch (action) {
+            case 'jog-x+':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 X1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'jog-x-':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 X-1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'jog-y+':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 Y1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'jog-y-':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 Y-1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'jog-z+':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 Z1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'jog-z-':
+                controller.command('gcode', 'G91');
+                controller.command('gcode', 'G0 Z-1');
+                controller.command('gcode', 'G90');
+                break;
+            case 'coolant-on':
+                controller.command('gcode', 'M8');
+                break;
+            case 'coolant-off':
+                controller.command('gcode', 'M9');
+                break;
+            case 'feedhold':
+                controller.command('feedhold');
+                break;
+            case 'resume':
+                controller.command('cyclestart');
+                break;
+            case 'reset':
+                controller.command('reset');
+                break;
+            default:
+                break;
+        }
     }
 
     render() {
