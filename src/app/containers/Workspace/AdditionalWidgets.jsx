@@ -53,7 +53,7 @@ class AdditionalWidgets extends PureComponent {
   };
 
   removeWidget = (widgetId) => () => {
-    // Remove widget through parent handler  
+    // Remove widget through parent handler
     this.props.onRemoveWidget(widgetId);
   };
 
