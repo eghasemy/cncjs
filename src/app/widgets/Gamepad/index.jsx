@@ -6,6 +6,7 @@ import Widget from 'app/components/Widget';
 import i18n from 'app/lib/i18n';
 import shortid from 'shortid';
 import controller from 'app/lib/controller';
+import api from 'app/api';
 import store from 'app/store';
 import { ensureArray } from 'ensure-type';
 import combokeys from 'app/lib/combokeys';
@@ -149,7 +150,8 @@ class GamepadWidget extends PureComponent {
             profiles,
             currentProfile,
             selectedGamepad: this.config.get('selectedGamepad', 0),
-            continuousJog: this.config.get('continuousJog', false)
+            continuousJog: this.config.get('continuousJog', false),
+            macros: []
         };
     }
 
@@ -163,6 +165,7 @@ class GamepadWidget extends PureComponent {
     }
 
     componentDidMount() {
+        this.fetchMacros();
         this.loop();
     }
 
@@ -212,6 +215,16 @@ class GamepadWidget extends PureComponent {
 
     stepBackward = () => {
         combokeys.emit('JOG_LEVER_SWITCH', null, { key: '-' });
+    };
+
+    fetchMacros = async () => {
+        try {
+            const res = await api.macros.fetch();
+            const { records: macros } = res.body;
+            this.setState({ macros });
+        } catch (err) {
+            // ignore errors
+        }
     };
 
     loop = () => {
@@ -265,6 +278,16 @@ class GamepadWidget extends PureComponent {
     };
 
     handleAction(action) {
+        if (action.startsWith('run-macro-')) {
+            const id = action.substring('run-macro-'.length);
+            controller.command('macro:run', id, controller.context, () => {});
+            return;
+        }
+        if (action.startsWith('load-macro-')) {
+            const id = action.substring('load-macro-'.length);
+            controller.command('macro:load', id, controller.context, () => {});
+            return;
+        }
         switch (action) {
             case 'jog-x+':
                 controller.command('gcode', 'G91');
@@ -395,6 +418,7 @@ class GamepadWidget extends PureComponent {
                   buttonMap={current.buttonMap}
                   axisMap={current.axisMap}
                   gamepadIndex={selectedGamepad}
+                  macros={this.state.macros}
                   onChangeName={(name) => {
                     this.setState(state => ({
                       profiles: {
