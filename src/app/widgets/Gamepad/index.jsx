@@ -331,14 +331,50 @@ class GamepadWidget extends PureComponent {
                     <option key={id} value={id}>{profiles[id].name}</option>
                   ))}
                 </select>
-                <div style={{ marginTop: 5 }}>
-                  <button type="button" className="btn btn-default" onClick={actions.newProfile}>{i18n._('New')}</button>
-                  <label className="btn btn-default btn-file" style={{ marginLeft: 5 }}>
-                    {i18n._('Import Config')}
-                    <input type="file" style={{ display: 'none' }} onChange={actions.importProfile} />
-                  </label>
-                  <button type="button" className="btn btn-default" style={{ marginLeft: 5 }} onClick={actions.exportProfile}>{i18n._('Export Config')}</button>
-                  <button type="button" className="btn btn-default" style={{ marginLeft: 5 }} onClick={actions.deleteProfile}>{i18n._('Remove')}</button>
+                <div className="btn-group btn-group-justified" role="group" style={{ marginTop: 5 }}>
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      className="btn btn-default"
+                      style={{ padding: '5px 0' }}
+                      onClick={actions.newProfile}
+                      title={i18n._('New')}
+                    >
+                      <i className="fa fa-plus" />
+                    </button>
+                  </div>
+                  <div className="btn-group btn-group-sm" role="group">
+                    <label
+                      className="btn btn-default btn-file"
+                      style={{ padding: '5px 0', marginBottom: 0 }}
+                      title={i18n._('Import Config')}
+                    >
+                      <i className="fa fa-upload" />
+                      <input type="file" style={{ display: 'none' }} onChange={actions.importProfile} />
+                    </label>
+                  </div>
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      className="btn btn-default"
+                      style={{ padding: '5px 0' }}
+                      onClick={actions.exportProfile}
+                      title={i18n._('Export Config')}
+                    >
+                      <i className="fa fa-download" />
+                    </button>
+                  </div>
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      className="btn btn-default"
+                      style={{ padding: '5px 0' }}
+                      onClick={actions.deleteProfile}
+                      title={i18n._('Remove')}
+                    >
+                      <i className="fa fa-trash" />
+                    </button>
+                  </div>
                 </div>
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
