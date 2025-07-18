@@ -22,7 +22,7 @@ const defaultState = {
       secondary: {
         show: true,
         widgets: [
-          'axes', 'gcode', 'macro', 'probe', 'tool', 'spindle', 'laser',
+          'axes', 'gcode', 'macro', 'probe', 'tool', 'spindle', 'laser', 'gamepad'
         ]
       }
     },
@@ -236,6 +236,9 @@ const defaultState = {
       },
       crosshair: false,
       muted: false
+    },
+    gamepad: {
+      minimized: false
     }
   }
 };

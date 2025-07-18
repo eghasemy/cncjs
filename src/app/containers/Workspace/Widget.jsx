@@ -16,6 +16,7 @@ import TinyGWidget from 'app/widgets/TinyG';
 import ToolWidget from 'app/widgets/Tool';
 import VisualizerWidget from 'app/widgets/Visualizer';
 import WebcamWidget from 'app/widgets/Webcam';
+import GamepadWidget from 'app/widgets/Gamepad';
 
 const getWidgetByName = (name) => {
   return {
@@ -34,7 +35,8 @@ const getWidgetByName = (name) => {
     'tinyg': TinyGWidget,
     'tool': ToolWidget,
     'visualizer': VisualizerWidget,
-    'webcam': WebcamWidget
+    'webcam': WebcamWidget,
+    'gamepad': GamepadWidget
   }[name] || null;
 };
 
