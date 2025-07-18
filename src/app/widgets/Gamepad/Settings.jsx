@@ -77,88 +77,88 @@ class Settings extends PureComponent {
         const { onCancel } = this.props;
         const { buttons, axes, buttonMap, axisMap } = this.state;
         return (
-            <Modal disableOverlay size="sm" onClose={onCancel}>
-                <Modal.Header>
-                    <Modal.Title>{i18n._('Gamepad Settings')}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {buttons > 0 && (
-                        <table className="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>{i18n._('Buttons')}</th>
-                                    <th>{i18n._('Action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Array.from({ length: buttons }).map((_, i) => (
-                                    <tr key={i}>
-                                        <td>{i}</td>
-                                        <td>
-                                            <select
-                                                className="form-control"
-                                                value={buttonMap[i] || ''}
-                                                onChange={e => this.handleChangeButton(i, e.target.value)}
-                                            >
-                                                {ACTIONS.map(opt => (
-                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <Modal disableOverlay size="sm" onClose={onCancel}>
+            <Modal.Header>
+              <Modal.Title>{i18n._('Gamepad Settings')}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {buttons > 0 && (
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>{i18n._('Buttons')}</th>
+                      <th>{i18n._('Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: buttons }).map((_, i) => (
+                      <tr key={i}>
+                        <td>{i}</td>
+                        <td>
+                          <select
+                            className="form-control"
+                            value={buttonMap[i] || ''}
+                            onChange={e => this.handleChangeButton(i, e.target.value)}
+                          >
+                            {ACTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                 ))}
-                                            </select>
-                                        </td>
-                                    </tr>
+                          </select>
+                        </td>
+                      </tr>
                                 ))}
-                            </tbody>
-                        </table>
+                  </tbody>
+                </table>
                     )}
-                    {axes > 0 && (
-                        <table className="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>{i18n._('Axes')}</th>
-                                    <th>{i18n._('Negative')}</th>
-                                    <th>{i18n._('Positive')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {Array.from({ length: axes }).map((_, i) => {
+              {axes > 0 && (
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>{i18n._('Axes')}</th>
+                      <th>{i18n._('Negative')}</th>
+                      <th>{i18n._('Positive')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: axes }).map((_, i) => {
                                     const map = axisMap[i] || {};
                                     return (
-                                        <tr key={i}>
-                                            <td>{i}</td>
-                                            <td>
-                                                <select
-                                                    className="form-control"
-                                                    value={map.negative || ''}
-                                                    onChange={e => this.handleChangeAxis(i, 'negative', e.target.value)}
-                                                >
-                                                    {ACTIONS.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                      <tr key={i}>
+                                        <td>{i}</td>
+                                        <td>
+                                          <select
+                                            className="form-control"
+                                            value={map.negative || ''}
+                                            onChange={e => this.handleChangeAxis(i, 'negative', e.target.value)}
+                                          >
+                                            {ACTIONS.map(opt => (
+                                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                     ))}
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <select
-                                                    className="form-control"
-                                                    value={map.positive || ''}
-                                                    onChange={e => this.handleChangeAxis(i, 'positive', e.target.value)}
-                                                >
-                                                    {ACTIONS.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                          </select>
+                                        </td>
+                                        <td>
+                                          <select
+                                            className="form-control"
+                                            value={map.positive || ''}
+                                            onChange={e => this.handleChangeAxis(i, 'positive', e.target.value)}
+                                          >
+                                            {ACTIONS.map(opt => (
+                                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                     ))}
-                                                </select>
-                                            </td>
-                                        </tr>
+                                          </select>
+                                        </td>
+                                      </tr>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                  </tbody>
+                </table>
                     )}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={onCancel}>{i18n._('Cancel')}</Button>
-                    <Button btnStyle="primary" onClick={this.handleSave}>{i18n._('Save Changes')}</Button>
-                </Modal.Footer>
-            </Modal>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={onCancel}>{i18n._('Cancel')}</Button>
+              <Button btnStyle="primary" onClick={this.handleSave}>{i18n._('Save Changes')}</Button>
+            </Modal.Footer>
+          </Modal>
         );
     }
 }
