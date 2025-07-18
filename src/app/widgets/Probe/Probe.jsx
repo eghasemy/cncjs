@@ -29,7 +29,6 @@ import {
   ROTATION_EDGE_TOP,
   ROTATION_EDGE_BOTTOM
 } from './constants';
-import styles from './index.styl';
 
 class Probe extends PureComponent {
     static propTypes = {
@@ -553,17 +552,17 @@ class Probe extends PureComponent {
     }
 
     renderCenterTab(state, actions, displayUnits, step, canClick) {
-      const { 
-        centerProbeType, 
-        setCenterAsOrigin, 
-        centerSizeX, 
-        centerSizeY, 
-        centerPasses, 
-        xyClearing 
+      const {
+        centerProbeType,
+        setCenterAsOrigin,
+        centerSizeX,
+        centerSizeY,
+        centerPasses,
+        xyClearing
       } = state;
 
       // Validation: XY clearance must be less than half of X and Y size
-      const xySizeError = (centerSizeX > 0 && xyClearing >= centerSizeX / 2) || 
+      const xySizeError = (centerSizeX > 0 && xyClearing >= centerSizeX / 2) ||
                           (centerSizeY > 0 && xyClearing >= centerSizeY / 2);
 
       return (
@@ -651,11 +650,11 @@ class Probe extends PureComponent {
                 </div>
               </div>
             </div>
-            {xySizeError && (
+            {xySizeError ? (
               <p className="text-danger">
                 <small>{i18n._('XY Clearance must be less than half of X and Y size to prevent collisions')}</small>
               </p>
-            )}
+) : null}
           </div>
 
           <div className="form-group">
@@ -747,7 +746,7 @@ class Probe extends PureComponent {
           </div>
 
           {this.renderProbeControls(actions, canClick)}
-          
+
           <div className="row no-gutters" style={{ marginTop: '10px' }}>
             <div className="col-xs-12">
               <button
@@ -765,10 +764,10 @@ class Probe extends PureComponent {
     }
 
     renderHeightMapTab(state, actions, displayUnits, step, canClick) {
-      const { 
-        heightMapStartX, 
-        heightMapStartY, 
-        heightMapWidth, 
+      const {
+        heightMapStartX,
+        heightMapStartY,
+        heightMapWidth,
         heightMapHeight,
         heightMapGridSizeX,
         heightMapGridSizeY,

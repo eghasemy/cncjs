@@ -51,7 +51,6 @@ import {
   INTERNAL_EDGE_Y_POSITIVE,
   INTERNAL_EDGE_Y_NEGATIVE,
   CENTER_PROBE_EXTERNAL,
-  CENTER_PROBE_INTERNAL,
   ROTATION_EDGE_LEFT,
   ROTATION_EDGE_RIGHT,
   ROTATION_EDGE_TOP,
@@ -173,14 +172,14 @@ class ProbeWidget extends PureComponent {
       },
       // External edge handlers
       selectExternalEdge: (direction) => {
-        this.setState({ 
-          selectedExternalEdge: this.state.selectedExternalEdge === direction ? null : direction 
+        this.setState({
+          selectedExternalEdge: this.state.selectedExternalEdge === direction ? null : direction
         });
       },
       // Internal edge handlers
       selectInternalEdge: (direction) => {
-        this.setState({ 
-          selectedInternalEdge: this.state.selectedInternalEdge === direction ? null : direction 
+        this.setState({
+          selectedInternalEdge: this.state.selectedInternalEdge === direction ? null : direction
         });
       },
       // Center probe handlers
@@ -436,8 +435,6 @@ class ProbeWidget extends PureComponent {
         const {
           centerProbeType,
           setCenterAsOrigin,
-          centerSizeX,
-          centerSizeY,
           centerPasses,
           probingDistance,
           searchFeedrate,
@@ -545,8 +542,7 @@ class ProbeWidget extends PureComponent {
         const {
           selectedRotationEdge,
           probingDistance,
-          searchFeedrate,
-          xyClearing
+          searchFeedrate
         } = this.state;
 
         if (!selectedRotationEdge) {
@@ -664,10 +660,10 @@ class ProbeWidget extends PureComponent {
 
             commands.push(
               gcode(`; Probe point ${row + 1},${col + 1}`),
-              gcode('G0', { 
-                X: heightMapStartX + xOffset, 
-                Y: heightMapStartY + yOffset, 
-                Z: '#3' 
+              gcode('G0', {
+                X: heightMapStartX + xOffset,
+                Y: heightMapStartY + yOffset,
+                Z: '#3'
               }),
               gcode('G91'),
               gcode('G38.2', { Z: -probingDistance, F: searchFeedrate }),
@@ -821,10 +817,10 @@ class ProbeWidget extends PureComponent {
         return;
       }
 
-      const { 
-        units, 
-        probeType, 
-        centerProbeType, 
+      const {
+        units,
+        probeType,
+        centerProbeType,
         selectedExternalEdge,
         selectedInternalEdge,
         setCenterAsOrigin,
@@ -835,7 +831,7 @@ class ProbeWidget extends PureComponent {
         heightMapGridSizeX,
         heightMapGridSizeY
       } = this.state;
-      
+
       // Save non-numeric config
       this.config.set('probeType', probeType);
       this.config.set('centerProbeType', centerProbeType);
@@ -887,7 +883,7 @@ class ProbeWidget extends PureComponent {
         heightMapWidth = in2mm(heightMapWidth);
         heightMapHeight = in2mm(heightMapHeight);
       }
-      
+
       // Save numeric config in mm
       this.config.set('probeDiameter', Number(probeDiameter));
       this.config.set('touchPlateHeight', Number(touchPlateHeight));
@@ -927,7 +923,7 @@ class ProbeWidget extends PureComponent {
         },
         // Probe type selection - start with configuration tab
         probeType: this.config.get('probeType', PROBE_TYPE_CONFIG),
-        
+
         // Configuration parameters
         probeDiameter: Number(this.config.get('probeDiameter') || 3).toFixed(3) * 1,
         touchPlateHeight: Number(this.config.get('touchPlateHeight') || 0).toFixed(3) * 1,
@@ -939,23 +935,23 @@ class ProbeWidget extends PureComponent {
         xyClearing: Number(this.config.get('xyClearing') || 2).toFixed(3) * 1,
         probeOffset: Number(this.config.get('probeOffset') || 0).toFixed(3) * 1,
         probeDepth: Number(this.config.get('probeDepth') || 10).toFixed(3) * 1,
-        
+
         // External edge probing
         selectedExternalEdge: this.config.get('selectedExternalEdge', null),
-        
+
         // Internal edge probing
         selectedInternalEdge: this.config.get('selectedInternalEdge', null),
-        
+
         // Center probing
         centerProbeType: this.config.get('centerProbeType', CENTER_PROBE_EXTERNAL),
         setCenterAsOrigin: this.config.get('setCenterAsOrigin', true),
         centerSizeX: Number(this.config.get('centerSizeX') || 0).toFixed(3) * 1,
         centerSizeY: Number(this.config.get('centerSizeY') || 0).toFixed(3) * 1,
         centerPasses: Number(this.config.get('centerPasses') || 1),
-        
+
         // Rotation probing
         selectedRotationEdge: this.config.get('selectedRotationEdge', null),
-        
+
         // Height mapping
         heightMapStartX: Number(this.config.get('heightMapStartX') || 0).toFixed(3) * 1,
         heightMapStartY: Number(this.config.get('heightMapStartY') || 0).toFixed(3) * 1,
@@ -1076,9 +1072,7 @@ class ProbeWidget extends PureComponent {
                 <i className="fa fa-bars" />
                 <Space width="8" />
               </Widget.Sortable>
-              {isForkedWidget &&
-                <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-              }
+              {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
               {i18n._('Probe')}
             </Widget.Title>
             <Widget.Controls className={this.props.sortable.filterClassName}>
@@ -1140,8 +1134,7 @@ class ProbeWidget extends PureComponent {
             )}
           >
             {state.modal.name === MODAL_PREVIEW &&
-              <RunProbe state={state} actions={actions} />
-            }
+              <RunProbe state={state} actions={actions} />}
             <Probe
               state={state}
               actions={actions}
