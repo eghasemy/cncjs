@@ -18,10 +18,18 @@ import {
   EXTERNAL_EDGE_Y_POSITIVE,
   EXTERNAL_EDGE_Y_NEGATIVE,
   EXTERNAL_EDGE_Z_NEGATIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
   INTERNAL_EDGE_X_POSITIVE,
   INTERNAL_EDGE_X_NEGATIVE,
   INTERNAL_EDGE_Y_POSITIVE,
   INTERNAL_EDGE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
   CENTER_PROBE_EXTERNAL,
   CENTER_PROBE_INTERNAL,
   ROTATION_EDGE_LEFT,
@@ -379,10 +387,24 @@ class Probe extends PureComponent {
       return (
         <div>
           <div className="form-group">
-            <label className="control-label">{i18n._('External Edge Direction')}</label>
+            <label className="control-label">{i18n._('External Edge/Corner Direction')}</label>
             <div style={{ textAlign: 'center', margin: '20px 0' }}>
-              {/* Top row */}
+              {/* Top row - corners and edge */}
               <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y+ Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE)}
+                >
+                  ↖
+                </button>
                 <button
                   type="button"
                   className={classNames(
@@ -397,8 +419,22 @@ class Probe extends PureComponent {
                 >
                   ↑
                 </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y+ Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE)}
+                >
+                  ↗
+                </button>
               </div>
-              {/* Middle row */}
+              {/* Middle row - edges and center */}
               <div style={{ marginBottom: '10px' }}>
                 <button
                   type="button"
@@ -430,8 +466,22 @@ class Probe extends PureComponent {
                   →
                 </button>
               </div>
-              {/* Bottom row */}
+              {/* Bottom row - corners and edge */}
               <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y- Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE)}
+                >
+                  ↙
+                </button>
                 <button
                   type="button"
                   className={classNames(
@@ -445,6 +495,20 @@ class Probe extends PureComponent {
                   onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Y_NEGATIVE)}
                 >
                   ↓
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y- Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE)}
+                >
+                  ↘
                 </button>
               </div>
               {/* Z direction */}
@@ -477,10 +541,24 @@ class Probe extends PureComponent {
       return (
         <div>
           <div className="form-group">
-            <label className="control-label">{i18n._('Internal Edge Direction')}</label>
+            <label className="control-label">{i18n._('Internal Edge/Corner Direction')}</label>
             <div style={{ textAlign: 'center', margin: '20px 0' }}>
-              {/* Top row */}
+              {/* Top row - corners and edge */}
               <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y+ Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE)}
+                >
+                  ↖
+                </button>
                 <button
                   type="button"
                   className={classNames(
@@ -495,8 +573,22 @@ class Probe extends PureComponent {
                 >
                   ↑
                 </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y+ Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE)}
+                >
+                  ↗
+                </button>
               </div>
-              {/* Middle row */}
+              {/* Middle row - edges and center */}
               <div style={{ marginBottom: '10px' }}>
                 <button
                   type="button"
@@ -528,8 +620,22 @@ class Probe extends PureComponent {
                   →
                 </button>
               </div>
-              {/* Bottom row */}
+              {/* Bottom row - corners and edge */}
               <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y- Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE)}
+                >
+                  ↙
+                </button>
                 <button
                   type="button"
                   className={classNames(
@@ -543,6 +649,20 @@ class Probe extends PureComponent {
                   onClick={() => actions.selectInternalEdge(INTERNAL_EDGE_Y_NEGATIVE)}
                 >
                   ↓
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y- Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE)}
+                >
+                  ↘
                 </button>
               </div>
             </div>

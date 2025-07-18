@@ -46,10 +46,18 @@ import {
   EXTERNAL_EDGE_Y_POSITIVE,
   EXTERNAL_EDGE_Y_NEGATIVE,
   EXTERNAL_EDGE_Z_NEGATIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
   INTERNAL_EDGE_X_POSITIVE,
   INTERNAL_EDGE_X_NEGATIVE,
   INTERNAL_EDGE_Y_POSITIVE,
   INTERNAL_EDGE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
   CENTER_PROBE_EXTERNAL,
   ROTATION_EDGE_LEFT,
   ROTATION_EDGE_RIGHT,
@@ -329,6 +337,9 @@ class ProbeWidget extends PureComponent {
 
         // Determine probe direction and axis based on selection
         let probeAxis, probeDirection;
+        let isCornerProbe = false;
+        let xDirection, yDirection;
+
         switch (selectedExternalEdge) {
         case EXTERNAL_EDGE_X_POSITIVE:
           probeAxis = 'X';
@@ -350,36 +361,102 @@ class ProbeWidget extends PureComponent {
           probeAxis = 'Z';
           probeDirection = -probingDistance;
           break;
+        case EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
+          isCornerProbe = true;
+          xDirection = probingDistance;
+          yDirection = probingDistance;
+          break;
+        case EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
+          isCornerProbe = true;
+          xDirection = probingDistance;
+          yDirection = -probingDistance;
+          break;
+        case EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
+          isCornerProbe = true;
+          xDirection = -probingDistance;
+          yDirection = probingDistance;
+          break;
+        case EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
+          isCornerProbe = true;
+          xDirection = -probingDistance;
+          yDirection = -probingDistance;
+          break;
         default:
           return [];
         }
 
-        commands.push(
-          // Probe toward edge
-          gcode(`; Probe ${probeAxis} axis toward edge`),
-          gcode('G91'), // Relative positioning
-          gcode('G38.2', {
-            [probeAxis]: probeDirection,
-            F: searchFeedrate
-          }),
-          gcode('G90'), // Absolute positioning
+        if (isCornerProbe) {
+          // Corner probing sequence - probe both X and Y edges
+          commands.push(
+            gcode('; External Corner Probing Sequence'),
+            
+            // Probe X edge first
+            gcode('; Probe X edge for corner'),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              X: xDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
+            gcode('#4 = [posx]'), // Store X edge position
+            
+            // Retract from X edge
+            gcode('G91'),
+            gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
+            gcode('G90'),
+            
+            // Probe Y edge
+            gcode('; Probe Y edge for corner'),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              Y: yDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
+            gcode('#5 = [posy]'), // Store Y edge position
+            
+            // Set work coordinates to corner position
+            gcode('; Set work coordinates to corner'),
+            gcode('G10', {
+              L: 20,
+              P: 1, // G54 coordinate system
+              X: '#4',
+              Y: '#5'
+            }),
+            
+            // Return to safe position
+            gcode('; Return to safe position'),
+            gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
+          );
+        } else {
+          // Single edge probing
+          commands.push(
+            // Probe toward edge
+            gcode(`; Probe ${probeAxis} axis toward edge`),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              [probeAxis]: probeDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
 
-          // Set work coordinate
-          gcode(`; Set work coordinate for ${probeAxis} axis`),
-          gcode('G10', {
-            L: 20,
-            P: 1, // G54 coordinate system
-            [probeAxis]: touchPlateHeight
-          }),
+            // Set work coordinate
+            gcode(`; Set work coordinate for ${probeAxis} axis`),
+            gcode('G10', {
+              L: 20,
+              P: 1, // G54 coordinate system
+              [probeAxis]: touchPlateHeight
+            }),
 
-          // Retract from edge
-          gcode('; Retract from edge'),
-          gcode('G91'), // Relative positioning
-          gcode('G0', {
-            [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
-          }),
-          gcode('G90') // Absolute positioning
-        );
+            // Retract from edge
+            gcode('; Retract from edge'),
+            gcode('G91'), // Relative positioning
+            gcode('G0', {
+              [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
+            }),
+            gcode('G90') // Absolute positioning
+          );
+        }
 
         return commands;
       },
@@ -406,6 +483,9 @@ class ProbeWidget extends PureComponent {
 
         // Determine probe direction and axis based on selection
         let probeAxis, probeDirection;
+        let isCornerProbe = false;
+        let xDirection, yDirection;
+
         switch (selectedInternalEdge) {
         case INTERNAL_EDGE_X_POSITIVE:
           probeAxis = 'X';
@@ -423,36 +503,102 @@ class ProbeWidget extends PureComponent {
           probeAxis = 'Y';
           probeDirection = -probingDistance;
           break;
+        case INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE:
+          isCornerProbe = true;
+          xDirection = probingDistance;
+          yDirection = probingDistance;
+          break;
+        case INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE:
+          isCornerProbe = true;
+          xDirection = probingDistance;
+          yDirection = -probingDistance;
+          break;
+        case INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE:
+          isCornerProbe = true;
+          xDirection = -probingDistance;
+          yDirection = probingDistance;
+          break;
+        case INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE:
+          isCornerProbe = true;
+          xDirection = -probingDistance;
+          yDirection = -probingDistance;
+          break;
         default:
           return [];
         }
 
-        commands.push(
-          // Probe toward internal edge
-          gcode(`; Probe ${probeAxis} axis toward internal edge`),
-          gcode('G91'), // Relative positioning
-          gcode('G38.2', {
-            [probeAxis]: probeDirection,
-            F: searchFeedrate
-          }),
-          gcode('G90'), // Absolute positioning
+        if (isCornerProbe) {
+          // Internal corner probing sequence - probe both X and Y edges
+          commands.push(
+            gcode('; Internal Corner Probing Sequence'),
+            
+            // Probe X edge first
+            gcode('; Probe X edge for internal corner'),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              X: xDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
+            gcode('#4 = [posx]'), // Store X edge position
+            
+            // Retract from X edge
+            gcode('G91'),
+            gcode('G0', { X: xDirection > 0 ? -xyClearing : xyClearing }),
+            gcode('G90'),
+            
+            // Probe Y edge
+            gcode('; Probe Y edge for internal corner'),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              Y: yDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
+            gcode('#5 = [posy]'), // Store Y edge position
+            
+            // Set work coordinates to corner position
+            gcode('; Set work coordinates to internal corner'),
+            gcode('G10', {
+              L: 20,
+              P: 1, // G54 coordinate system
+              X: '#4',
+              Y: '#5'
+            }),
+            
+            // Return to safe position
+            gcode('; Return to safe position'),
+            gcode('G0', { X: '#1', Y: '#2', Z: '#3' })
+          );
+        } else {
+          // Single edge probing
+          commands.push(
+            // Probe toward internal edge
+            gcode(`; Probe ${probeAxis} axis toward internal edge`),
+            gcode('G91'), // Relative positioning
+            gcode('G38.2', {
+              [probeAxis]: probeDirection,
+              F: searchFeedrate
+            }),
+            gcode('G90'), // Absolute positioning
 
-          // Set work coordinate
-          gcode(`; Set work coordinate for ${probeAxis} axis`),
-          gcode('G10', {
-            L: 20,
-            P: 1, // G54 coordinate system
-            [probeAxis]: touchPlateHeight
-          }),
+            // Set work coordinate
+            gcode(`; Set work coordinate for ${probeAxis} axis`),
+            gcode('G10', {
+              L: 20,
+              P: 1, // G54 coordinate system
+              [probeAxis]: touchPlateHeight
+            }),
 
-          // Retract from edge
-          gcode('; Retract from edge'),
-          gcode('G91'), // Relative positioning
-          gcode('G0', {
-            [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
-          }),
-          gcode('G90') // Absolute positioning
-        );
+            // Retract from edge
+            gcode('; Retract from edge'),
+            gcode('G91'), // Relative positioning
+            gcode('G0', {
+              [probeAxis]: probeDirection > 0 ? -xyClearing : xyClearing
+            }),
+            gcode('G90') // Absolute positioning
+          );
+        }
 
         return commands;
       },

@@ -23,11 +23,23 @@ export const EXTERNAL_EDGE_Y_POSITIVE = 'y_positive';
 export const EXTERNAL_EDGE_Y_NEGATIVE = 'y_negative';
 export const EXTERNAL_EDGE_Z_NEGATIVE = 'z_negative';
 
+// External Corner Probe Directions
+export const EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE = 'x_positive_y_positive';
+export const EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE = 'x_positive_y_negative';
+export const EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE = 'x_negative_y_positive';
+export const EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE = 'x_negative_y_negative';
+
 // Internal Edge Probe Directions
 export const INTERNAL_EDGE_X_POSITIVE = 'x_positive';
 export const INTERNAL_EDGE_X_NEGATIVE = 'x_negative';
 export const INTERNAL_EDGE_Y_POSITIVE = 'y_positive';
 export const INTERNAL_EDGE_Y_NEGATIVE = 'y_negative';
+
+// Internal Corner Probe Directions
+export const INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE = 'x_positive_y_positive';
+export const INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE = 'x_positive_y_negative';
+export const INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE = 'x_negative_y_positive';
+export const INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE = 'x_negative_y_negative';
 
 // Center Probe Types
 export const CENTER_PROBE_EXTERNAL = 'external';
