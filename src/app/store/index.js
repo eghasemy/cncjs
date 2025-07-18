@@ -84,14 +84,6 @@ const normalizeState = (state) => {
     secondaryList = get(state, 'workspace.container.secondary.widgets');
   }
 
-  // Update additional widgets
-  let additionalList = get(cnc.state, 'workspace.container.additional.widgets');
-  if (additionalList) {
-    set(state, 'workspace.container.additional.widgets', additionalList);
-  } else {
-    additionalList = get(state, 'workspace.container.additional.widgets');
-  }
-
   primaryList = uniq(ensureArray(primaryList)); // Use the same order in primaryList
   primaryList = difference(primaryList, defaultList); // Exclude defaultList
 
@@ -99,14 +91,8 @@ const normalizeState = (state) => {
   secondaryList = difference(secondaryList, primaryList); // Exclude primaryList
   secondaryList = difference(secondaryList, defaultList); // Exclude defaultList
 
-  additionalList = uniq(ensureArray(additionalList)); // Use the same order in additionalList
-  additionalList = difference(additionalList, primaryList); // Exclude primaryList
-  additionalList = difference(additionalList, secondaryList); // Exclude secondaryList
-  additionalList = difference(additionalList, defaultList); // Exclude defaultList
-
   set(state, 'workspace.container.primary.widgets', primaryList);
   set(state, 'workspace.container.secondary.widgets', secondaryList);
-  set(state, 'workspace.container.additional.widgets', additionalList);
 
   //
   // Remember configured axes (#416)

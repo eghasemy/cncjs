@@ -91,44 +91,6 @@
             right: 360px;
             top: ($navbar-height + 1);
             bottom: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .visualizer-section {
-            flex: 1 1 50%;
-            min-height: 50%;
-            max-height: 50%;
-            border-bottom: 1px solid #ccc;
-            position: relative;
-            overflow: hidden;
-
-            // Constrain widgets within this section
-            .widget {
-                position: relative !important;
-                height: 100% !important;
-                max-height: 100% !important;
-                
-                .widget-content {
-                    position: absolute !important;
-                    top: 38px !important;
-                    right: 0 !important;
-                    bottom: 0 !important;
-                    left: 0 !important;
-                }
-            }
-        }
-
-        .additional-widgets-section {
-            flex: 1 1 50%;
-            min-height: 50%;
-            background-color: #f6f7f8;
-            overflow-y: auto;
-
-            .additional-widgets-header {
-                padding: 0 10px;
-                border-bottom: 1px solid #ccc;
-            }
         }
     }
 }
