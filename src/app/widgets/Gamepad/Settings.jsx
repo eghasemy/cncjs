@@ -4,7 +4,7 @@ import { Button } from 'app/components/Buttons';
 import Modal from 'app/components/Modal';
 import i18n from 'app/lib/i18n';
 
-const ACTIONS = [
+const getActions = () => [
     { value: '', label: i18n._('None') },
     { value: 'jog-x+', label: i18n._('Jog +X') },
     { value: 'jog-x-', label: i18n._('Jog -X') },
@@ -156,6 +156,7 @@ class Settings extends PureComponent {
     render() {
         const { onCancel } = this.props;
         const { buttons, axes, buttonMap, axisMap, name, activeButtons, activeAxes } = this.state;
+        const actions = getActions();
         return (
           <Modal disableOverlay size="sm" onClose={onCancel}>
             <Modal.Header>
@@ -184,7 +185,7 @@ class Settings extends PureComponent {
                             value={buttonMap[i] || ''}
                             onChange={e => this.handleChangeButton(i, e.target.value)}
                           >
-                            {ACTIONS.map(opt => (
+                            {actions.map(opt => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                 ))}
                           </select>
@@ -215,7 +216,7 @@ class Settings extends PureComponent {
                                             value={map.negative || ''}
                                             onChange={e => this.handleChangeAxis(i, 'negative', e.target.value)}
                                           >
-                                            {ACTIONS.map(opt => (
+                                            {actions.map(opt => (
                                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                     ))}
                                           </select>
@@ -226,7 +227,7 @@ class Settings extends PureComponent {
                                             value={map.positive || ''}
                                             onChange={e => this.handleChangeAxis(i, 'positive', e.target.value)}
                                           >
-                                            {ACTIONS.map(opt => (
+                                            {actions.map(opt => (
                                               <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                     ))}
                                           </select>
