@@ -180,6 +180,10 @@ class ProbeWidget extends PureComponent {
         const probeDepth = event.target.value;
         this.setState({ probeDepth });
       },
+      toggleShowProbeModal: () => {
+        const { showProbeModal } = this.state;
+        this.setState({ showProbeModal: !showProbeModal });
+      },
       // External edge handlers
       selectExternalEdge: (direction) => {
         this.setState({
@@ -219,6 +223,22 @@ class ProbeWidget extends PureComponent {
       applyRotationToGcode: () => {
         // TODO: Implement G-code rotation application
         console.log('Apply rotation to G-code');
+      },
+      applyRotationMatrixToGcode: () => {
+        // Note: This is a placeholder implementation for 2D rotation matrix application
+        // In a production environment, this would need to:
+        // 1. Calculate the actual rotation angle from probe results
+        // 2. Access the loaded G-code from the application state
+        // 3. Parse and transform all coordinate movements
+        // 4. Update the visualizer and file content
+
+        console.log('2D Rotation Matrix method selected');
+        console.log('This would apply rotation transformation to loaded G-code using X0Y0 as center');
+        console.log('Implementation requires integration with file management and visualizer systems');
+
+        // For now, just show a message to the user
+        // In practice, this would access controller.context or pub/sub events
+        // to get the loaded G-code and apply the transformation
       },
       // Height map handlers
       handleHeightMapStartXChange: (event) => {
@@ -718,7 +738,8 @@ class ProbeWidget extends PureComponent {
         const {
           selectedRotationEdge,
           probingDistance,
-          searchFeedrate
+          searchFeedrate,
+          rotationMethod
         } = this.state;
 
         if (!selectedRotationEdge) {
@@ -782,11 +803,27 @@ class ProbeWidget extends PureComponent {
           gcode('#7 = [#6 - #4]'), // Delta Y
           gcode('#8 = [#5 - #3]'), // Delta X
           gcode('#9 = [ATAN[#7]/[#8]]'), // Angle in radians
+        );
 
-          // Apply coordinate system rotation using X0, Y0 as center
-          gcode('; Apply rotation to coordinate system'),
-          gcode('G68 X0 Y0 R[#9 * 180 / 3.14159]'), // Rotate coordinate system
+        if (rotationMethod === ROTATION_METHOD_G68) {
+          // Apply coordinate system rotation using G68
+          commands.push(
+            gcode('; Apply rotation to coordinate system'),
+            gcode('G68 X0 Y0 R[#9 * 180 / 3.14159]') // Rotate coordinate system
+          );
+        } else {
+          // For matrix method, store the angle for later application to G-code
+          commands.push(
+            gcode('; Store rotation angle for G-code transformation'),
+            gcode('(MSG, Rotation angle calculated: #9 radians)'),
+            gcode('(MSG, Apply 2D rotation matrix to loaded G-code using X0 Y0 as center)')
+          );
 
+          // Apply rotation matrix to loaded G-code
+          this.actions.applyRotationMatrixToGcode();
+        }
+
+        commands.push(
           // Return to original position
           gcode('G0', { X: '#1', Y: '#2' })
         );
@@ -876,14 +913,22 @@ class ProbeWidget extends PureComponent {
         controller.command('gcode', commands);
       },
       startProbing: () => {
-        // Get positioning commands first
-        const positioningCommands = this.actions.generatePositioningCommands();
-        // Get probe commands based on current probe type
-        const probeCommands = this.actions.populateProbeCommands();
-        // Combine positioning and probe commands
-        const allCommands = [...positioningCommands, ...probeCommands];
-        // Execute all commands
-        controller.command('gcode', allCommands);
+        const { showProbeModal } = this.state;
+
+        if (showProbeModal) {
+          // Show modal preview
+          this.actions.openModal(MODAL_PREVIEW);
+        } else {
+          // Execute directly
+          // Get positioning commands first
+          const positioningCommands = this.actions.generatePositioningCommands();
+          // Get probe commands based on current probe type
+          const probeCommands = this.actions.populateProbeCommands();
+          // Combine positioning and probe commands
+          const allCommands = [...positioningCommands, ...probeCommands];
+          // Execute all commands
+          controller.command('gcode', allCommands);
+        }
       },
       generatePositioningCommands: () => {
         const {
@@ -901,16 +946,16 @@ class ProbeWidget extends PureComponent {
           gcode('; Positioning for probing'),
           gcode('G90'), // Absolute positioning
           gcode('#1 = [posx]'), // Store current X position
-          gcode('#2 = [posy]'), // Store current Y position  
+          gcode('#2 = [posy]'), // Store current Y position
           gcode('#3 = [posz]'), // Store current Z position
         ];
 
         // For edge, center, and rotation probing, move to XY clearance position
-        if (probeType === PROBE_TYPE_EXTERNAL_EDGE || 
+        if (probeType === PROBE_TYPE_EXTERNAL_EDGE ||
             probeType === PROBE_TYPE_INTERNAL_EDGE ||
             probeType === PROBE_TYPE_CENTER ||
             probeType === PROBE_TYPE_ROTATION) {
-          
+
           commands.push(
             gcode('; Move to XY clearance position'),
             gcode('G91'), // Relative positioning
@@ -1060,7 +1105,8 @@ class ProbeWidget extends PureComponent {
         pauseBeforeProbing,
         setZZeroAtOrigin,
         heightMapGridSizeX,
-        heightMapGridSizeY
+        heightMapGridSizeY,
+        showProbeModal
       } = this.state;
 
       // Save non-numeric config
@@ -1076,6 +1122,7 @@ class ProbeWidget extends PureComponent {
       this.config.set('setZZeroAtOrigin', setZZeroAtOrigin);
       this.config.set('heightMapGridSizeX', heightMapGridSizeX);
       this.config.set('heightMapGridSizeY', heightMapGridSizeY);
+      this.config.set('showProbeModal', showProbeModal);
 
       let {
         probeDiameter,
@@ -1167,6 +1214,7 @@ class ProbeWidget extends PureComponent {
         xyClearing: Number(this.config.get('xyClearing') || 2).toFixed(3) * 1,
         probeOffset: Number(this.config.get('probeOffset') || 0).toFixed(3) * 1,
         probeDepth: Number(this.config.get('probeDepth') || 10).toFixed(3) * 1,
+        showProbeModal: this.config.get('showProbeModal', false),
 
         // External edge probing
         selectedExternalEdge: this.config.get('selectedExternalEdge', null),

@@ -6,7 +6,6 @@ import {
   METRIC_UNITS
 } from '../../constants';
 import {
-  MODAL_PREVIEW,
   PROBE_TYPE_CONFIG,
   PROBE_TYPE_EXTERNAL_EDGE,
   PROBE_TYPE_INTERNAL_EDGE,
@@ -171,7 +170,8 @@ class Probe extends PureComponent {
         latchDistance,
         xyClearing,
         probeOffset,
-        probeDepth
+        probeDepth,
+        showProbeModal
       } = state;
 
       return (
@@ -374,6 +374,27 @@ class Probe extends PureComponent {
                       onChange={actions.handleProbeDepthChange}
                     />
                     <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Probing Behavior Section */}
+          <div className="panel panel-default">
+            <div className="panel-heading">{i18n._('Probing Behavior')}</div>
+            <div className="panel-body">
+              <div className="row no-gutters">
+                <div className="col-xs-12">
+                  <div className="checkbox">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={state.showProbeModal}
+                        onChange={actions.toggleShowProbeModal}
+                      />
+                      {i18n._('Show probe preview modal before starting')}
+                    </label>
                   </div>
                 </div>
               </div>
@@ -892,7 +913,7 @@ class Probe extends PureComponent {
 
           <div className="form-group">
             <p className="help-block">
-              {rotationMethod === ROTATION_METHOD_G68 
+              {rotationMethod === ROTATION_METHOD_G68
                 ? i18n._('Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.')
                 : i18n._('Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.')
               }

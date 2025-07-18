@@ -455,6 +455,8 @@
   "XY Clearance": "XY Clearance",
   "Offset": "Offset",
   "Depth": "Depth",
+  "Probing Behavior": "Probing Behavior",
+  "Show probe preview modal before starting": "Show probe preview modal before starting",
   "External Edge/Corner Direction": "External Edge/Corner Direction",
   "Y+ Edge": "Y+ Edge",
   "X- Edge": "X- Edge",
