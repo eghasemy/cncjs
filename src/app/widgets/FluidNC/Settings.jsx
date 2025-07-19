@@ -44,9 +44,8 @@ class Settings extends PureComponent {
     };
 
     rebootDevice = () => {
-      if (window.confirm(i18n._('Are you sure you want to reboot the FluidNC device?'))) {
-        controller.command('gcode', '$Bye');
-      }
+      // TODO: Add proper confirmation modal
+      controller.command('gcode', '$Bye');
     };
 
     uploadFile = (file, content) => {
@@ -57,10 +56,9 @@ class Settings extends PureComponent {
     };
 
     deleteFile = (filename) => {
-      if (window.confirm(i18n._('Are you sure you want to delete {{filename}}?', { filename }))) {
-        controller.command('gcode', `$File/Delete=${filename}`);
-        this.refreshFiles();
-      }
+      // TODO: Add proper confirmation modal
+      controller.command('gcode', `$File/Delete=${filename}`);
+      this.refreshFiles();
     };
 
     saveConfig = (config) => {

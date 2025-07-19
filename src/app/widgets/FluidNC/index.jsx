@@ -266,9 +266,7 @@ class FluidNCWidget extends PureComponent {
           <Widget.Header>
             <Widget.Title>
               <Widget.Anchor href="#fluidnc">
-                {isForkedWidget &&
-                  <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-                }
+                {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
                 {i18n._('FluidNC')}
               </Widget.Anchor>
             </Widget.Title>
@@ -341,11 +339,9 @@ class FluidNCWidget extends PureComponent {
             />
           </Widget.Content>
           {state.modal.name === MODAL_CONTROLLER &&
-            <Controller state={state} actions={actions} />
-          }
+            <Controller state={state} actions={actions} />}
           {state.modal.name === MODAL_SETTINGS &&
-            <Settings state={state} actions={actions} />
-          }
+            <Settings state={state} actions={actions} />}
         </Widget>
       );
     }

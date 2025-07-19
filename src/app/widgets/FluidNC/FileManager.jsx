@@ -32,7 +32,7 @@ class FileManager extends PureComponent {
     handleDrop = (e) => {
       e.preventDefault();
       this.setState({ dragOver: false });
-      
+
       const files = Array.from(e.dataTransfer.files);
       files.forEach(file => this.uploadFile(file));
     };
@@ -45,25 +45,27 @@ class FileManager extends PureComponent {
 
     uploadFile = (file) => {
       this.setState({ uploading: true });
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         this.props.onUpload(file.name, e.target.result);
         this.setState({ uploading: false });
       };
       reader.onerror = () => {
-        alert(i18n._('Failed to read file: {{filename}}', { filename: file.name }));
+        console.error(i18n._('Failed to read file: {{filename}}', { filename: file.name }));
         this.setState({ uploading: false });
       };
       reader.readAsText(file);
     };
 
     formatFileSize = (bytes) => {
-      if (bytes === 0) return '0 B';
+      if (bytes === 0) {
+ return '0 B';
+}
       const k = 1024;
       const sizes = ['B', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      return parseFloat((bytes / k ** i).toFixed(2)) + ' ' + sizes[i];
     };
 
     render() {
@@ -104,7 +106,7 @@ class FileManager extends PureComponent {
               </div>
             </div>
           </div>
-          
+
           <div
             className={`${styles.dropZone} ${dragOver ? styles.dragOver : ''}`}
             onDragOver={this.handleDragOver}
@@ -142,7 +144,7 @@ class FileManager extends PureComponent {
                 </div>
               </div>
             </div>
-            
+
             {files.length === 0 ? (
               <div className={styles.emptyState}>
                 <p>{i18n._('No files found on the device.')}</p>
@@ -156,12 +158,12 @@ class FileManager extends PureComponent {
                       <i className={`fa ${this.getFileIcon(file.name)}`} />
                       <span className="space" />
                       {file.name}
-                      {file.active && (
+                      {file.active ? (
                         <span className={styles.activeIndicator}>
                           <span className="space" />
                           <i className="fa fa-star" title={i18n._('Active Configuration')} />
                         </span>
-                      )}
+) : null}
                     </div>
                     <div className="col-sm-2">
                       {this.formatFileSize(file.size || 0)}

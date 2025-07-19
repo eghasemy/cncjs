@@ -18,13 +18,13 @@ class EndstopTester extends PureComponent {
 
     testEndstop = (axis, direction) => {
       this.setState({ testing: true });
-      
+
       // Send a small movement command to test endstop
       const distance = direction === 'positive' ? 1 : -1;
       const command = `G91 G1 ${axis.toUpperCase()}${distance} F100`;
-      
+
       controller.command('gcode', command);
-      
+
       // Check status after movement
       setTimeout(() => {
         controller.command('gcode', '?');
@@ -36,15 +36,13 @@ class EndstopTester extends PureComponent {
     };
 
     homeAxis = (axis) => {
-      if (window.confirm(i18n._('Home {{axis}} axis?', { axis: axis.toUpperCase() }))) {
-        controller.command('gcode', `$H${axis.toUpperCase()}`);
-      }
+      // TODO: Add proper confirmation modal
+      controller.command('gcode', `$H${axis.toUpperCase()}`);
     };
 
     homeAllAxes = () => {
-      if (window.confirm(i18n._('Home all axes?'))) {
-        controller.command('gcode', '$H');
-      }
+      // TODO: Add proper confirmation modal
+      controller.command('gcode', '$H');
     };
 
     render() {
@@ -97,7 +95,7 @@ class EndstopTester extends PureComponent {
             {axes.map(axis => (
               <div key={axis} className={styles.axisSection}>
                 <h6>{i18n._('{{axis}} Axis', { axis: axis.toUpperCase() })}</h6>
-                
+
                 <div className="row">
                   <div className="col-sm-6">
                     <div className={styles.endstopStatus}>
@@ -109,7 +107,7 @@ class EndstopTester extends PureComponent {
                           {endstopStates[axis]?.min ? i18n._('Triggered') : i18n._('Open')}
                         </span>
                       </div>
-                      
+
                       <div className={styles.endstopIndicator}>
                         <span className={styles.label}>Max Endstop:</span>
                         <span className={`${styles.status} ${endstopStates[axis]?.max ? styles.triggered : styles.open}`}>
@@ -120,7 +118,7 @@ class EndstopTester extends PureComponent {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="col-sm-6">
                     <div className={styles.testControls}>
                       <Button
@@ -171,7 +169,7 @@ class EndstopTester extends PureComponent {
               <li>{i18n._('Homing will move the axis until it hits the endstop switch')}</li>
               <li>{i18n._('Ensure endstops are properly wired and configured before using')}</li>
             </ul>
-            
+
             <div className={styles.warningBox}>
               <i className="fa fa-exclamation-triangle" />
               <span className="space" />

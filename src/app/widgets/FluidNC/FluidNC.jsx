@@ -1,4 +1,3 @@
-import { ensureArray } from 'ensure-type';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
@@ -84,7 +83,7 @@ class FluidNC extends PureComponent {
                 />
               </Toggler>
             </Panel.Heading>
-            {panel.queueReports.expanded && (
+            {panel.queueReports.expanded ? (
               <Panel.Body>
                 <div className="row no-gutters">
                   <div className="col col-xs-4">
@@ -127,7 +126,7 @@ class FluidNC extends PureComponent {
                   </div>
                 </div>
               </Panel.Body>
-            )}
+) : null}
           </Panel>
           <Panel className={styles.panel}>
             <Panel.Heading className={styles['panel-heading']}>
@@ -145,7 +144,7 @@ class FluidNC extends PureComponent {
                 />
               </Toggler>
             </Panel.Heading>
-            {panel.statusReports.expanded && (
+            {panel.statusReports.expanded ? (
               <Panel.Body>
                 <div className="row no-gutters">
                   <div className="col col-xs-4">
@@ -175,7 +174,7 @@ class FluidNC extends PureComponent {
                 </div>
                 <Overrides ovF={ovF} ovR={ovR} ovS={ovS} />
               </Panel.Body>
-            )}
+) : null}
           </Panel>
           <Panel className={styles.panel}>
             <Panel.Heading className={styles['panel-heading']}>
@@ -193,7 +192,7 @@ class FluidNC extends PureComponent {
                 />
               </Toggler>
             </Panel.Heading>
-            {panel.modalGroups.expanded && (
+            {panel.modalGroups.expanded ? (
               <Panel.Body>
                 <div className="row no-gutters">
                   <div className="col col-xs-6">
@@ -278,7 +277,7 @@ class FluidNC extends PureComponent {
                   </div>
                 </div>
               </Panel.Body>
-            )}
+) : null}
           </Panel>
         </div>
       );

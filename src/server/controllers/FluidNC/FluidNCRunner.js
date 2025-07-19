@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import FluidNCLineParser from './FluidNCLineParser';
 
 class FluidNCRunner {

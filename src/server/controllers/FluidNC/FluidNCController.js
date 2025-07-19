@@ -1,23 +1,16 @@
 import {
   ensureArray,
   ensurePositiveNumber,
-  ensureString,
 } from 'ensure-type';
-import * as gcodeParser from 'gcode-parser';
 import _ from 'lodash';
 import SerialConnection from '../../lib/SerialConnection';
 import EventTrigger from '../../lib/EventTrigger';
 import Feeder from '../../lib/Feeder';
-import MessageSlot from '../../lib/MessageSlot';
 import Sender, { SP_TYPE_CHAR_COUNTING } from '../../lib/Sender';
 import Workflow, {
   WORKFLOW_STATE_IDLE,
-  WORKFLOW_STATE_PAUSED,
   WORKFLOW_STATE_RUNNING
 } from '../../lib/Workflow';
-import delay from '../../lib/delay';
-import evaluateAssignmentExpression from '../../lib/evaluate-assignment-expression';
-import x from '../../lib/json-stringify';
 import logger from '../../lib/logger';
 import translateExpression from '../../lib/translate-expression';
 import config from '../../services/configstore';
@@ -25,35 +18,13 @@ import monitor from '../../services/monitor';
 import taskRunner from '../../services/taskrunner';
 import store from '../../store';
 import {
-  GLOBAL_OBJECTS as globalObjects,
-  // Builtin Commands
-  BUILTIN_COMMAND_MSG,
-  BUILTIN_COMMAND_WAIT,
-  // M6 Tool Change
-  TOOL_CHANGE_POLICY_IGNORE_M6_COMMANDS,
-  TOOL_CHANGE_POLICY_SEND_M6_COMMANDS,
-  TOOL_CHANGE_POLICY_MANUAL_TOOL_CHANGE_WCS,
-  TOOL_CHANGE_POLICY_MANUAL_TOOL_CHANGE_TLO,
-  TOOL_CHANGE_POLICY_MANUAL_TOOL_CHANGE_CUSTOM_PROBING,
-  // Units
-  IMPERIAL_UNITS,
-  METRIC_UNITS,
   // Write Source
   WRITE_SOURCE_CLIENT,
-  WRITE_SOURCE_FEEDER
 } from '../constants';
-import * as builtinCommand from '../utils/builtin-command';
-import { isM0, isM1, isM6, replaceM6 } from '../utils/gcode';
-import { mapPositionToUnits, mapValueToUnits } from '../utils/units';
 import FluidNCRunner from './FluidNCRunner';
 import {
   FLUIDNC,
-  FLUIDNC_ACTIVE_STATE_RUN,
-  FLUIDNC_ACTIVE_STATE_HOLD,
   FLUIDNC_REALTIME_COMMANDS,
-  FLUIDNC_ALARMS,
-  FLUIDNC_ERRORS,
-  FLUIDNC_SETTINGS,
 } from './constants';
 
 const log = logger('controller:FluidNC');
@@ -214,8 +185,6 @@ class FluidNCController {
           // Remove comments that start with a semicolon `;`
           line = line.replace(/;.*/g, '').trim();
           context = this.populateContext(context);
-
-          const { sent, received } = this.sender.state;
 
           if (line[0] === '%') {
             // %
@@ -485,7 +454,7 @@ class FluidNCController {
     }
 
     open(callback = noop) {
-      const { port, baudrate, rtscts } = this.options;
+      const { port, baudrate } = this.options;
 
       // Assertion check
       if (this.isOpen()) {
@@ -756,7 +725,6 @@ class FluidNCController {
         },
         'lasertest': () => {
           const [power = 0, duration = 0] = args;
-          const powerPercent = ensurePositiveNumber(power / 255 * 100);
           const durationMs = ensurePositiveNumber(duration);
 
           // Turn on the laser at the specified power level
@@ -801,7 +769,6 @@ class FluidNCController {
         },
         'watchdir:load': () => {
           const [file, callback = noop] = args;
-          const context = {}; // empty context
 
           monitor.readFile(file, (err, data) => {
             if (err) {

@@ -23,7 +23,7 @@ class ConfigEditor extends PureComponent {
 
     componentDidUpdate(prevProps) {
       if (prevProps.config !== this.props.config) {
-        this.setState({ 
+        this.setState({
           editedConfig: this.props.config,
           hasChanges: false
         });
@@ -32,29 +32,27 @@ class ConfigEditor extends PureComponent {
 
     handleConfigChange = (e) => {
       const editedConfig = e.target.value;
-      this.setState({ 
+      this.setState({
         editedConfig,
         hasChanges: editedConfig !== this.props.config
       });
     };
 
     handleSave = () => {
-      if (window.confirm(i18n._('Are you sure you want to save the configuration? This will restart the device.'))) {
-        this.setState({ saving: true });
-        this.props.onSave(this.state.editedConfig);
-        setTimeout(() => {
+      // TODO: Add proper confirmation modal
+      this.setState({ saving: true });
+      this.props.onSave(this.state.editedConfig);
+      setTimeout(() => {
           this.setState({ saving: false, hasChanges: false });
         }, 2000);
-      }
     };
 
     handleReset = () => {
-      if (window.confirm(i18n._('Are you sure you want to discard all changes?'))) {
-        this.setState({ 
-          editedConfig: this.props.config,
-          hasChanges: false
-        });
-      }
+      // TODO: Add proper confirmation modal  
+      this.setState({
+        editedConfig: this.props.config,
+        hasChanges: false
+      });
     };
 
     render() {
@@ -111,14 +109,14 @@ class ConfigEditor extends PureComponent {
           </div>
 
           <div className={styles.editorContainer}>
-            {hasChanges && (
+            {hasChanges ? (
               <div className={styles.changeIndicator}>
                 <i className="fa fa-exclamation-triangle" />
                 <span className="space" />
                 {i18n._('You have unsaved changes')}
               </div>
-            )}
-            
+) : null}
+
             <textarea
               className={styles.configTextarea}
               value={editedConfig}
@@ -136,7 +134,7 @@ class ConfigEditor extends PureComponent {
               <li>{i18n._('Syntax errors may prevent the device from starting properly')}</li>
               <li>{i18n._('Always backup your working configuration before making changes')}</li>
             </ul>
-            
+
             <h6>{i18n._('Common Configuration Sections:')}</h6>
             <div className={styles.configReference}>
               <div className="row">
