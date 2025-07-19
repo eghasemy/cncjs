@@ -468,8 +468,8 @@ class ProbeWidget extends PureComponent {
         const startY = parseFloat(heightMapStartY) || 0;
         const width = parseFloat(heightMapWidth) || 100;
         const height = parseFloat(heightMapHeight) || 100;
-        const gridX = parseInt(heightMapGridSizeX) || 3;
-        const gridY = parseInt(heightMapGridSizeY) || 3;
+        const gridX = parseInt(heightMapGridSizeX, 10) || 3;
+        const gridY = parseInt(heightMapGridSizeY, 10) || 3;
 
         const originalGcode = sender.gcode;
         const lines = originalGcode.split('\n');
@@ -542,7 +542,6 @@ class ProbeWidget extends PureComponent {
               // Check if coordinates are within the height map area
               if (currentX >= startX && currentX <= startX + width &&
                   currentY >= startY && currentY <= startY + height) {
-
                 const heightCompensation = interpolateHeight(currentX, currentY);
                 const compensatedZ = currentZ + heightCompensation;
 
