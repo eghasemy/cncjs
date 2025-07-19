@@ -8,12 +8,14 @@ import controller from 'app/lib/controller';
 import WidgetConfig from '../WidgetConfig';
 import GrblHAL from './GrblHAL';
 import Controller from './Controller';
+import Settings from './Settings';
 import {
   GRBLHAL
 } from '../../constants';
 import {
   MODAL_NONE,
-  MODAL_CONTROLLER
+  MODAL_CONTROLLER,
+  MODAL_SETTINGS
 } from './constants';
 import styles from './index.styl';
 
@@ -268,6 +270,13 @@ class GrblHALWidget extends PureComponent {
                 </Widget.Button>
               )}
               {isReady && (
+                <Widget.Button
+                  onClick={() => actions.openModal(MODAL_SETTINGS)}
+                >
+                  <i className="fa fa-sliders" />
+                </Widget.Button>
+              )}
+              {isReady && (
                 <Widget.DropdownButton
                   toggle={<i className="fa fa-th-large" />}
                 >
@@ -402,6 +411,9 @@ class GrblHALWidget extends PureComponent {
             >
               {state.modal.name === MODAL_CONTROLLER &&
                 <Controller state={state} actions={actions} />
+              }
+              {state.modal.name === MODAL_SETTINGS &&
+                <Settings state={state} actions={actions} />
               }
               <GrblHAL
                 state={state}
