@@ -226,9 +226,9 @@ class ProbeWidget extends PureComponent {
         console.log('Apply rotation to G-code');
       },
       applyRotationMatrixToGcode: () => {
-        // Access the loaded G-code content through the controller context
-        const sender = controller.state && controller.state.sender;
-        if (!sender || !sender.gcode) {
+        // Access the loaded G-code content from widget state
+        const { gcode } = this.state;
+        if (!gcode || !gcode.content) {
           console.warn('No G-code loaded to transform');
           return;
         }
@@ -259,7 +259,7 @@ class ProbeWidget extends PureComponent {
           return;
         }
 
-        const originalGcode = sender.gcode;
+        const originalGcode = gcode.content;
         const lines = originalGcode.split('\n');
         const transformedLines = [];
 
@@ -380,15 +380,15 @@ class ProbeWidget extends PureComponent {
         this.setState({ setZZeroAtOrigin: !setZZeroAtOrigin });
       },
       autoDetectHeightMapArea: () => {
-        // Access the loaded G-code content through the controller context
-        const sender = controller.state && controller.state.sender;
-        if (!sender || !sender.gcode) {
+        // Access the loaded G-code content from widget state
+        const { gcode } = this.state;
+        if (!gcode || !gcode.content) {
           console.warn('No G-code loaded to auto-detect limits');
           return;
         }
 
-        const gcode = sender.gcode;
-        const lines = gcode.split('\n');
+        const gcodeContent = gcode.content;
+        const lines = gcodeContent.split('\n');
 
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
@@ -450,9 +450,9 @@ class ProbeWidget extends PureComponent {
         console.log(`Auto-detected height map area: X=${paddedMinX.toFixed(3)} Y=${paddedMinY.toFixed(3)} W=${paddedWidth.toFixed(3)} H=${paddedHeight.toFixed(3)}`);
       },
       applyHeightMapToGcode: () => {
-        // Access the loaded G-code content through the controller context
-        const sender = controller.state && controller.state.sender;
-        if (!sender || !sender.gcode) {
+        // Access the loaded G-code content from widget state
+        const { gcode } = this.state;
+        if (!gcode || !gcode.content) {
           console.warn('No G-code loaded to apply height map');
           return;
         }
@@ -471,7 +471,7 @@ class ProbeWidget extends PureComponent {
         const gridX = parseInt(heightMapGridSizeX, 10) || 3;
         const gridY = parseInt(heightMapGridSizeY, 10) || 3;
 
-        const originalGcode = sender.gcode;
+        const originalGcode = gcode.content;
         const lines = originalGcode.split('\n');
         const compensatedLines = [];
 
@@ -1648,6 +1648,20 @@ class ProbeWidget extends PureComponent {
           heightMapGridSizeX: this.config.get('heightMapGridSizeX') || 3,
           heightMapGridSizeY: this.config.get('heightMapGridSizeY') || 3
         });
+      },
+      'gcode:load': (name, gcode) => {
+        this.setState({
+          gcode: {
+            content: gcode
+          }
+        });
+      },
+      'gcode:unload': () => {
+        this.setState({
+          gcode: {
+            content: ''
+          }
+        });
       }
     };
 
@@ -1825,7 +1839,12 @@ class ProbeWidget extends PureComponent {
         heightMapGridSizeY: Number(this.config.get('heightMapGridSizeY') || 3),
         heightMapData: [], // Initialize empty height map data
         pauseBeforeProbing: this.config.get('pauseBeforeProbing', false),
-        setZZeroAtOrigin: this.config.get('setZZeroAtOrigin', true)
+        setZZeroAtOrigin: this.config.get('setZZeroAtOrigin', true),
+        
+        // G-code storage for height mapping and auto-detect functionality
+        gcode: {
+          content: ''
+        }
       };
     }
 
