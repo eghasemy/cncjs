@@ -33,7 +33,10 @@ const getActions = (macros = []) => {
         { value: 'spindle-reset', label: i18n._('Spindle Reset') },
         { value: 'rapid-25', label: i18n._('Rapid 25%') },
         { value: 'rapid-50', label: i18n._('Rapid 50%') },
-        { value: 'rapid-100', label: i18n._('Rapid 100%') }
+        { value: 'rapid-100', label: i18n._('Rapid 100%') },
+        { value: 'zero-x', label: i18n._('Zero Out Temporary X Axis (G92 X0)') },
+        { value: 'zero-y', label: i18n._('Zero Out Temporary Y Axis (G92 Y0)') },
+        { value: 'zero-z', label: i18n._('Zero Out Temporary Z Axis (G92 Z0)') }
     ];
     const macroActions = macros.map(macro => ({
         value: `run-macro-${macro.id}`,

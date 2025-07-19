@@ -397,6 +397,15 @@ class GamepadWidget extends PureComponent {
             case 'rapid-100':
                 controller.command('rapidOverride', 100);
                 break;
+            case 'zero-x':
+                controller.command('gcode', 'G92 X0');
+                break;
+            case 'zero-y':
+                controller.command('gcode', 'G92 Y0');
+                break;
+            case 'zero-z':
+                controller.command('gcode', 'G92 Z0');
+                break;
             default:
                 break;
         }
