@@ -458,7 +458,7 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; External Edge Probing Sequence'),
-          gcode(`#<_probe_clearance> = [${xyClearing}] - [${probeDiameter} / 2]`),
+          gcode(`#<_probe_clearance> = ${xyClearing} - ${probeDiameter} / 2`),
           gcode('G91') // Relative mode
         ];
 
@@ -482,7 +482,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Move Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to edge'),
-            gcode('G1', { X: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0'),
             gcode('G90')
@@ -505,7 +505,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Move Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to edge'),
-            gcode('G1', { X: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0'),
             gcode('G90')
@@ -528,7 +528,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 Y0'),
             gcode('G90')
@@ -551,7 +551,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 Y0'),
             gcode('G90')
@@ -602,7 +602,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: '#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -641,7 +641,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: '#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -680,7 +680,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: -'#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -719,7 +719,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: -'#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -750,7 +750,7 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; Internal Edge Probing Sequence'),
-          gcode(`#<_probe_clearance> = [${xyClearing}] - [${probeDiameter} / 2]`),
+          gcode(`#<_probe_clearance> = ${xyClearing} - ${probeDiameter} / 2`),
           gcode('G91') // Relative mode
         ];
 
@@ -774,7 +774,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Move Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to edge'),
-            gcode('G1', { X: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0'),
             gcode('G90')
@@ -797,7 +797,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Move Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to edge'),
-            gcode('G1', { X: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0'),
             gcode('G90')
@@ -820,7 +820,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 Y0'),
             gcode('G90')
@@ -843,7 +843,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 Y0'),
             gcode('G90')
@@ -882,7 +882,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: '#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -921,7 +921,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: '#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -960,7 +960,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: -'#<_probe_clearance>', Y: '#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> Y#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
@@ -999,7 +999,7 @@ class ProbeWidget extends PureComponent {
             gcode('; Z up'),
             gcode('G1', { Z: probeDepth, F: rapidsFeedrate }),
             gcode('; Return to corner'),
-            gcode('G1', { X: -'#<_probe_clearance>', Y: -'#<_probe_clearance>', F: rapidsFeedrate }),
+            `G1 X-#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`,
             gcode('; Finally zero out'),
             gcode('G10 L20 P0 X0 Y0'),
             gcode('G90')
