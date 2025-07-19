@@ -1,0 +1,43 @@
+export const SETTINGS_INFO = [
+  { setting: '$0', message: 'Step pulse time', units: 'microseconds' },
+  { setting: '$1', message: 'Step idle delay', units: 'milliseconds' },
+  { setting: '$2', message: 'Step pulse invert', units: 'mask' },
+  { setting: '$3', message: 'Step direction invert', units: 'mask' },
+  { setting: '$4', message: 'Invert step enable pin', units: 'boolean' },
+  { setting: '$5', message: 'Invert limit pins', units: 'boolean' },
+  { setting: '$6', message: 'Invert probe pin', units: 'boolean' },
+  { setting: '$10', message: 'Status report options', units: 'mask' },
+  { setting: '$11', message: 'Junction deviation', units: 'millimeters' },
+  { setting: '$12', message: 'Arc tolerance', units: 'millimeters' },
+  { setting: '$13', message: 'Report in inches', units: 'boolean' },
+  { setting: '$20', message: 'Soft limits enable', units: 'boolean' },
+  { setting: '$21', message: 'Hard limits enable', units: 'boolean' },
+  { setting: '$22', message: 'Homing cycle enable', units: 'boolean' },
+  { setting: '$23', message: 'Homing direction invert', units: 'mask' },
+  { setting: '$24', message: 'Homing locate feed rate', units: 'mm/min' },
+  { setting: '$25', message: 'Homing search seek rate', units: 'mm/min' },
+  { setting: '$26', message: 'Homing switch debounce delay', units: 'milliseconds' },
+  { setting: '$27', message: 'Homing switch pull-off distance', units: 'millimeters' },
+  { setting: '$30', message: 'Maximum spindle speed', units: 'RPM' },
+  { setting: '$31', message: 'Minimum spindle speed', units: 'RPM' },
+  { setting: '$32', message: 'Laser-mode enable', units: 'boolean' },
+  { setting: '$100', message: 'X-axis travel resolution', units: 'step/mm' },
+  { setting: '$101', message: 'Y-axis travel resolution', units: 'step/mm' },
+  { setting: '$102', message: 'Z-axis travel resolution', units: 'step/mm' },
+  { setting: '$110', message: 'X-axis maximum rate', units: 'mm/min' },
+  { setting: '$111', message: 'Y-axis maximum rate', units: 'mm/min' },
+  { setting: '$112', message: 'Z-axis maximum rate', units: 'mm/min' },
+  { setting: '$120', message: 'X-axis acceleration', units: 'mm/sec^2' },
+  { setting: '$121', message: 'Y-axis acceleration', units: 'mm/sec^2' },
+  { setting: '$122', message: 'Z-axis acceleration', units: 'mm/sec^2' },
+  { setting: '$130', message: 'X-axis maximum travel', units: 'millimeters' },
+  { setting: '$131', message: 'Y-axis maximum travel', units: 'millimeters' },
+  { setting: '$132', message: 'Z-axis maximum travel', units: 'millimeters' }
+];
+
+export const SETTINGS_CATEGORIES = {
+  'General': ['$0', '$1', '$2', '$3', '$4', '$5', '$6', '$10', '$11', '$12', '$13'],
+  'Homing & Limits': ['$20', '$21', '$22', '$23', '$24', '$25', '$26', '$27'],
+  'Spindle/Laser': ['$30', '$31', '$32'],
+  'Axes': ['$100', '$101', '$102', '$110', '$111', '$112', '$120', '$121', '$122', '$130', '$131', '$132']
+};

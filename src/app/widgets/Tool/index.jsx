@@ -22,6 +22,7 @@ import {
   METRIC_UNITS,
   // Grbl
   GRBL,
+  GRBLHAL,
   // Marlin
   MARLIN,
   // Smoothie
@@ -504,7 +505,7 @@ class ToolWidget extends PureComponent {
     if (!port) {
       return false;
     }
-    if (!includes([GRBL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+    if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
       return false;
     }
     return true;

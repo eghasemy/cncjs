@@ -124,6 +124,7 @@
     "smoothieware",
     "tinyg",
     "g2core",
+    "grblhal",
     "react",
     "socket.io"
   ],
