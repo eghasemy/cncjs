@@ -8,6 +8,7 @@ import controller from 'app/lib/controller';
 import WidgetConfig from '../WidgetConfig';
 import FluidNC from './FluidNC';
 import Controller from './Controller';
+import Settings from './Settings';
 import {
   FLUIDNC
 } from '../../constants';
@@ -343,7 +344,7 @@ class FluidNCWidget extends PureComponent {
             <Controller state={state} actions={actions} />
           }
           {state.modal.name === MODAL_SETTINGS &&
-            <div>Settings Modal Placeholder</div>
+            <Settings state={state} actions={actions} />
           }
         </Widget>
       );
