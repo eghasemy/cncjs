@@ -345,17 +345,26 @@ class GamepadWidget extends PureComponent {
         }
     };
 
-    // Extract axis letter from jog action (e.g., 'jog-x+' -> 'X')
-    getAxisFromAction = (action) => {
+    // Extract axis and direction from jog action (e.g., 'jog-x+' -> { axis: 'X', direction: '+' })
+    getAxisAndDirectionFromAction = (action) => {
         if (typeof action !== 'string') {
- return null;
-}
+            return null;
+        }
 
-        const jogMatch = action.match(/^jog-([xyzabc])[+-]$/i);
+        const jogMatch = action.match(/^jog-([xyzabc])([+-])$/i);
         if (jogMatch) {
-            return jogMatch[1].toUpperCase();
+            return {
+                axis: jogMatch[1].toUpperCase(),
+                direction: jogMatch[2]
+            };
         }
         return null;
+    };
+
+    // Legacy method for backward compatibility
+    getAxisFromAction = (action) => {
+        const result = this.getAxisAndDirectionFromAction(action);
+        return result ? result.axis : null;
     };
 
     stepForward = () => {
@@ -399,30 +408,38 @@ class GamepadWidget extends PureComponent {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
 
-                // Handle positive direction
-                if (map.positive) {
-                    if (continuousJog) {
-                        // Use enhanced continuous jogging
-                        const axis = this.getAxisFromAction(map.positive);
-                        if (axis) {
-                            this.handleContinuousJog(axis, '+', val > 0 ? val : 0);
+                if (continuousJog) {
+                    // Enhanced continuous jogging mode
+
+                    // Handle positive direction
+                    if (map.positive) {
+                        const actionInfo = this.getAxisAndDirectionFromAction(map.positive);
+                        if (actionInfo) {
+                            // Only process if axis value indicates movement in this direction
+                            const magnitude = val > 0 ? val : 0;
+                            this.handleContinuousJog(actionInfo.axis, actionInfo.direction, magnitude);
                         }
-                    } else if (val > 0.5 && prev <= 0.5) {
-                        // Traditional single jog on threshold crossing
+                    }
+
+                    // Handle negative direction
+                    if (map.negative) {
+                        const actionInfo = this.getAxisAndDirectionFromAction(map.negative);
+                        if (actionInfo) {
+                            // Only process if axis value indicates movement in this direction
+                            const magnitude = val < 0 ? Math.abs(val) : 0;
+                            this.handleContinuousJog(actionInfo.axis, actionInfo.direction, magnitude);
+                        }
+                    }
+                } else {
+                    // Traditional step jogging mode
+
+                    // Handle positive direction
+                    if (map.positive && val > 0.5 && prev <= 0.5) {
                         this.handleAction(map.positive);
                     }
-                }
 
-                // Handle negative direction
-                if (map.negative) {
-                    if (continuousJog) {
-                        // Use enhanced continuous jogging
-                        const axis = this.getAxisFromAction(map.negative);
-                        if (axis) {
-                            this.handleContinuousJog(axis, '-', val < 0 ? Math.abs(val) : 0);
-                        }
-                    } else if (val < -0.5 && prev >= -0.5) {
-                        // Traditional single jog on threshold crossing
+                    // Handle negative direction
+                    if (map.negative && val < -0.5 && prev >= -0.5) {
                         this.handleAction(map.negative);
                     }
                 }
