@@ -33,6 +33,14 @@ const mapSectionPathToId = (path = '') => {
   return _camelCase(path.split('/')[0] || '');
 };
 
+const applyDarkModeClass = (enabled) => {
+  const body = document.querySelector('body');
+  if (!body) {
+    return;
+  }
+  body.classList.toggle('dark-mode', enabled);
+};
+
 class Settings extends PureComponent {
     static propTypes = {
       ...withRouter.propTypes
@@ -130,7 +138,9 @@ class Settings extends PureComponent {
 
               this.initialState.general = nextState;
 
-              this.setState({ general: nextState });
+              this.setState({ general: nextState }, () => {
+                applyDarkModeClass(nextState.darkMode);
+              });
             })
             .catch((res) => {
               this.setState({
@@ -210,8 +220,11 @@ class Settings extends PureComponent {
         },
         restoreSettings: () => {
           // Restore settings from initialState
+          const { darkMode } = this.initialState.general;
           this.setState({
             general: this.initialState.general
+          }, () => {
+            applyDarkModeClass(darkMode);
           });
         },
         toggleAllowAnonymousUsageDataCollection: () => {
@@ -225,11 +238,14 @@ class Settings extends PureComponent {
         },
         toggleDarkMode: () => {
           const { darkMode } = this.state.general;
+          const next = !darkMode;
           this.setState({
             general: {
               ...this.state.general,
-              darkMode: !darkMode,
+              darkMode: next,
             }
+          }, () => {
+            applyDarkModeClass(next);
           });
         },
         changeLanguage: (lang) => {
