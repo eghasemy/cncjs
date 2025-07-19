@@ -18,12 +18,17 @@ class General extends PureComponent {
 
     fields = {
       allowAnonymousUsageDataCollection: null,
+      darkMode: null,
     };
 
     handlers = {
       changeAllowAnonymousUsageDataCollection: (event) => {
         const { actions } = this.props;
         actions.toggleAllowAnonymousUsageDataCollection();
+      },
+      changeDarkMode: (event) => {
+        const { actions } = this.props;
+        actions.toggleDarkMode();
       },
       changeLanguage: (event) => {
         const { actions } = this.props;
@@ -76,6 +81,26 @@ class General extends PureComponent {
                       onChange={this.handlers.changeAllowAnonymousUsageDataCollection}
                     />
                     {i18n._('Enable anonymous usage data collection')}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <h5>{i18n._('Appearance')}</h5>
+            <div className={styles.formFields}>
+              <div className={styles.formGroup}>
+                <div className="checkbox">
+                  <label>
+                    <input
+                      ref={(node) => {
+                        this.fields.darkMode = node;
+                      }}
+                      type="checkbox"
+                      checked={state.darkMode}
+                      onChange={this.handlers.changeDarkMode}
+                    />
+                    {i18n._('Dark mode')}
                   </label>
                 </div>
               </div>

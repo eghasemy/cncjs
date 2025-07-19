@@ -9,6 +9,7 @@ const log = logger('service:configstore');
 
 const defaultState = { // default state
   allowAnonymousUsageDataCollection: false,
+  darkMode: false,
   checkForUpdates: true,
   controller: {
     exception: {

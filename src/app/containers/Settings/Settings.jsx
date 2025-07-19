@@ -112,6 +112,7 @@ class Settings extends PureComponent {
             .then((res) => {
               const {
                 allowAnonymousUsageDataCollection,
+                darkMode,
               } = { ...res.body };
 
               const nextState = {
@@ -123,6 +124,7 @@ class Settings extends PureComponent {
                 },
                 // followed by data
                 allowAnonymousUsageDataCollection: !!allowAnonymousUsageDataCollection,
+                darkMode: !!darkMode,
                 lang: i18next.language // TODO: Store language settings into the state
               };
 
@@ -146,6 +148,7 @@ class Settings extends PureComponent {
         save: () => {
           const {
             allowAnonymousUsageDataCollection,
+            darkMode,
             lang = 'en',
           } = this.state.general;
 
@@ -162,6 +165,7 @@ class Settings extends PureComponent {
 
           const data = {
             allowAnonymousUsageDataCollection,
+            darkMode,
           };
 
           api.setState(data)
@@ -216,6 +220,15 @@ class Settings extends PureComponent {
             general: {
               ...this.state.general,
               allowAnonymousUsageDataCollection: !allowAnonymousUsageDataCollection,
+            }
+          });
+        },
+        toggleDarkMode: () => {
+          const { darkMode } = this.state.general;
+          this.setState({
+            general: {
+              ...this.state.general,
+              darkMode: !darkMode,
             }
           });
         },
@@ -1095,6 +1108,7 @@ class Settings extends PureComponent {
             saving: false
           },
           allowAnonymousUsageDataCollection: false,
+          darkMode: false,
           lang: i18next.language
         },
         // Workspace

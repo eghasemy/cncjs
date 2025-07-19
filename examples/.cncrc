@@ -18,6 +18,7 @@
   "controller": "",
   "state": {
     "allowAnonymousUsageDataCollection": false,
+    "darkMode": false,
     "checkForUpdates": true,
     "controller": {
       "exception": {

@@ -100,7 +100,10 @@ series([
         if (authenticated) {
           try {
             const res = await api.getState();
-            const { allowAnonymousUsageDataCollection } = res.body || {};
+            const { allowAnonymousUsageDataCollection, darkMode } = res.body || {};
+            if (darkMode) {
+              document.body.classList.add('dark-mode');
+            }
             if (allowAnonymousUsageDataCollection && !GoogleAnalytics4.isInitialized) {
               GoogleAnalytics4.initialize([
                 {
@@ -174,6 +177,14 @@ series([
   { // Change backgrond color after loading complete
     const body = document.querySelector('body');
     body.style.backgroundColor = '#222'; // sidebar background color
+    try {
+      const res = await api.getState();
+      if (res.body?.darkMode) {
+        body.classList.add('dark-mode');
+      }
+    } catch (err) {
+      // ignore
+    }
   }
 
   if (settings.error.corruptedWorkspaceSettings) {

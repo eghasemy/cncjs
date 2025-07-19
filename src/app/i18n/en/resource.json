@@ -562,6 +562,8 @@
   "Use RTS/CTS flow control": "Use RTS/CTS flow control",
   "Data Collection": "Data Collection",
   "Enable anonymous usage data collection": "Enable anonymous usage data collection",
+  "Appearance": "Appearance",
+  "Dark mode": "Dark mode",
   "Display language:": "Display language:",
   "Tool Widget": "Tool Widget",
   "This widget manages workflows for tool changes.": "This widget manages workflows for tool changes.",
