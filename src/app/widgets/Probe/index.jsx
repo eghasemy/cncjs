@@ -757,32 +757,32 @@ class ProbeWidget extends PureComponent {
           commands.push(
             gcode('; === PROBE RIGHT EDGE (X+) ==='),
             gcode('; Professional external edge probing sequence'),
-            gcode(`; Pull away from edge in X+ by clearance`),
+            gcode('; Pull away from edge in X+ by clearance'),
             gcode(`G1 X${xyClearing} F${rapidsFeedrate}`),
             gcode('; Move Z down to probing depth'),
             gcode(`G1 Z-${probeDepth} F${rapidsFeedrate}`),
-            
+
             gcode('; Search probe X- direction'),
             gcode(`G38.2 X-${probingDistance} F${searchFeedrate}`),
             gcode('(IF [#5070 EQ 0] THEN MSG, Edge probe failed - check position and try again)'),
-            
+
             gcode('; Latch sequence for precision'),
             gcode(`G1 X${latchDistance} F${rapidsFeedrate}`), // Back off
             gcode(`G38.2 X-${latchDistance} F${latchFeedrate}`), // Precise latch probe
-            
+
             gcode('; Calculate edge position with probe radius compensation'),
             gcode('#<_edge_x> = [posx + [#<_probe_clearance>]]'),
             gcode('(MSG, Found edge at X=#<_edge_x>)'),
-            
+
             gcode('; Retract and move Z up'),
             gcode(`G1 X${xyClearing} F${rapidsFeedrate}`),
             gcode(`G1 Z${probeDepth} F${rapidsFeedrate}`),
-            
+
             gcode('; Move to calculated edge position'),
             gcode('G90'),
             gcode('G0 X#<_edge_x>'),
             gcode('G91'),
-            
+
             gcode('; Set coordinate system origin at edge'),
             gcode('G10 L20 P1 X0'),
             gcode('(MSG, X-axis zeroed at right edge)'),
@@ -794,32 +794,32 @@ class ProbeWidget extends PureComponent {
           commands.push(
             gcode('; === PROBE LEFT EDGE (X-) ==='),
             gcode('; Professional external edge probing sequence'),
-            gcode(`; Pull away from edge in X- by clearance`),
+            gcode('; Pull away from edge in X- by clearance'),
             gcode(`G1 X-${xyClearing} F${rapidsFeedrate}`),
             gcode('; Move Z down to probing depth'),
             gcode(`G1 Z-${probeDepth} F${rapidsFeedrate}`),
-            
+
             gcode('; Search probe X+ direction'),
             gcode(`G38.2 X${probingDistance} F${searchFeedrate}`),
             gcode('(IF [#5070 EQ 0] THEN MSG, Edge probe failed - check position and try again)'),
-            
+
             gcode('; Latch sequence for precision'),
             gcode(`G1 X-${latchDistance} F${rapidsFeedrate}`), // Back off
             gcode(`G38.2 X${latchDistance} F${latchFeedrate}`), // Precise latch probe
-            
+
             gcode('; Calculate edge position with probe radius compensation'),
             gcode('#<_edge_x> = [posx - [#<_probe_clearance>]]'),
             gcode('(MSG, Found edge at X=#<_edge_x>)'),
-            
+
             gcode('; Retract and move Z up'),
             gcode(`G1 X-${xyClearing} F${rapidsFeedrate}`),
             gcode(`G1 Z${probeDepth} F${rapidsFeedrate}`),
-            
+
             gcode('; Move to calculated edge position'),
             gcode('G90'),
             gcode('G0 X#<_edge_x>'),
             gcode('G91'),
-            
+
             gcode('; Set coordinate system origin at edge'),
             gcode('G10 L20 P1 X0'),
             gcode('(MSG, X-axis zeroed at left edge)'),
@@ -877,23 +877,23 @@ class ProbeWidget extends PureComponent {
           commands.push(
             gcode('; === PROBE Z- SURFACE ==='),
             gcode('; Professional surface height probing'),
-            
+
             gcode('; Search probe Z- direction'),
             gcode(`G38.2 Z-${probingDistance} F${searchFeedrate}`),
             gcode('(IF [#5070 EQ 0] THEN MSG, Surface probe failed - check Z position)'),
-            
+
             gcode('; Latch sequence for precision'),
             gcode(`G1 Z${latchDistance} F${rapidsFeedrate}`), // Back off
             gcode(`G38.2 Z-${latchDistance} F${latchFeedrate}`), // Precise latch probe
-            
+
             gcode('; Calculate surface position'),
             gcode('#<_surface_z> = [posz]'),
             gcode('(MSG, Found surface at Z=#<_surface_z>)'),
-            
+
             gcode('; Set coordinate system origin at surface'),
             gcode('G10 L20 P1 Z0'),
             gcode('(MSG, Z-axis zeroed at surface)'),
-            
+
             gcode('; Retract to safe height'),
             gcode(`G1 Z${xyClearing} F${rapidsFeedrate}`),
             gcode('G90')
@@ -1375,7 +1375,7 @@ class ProbeWidget extends PureComponent {
             gcode(`G0 X[${xyClearing}] Y[${xyClearing}] F${rapidsFeedrate}`),
             gcode(`G0 Z-[${probeDepth}] F${rapidsFeedrate}`),
             gcode('G90'),
-            
+
             // Multi-pass center finding with error checking
             gcode('; Probe sequence: X+, X-, Y+, Y- with latch method')
           );
@@ -1383,7 +1383,7 @@ class ProbeWidget extends PureComponent {
           for (let pass = 0; pass < centerPasses; pass++) {
             commands.push(
               gcode(`; === PASS ${pass + 1} OF ${centerPasses} ===`),
-              
+
               // X+ probe with search/latch
               gcode('; Probe X+ direction (search + latch)'),
               gcode('G91'),
@@ -1395,8 +1395,8 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 X-#<_probe_clearance> F${rapidsFeedrate}`), // Retract
               gcode('G90'),
               gcode('G0 X#<_center_x_start>'), // Return to center X
-              
-              // X- probe with search/latch  
+
+              // X- probe with search/latch
               gcode('; Probe X- direction (search + latch)'),
               gcode('G91'),
               gcode(`G38.2 X-${probingDistance} F${searchFeedrate}`),
@@ -1407,7 +1407,7 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 X#<_probe_clearance> F${rapidsFeedrate}`), // Retract
               gcode('G90'),
               gcode('G0 X#<_center_x_start>'), // Return to center X
-              
+
               // Y+ probe with search/latch
               gcode('; Probe Y+ direction (search + latch)'),
               gcode('G91'),
@@ -1419,7 +1419,7 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 Y-#<_probe_clearance> F${rapidsFeedrate}`), // Retract
               gcode('G90'),
               gcode('G0 Y#<_center_y_start>'), // Return to center Y
-              
+
               // Y- probe with search/latch
               gcode('; Probe Y- direction (search + latch)'),
               gcode('G91'),
@@ -1446,7 +1446,7 @@ class ProbeWidget extends PureComponent {
           for (let pass = 0; pass < centerPasses; pass++) {
             commands.push(
               gcode(`; === INTERNAL PASS ${pass + 1} OF ${centerPasses} ===`),
-              
+
               // Internal X+ probe
               gcode('; Internal probe X+ direction'),
               gcode('G91'),
@@ -1458,7 +1458,7 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 X-#<_probe_clearance> F${rapidsFeedrate}`),
               gcode('G90'),
               gcode('G0 X#<_center_x_start>'),
-              
+
               // Internal X- probe
               gcode('; Internal probe X- direction'),
               gcode('G91'),
@@ -1470,7 +1470,7 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 X#<_probe_clearance> F${rapidsFeedrate}`),
               gcode('G90'),
               gcode('G0 X#<_center_x_start>'),
-              
+
               // Internal Y+ probe
               gcode('; Internal probe Y+ direction'),
               gcode('G91'),
@@ -1482,8 +1482,8 @@ class ProbeWidget extends PureComponent {
               gcode(`G0 Y-#<_probe_clearance> F${rapidsFeedrate}`),
               gcode('G90'),
               gcode('G0 Y#<_center_y_start>'),
-              
-              // Internal Y- probe  
+
+              // Internal Y- probe
               gcode('; Internal probe Y- direction'),
               gcode('G91'),
               gcode(`G38.2 Y-${probingDistance} F${searchFeedrate}`),
@@ -1504,7 +1504,7 @@ class ProbeWidget extends PureComponent {
           gcode('; Calculate center using multi-pass averaging'),
           gcode('#<_center_x> = 0'),
           gcode('#<_center_y> = 0'),
-          gcode('#<_diameter_x> = 0'), 
+          gcode('#<_diameter_x> = 0'),
           gcode('#<_diameter_y> = 0')
         );
 
@@ -1527,7 +1527,7 @@ class ProbeWidget extends PureComponent {
           gcode(`#<_diameter_y> = [#<_diameter_y> / ${centerPasses}]`),
           gcode('(MSG, Calculated center: X=#<_center_x> Y=#<_center_y>)'),
           gcode('(MSG, Measured diameters: X=#<_diameter_x> Y=#<_diameter_y>)'),
-          
+
           // Move to calculated center
           gcode('; Move to calculated center position'),
           gcode('G91'),
@@ -1581,7 +1581,7 @@ class ProbeWidget extends PureComponent {
 
         // Determine probe direction and movement based on selected edge
         let firstProbeDirection, secondProbeDirection, moveToSecondPoint;
-        
+
         switch (selectedRotationEdge) {
         case ROTATION_EDGE_LEFT:
           // Probe left edge at two Y positions
@@ -1590,7 +1590,7 @@ class ProbeWidget extends PureComponent {
           moveToSecondPoint = 'G0 Y[#<_rot_y_start> + #<_probe_spacing>]';
           break;
         case ROTATION_EDGE_RIGHT:
-          // Probe right edge at two Y positions  
+          // Probe right edge at two Y positions
           firstProbeDirection = `G38.2 X-${probingDistance} F${searchFeedrate}`;
           secondProbeDirection = `G38.2 X-${probingDistance} F${searchFeedrate}`;
           moveToSecondPoint = 'G0 Y[#<_rot_y_start> + #<_probe_spacing>]';
@@ -1617,56 +1617,56 @@ class ProbeWidget extends PureComponent {
           gcode('G91'),
           gcode(`G0 Z-[${probeDepth}] F${rapidsFeedrate}`), // Move down to probe depth
           gcode('G90'),
-          
+
           gcode('; === FIRST PROBE POINT ==='),
           gcode('; Probe first point with search + latch method'),
           gcode('G91'),
           firstProbeDirection,
           gcode('(IF [#5070 EQ 0] THEN MSG, First rotation probe failed - check setup)'),
           gcode(`G1 X-${latchDistance} Y-${latchDistance} F${rapidsFeedrate}`), // Back off diagonally
-          
+
           // Precise latch probe
           gcode('; Latch probe for precision'),
           firstProbeDirection.replace(searchFeedrate, latchFeedrate).replace(probingDistance, latchDistance),
           gcode('#<_x1> = [posx]'), // Store first probe X
           gcode('#<_y1> = [posy]'), // Store first probe Y
           gcode('(MSG, First probe point: X=#<_x1> Y=#<_y1>)'),
-          
+
           // Retract from first probe point
           gcode('; Retract from first probe'),
           gcode(`G0 X-#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`),
           gcode('G90'),
-          
+
           gcode('; === MOVE TO SECOND PROBE POINT ==='),
           gcode('; Return to start position and move to second probe point'),
           gcode('G0 X#<_rot_x_start> Y#<_rot_y_start>'),
           moveToSecondPoint,
-          
+
           gcode('; === SECOND PROBE POINT ==='),
           gcode('; Probe second point with search + latch method'),
           gcode('G91'),
           secondProbeDirection,
           gcode('(IF [#5070 EQ 0] THEN MSG, Second rotation probe failed - check setup)'),
           gcode(`G1 X-${latchDistance} Y-${latchDistance} F${rapidsFeedrate}`), // Back off diagonally
-          
+
           // Precise latch probe
           gcode('; Latch probe for precision'),
           secondProbeDirection.replace(searchFeedrate, latchFeedrate).replace(probingDistance, latchDistance),
           gcode('#<_x2> = [posx]'), // Store second probe X
           gcode('#<_y2> = [posy]'), // Store second probe Y
           gcode('(MSG, Second probe point: X=#<_x2> Y=#<_y2>)'),
-          
+
           // Retract from second probe point
           gcode('; Retract from second probe'),
           gcode(`G0 X-#<_probe_clearance> Y-#<_probe_clearance> F${rapidsFeedrate}`),
           gcode('G90'),
-          
+
           gcode('; === ROTATION CALCULATION ==='),
           gcode('; Calculate rotation angle from two probe points'),
           gcode('#<_delta_x> = [#<_x2> - #<_x1>]'),
           gcode('#<_delta_y> = [#<_y2> - #<_y1>]'),
           gcode('#<_distance> = [SQRT[[#<_delta_x> * #<_delta_x>] + [#<_delta_y> * #<_delta_y>]]]'),
-          
+
           // Calculate angle in radians using ATAN2 if available, otherwise ATAN
           gcode('#<_angle_rad> = [ATAN[#<_delta_y>]/[#<_delta_x>]]'),
           gcode('#<_angle_deg> = [#<_angle_rad> * 180 / 3.14159265359]'),
@@ -1699,7 +1699,7 @@ class ProbeWidget extends PureComponent {
           gcode('; === VALIDATION ==='),
           gcode('(IF [ABS[#<_angle_deg>] GT 45] THEN MSG, WARNING: Large rotation angle detected!)'),
           gcode('(IF [#<_distance> LT 10] THEN MSG, WARNING: Probe points too close - increase spacing!)'),
-          
+
           gcode('; === RETURN TO START POSITION ==='),
           gcode('; Return to original position'),
           gcode(`G0 Z#<_rot_z_start> F${rapidsFeedrate}`), // Return to original Z first
@@ -1768,13 +1768,13 @@ class ProbeWidget extends PureComponent {
 
         // Generate probe points in an optimized zigzag pattern to minimize travel
         let variableNum = 100; // Start variables from #100 for height map
-        
+
         for (let row = 0; row < gridY; row++) {
           // Alternate direction for each row to minimize travel time
           const colStart = row % 2 === 0 ? 0 : gridX - 1;
           const colEnd = row % 2 === 0 ? gridX : -1;
           const colStep = row % 2 === 0 ? 1 : -1;
-          
+
           for (let col = colStart; col !== colEnd; col += colStep) {
             const xOffset = col * xStep;
             const yOffset = row * yStep;
@@ -1784,33 +1784,33 @@ class ProbeWidget extends PureComponent {
             commands.push(
               gcode(`; === PROBE POINT ${row + 1},${col + 1} ===`),
               gcode(`; Target: X${probeX.toFixed(3)} Y${probeY.toFixed(3)}`),
-              
+
               // Move to XY position at safe height
               gcode('; Move to probe XY position'),
               gcode(`G0 X${probeX.toFixed(3)} Y${probeY.toFixed(3)} Z#<_hm_safe_z>`),
-              
+
               // Move down to probe depth
               gcode('; Move to probe depth'),
               gcode('G91'),
               gcode(`G0 Z-[${probeDepth}] F${rapidsFeedrate}`),
               gcode('G90'),
-              
+
               // Probe with search + latch method for accuracy
               gcode('; Probe surface (search + latch)'),
               gcode('G91'),
               gcode(`G38.2 Z-${probingDistance} F${searchFeedrate}`),
               gcode('(IF [#5070 EQ 0] THEN #<_hm_error_count> = [#<_hm_error_count> + 1])'),
               gcode('(IF [#5070 EQ 0] THEN MSG, Probe failed at grid point - using interpolated value)'),
-              
+
               // Latch probe for precision if first probe succeeded
               gcode('(IF [#5070 EQ 1] THEN G1 Z0.5)'), // Back off 0.5mm if probe succeeded
               gcode(`(IF [#5070 EQ 1] THEN G38.2 Z-${latchDistance} F${latchFeedrate})`), // Precise latch
-              
+
               // Store probe result
               gcode(`#${variableNum} = [posz]`), // Store probe Z result
               gcode('(IF [#5070 EQ 1] THEN #<_hm_probe_count> = [#<_hm_probe_count> + 1])'),
               gcode(`(MSG, Point ${row + 1},${col + 1}: Z=#${variableNum})`),
-              
+
               // Retract to safe height
               gcode('; Retract to safe height'),
               gcode('G90'),
@@ -1831,7 +1831,6 @@ class ProbeWidget extends PureComponent {
 
         // Find minimum and maximum Z values for reference
         let minVar = 100;
-        let maxVar = 100;
         commands.push(
           gcode('; Calculate height map statistics'),
           gcode(`#<_hm_z_min> = #${minVar}`),
@@ -1953,6 +1952,9 @@ class ProbeWidget extends PureComponent {
             warnings.push('Large grid sizes may take a very long time to complete');
           }
           break;
+        default:
+          // Basic probe type - no additional validation needed
+          break;
         }
 
         return { warnings, errors };
@@ -1961,7 +1963,7 @@ class ProbeWidget extends PureComponent {
       // Add professional probe sequence wrapper with safety checks
       generateProbeSequenceWithSafety: () => {
         const validation = this.actions.validateProbeSetup();
-        
+
         if (validation.errors.length > 0) {
           console.error('Probe setup errors:', validation.errors);
           return [
