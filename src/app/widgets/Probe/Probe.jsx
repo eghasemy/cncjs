@@ -1028,7 +1028,7 @@ class Probe extends PureComponent {
               <div className="col-xs-12">
                 <button
                   type="button"
-                  className="btn btn-sm btn-default"
+                  className="btn btn-sm btn-default btn-block"
                   onClick={actions.autoDetectHeightMapArea}
                   disabled={!canClick}
                 >
@@ -1092,7 +1092,7 @@ class Probe extends PureComponent {
             <div style={{ marginTop: '10px' }}>
               <button
                 type="button"
-                className="btn btn-sm btn-info"
+                className="btn btn-sm btn-info btn-block"
                 onClick={actions.generateSampleHeightMapData}
                 disabled={!canClick}
               >
@@ -1131,7 +1131,7 @@ class Probe extends PureComponent {
             <div className="col-xs-12">
               <button
                 type="button"
-                className="btn btn-sm btn-warning"
+                className="btn btn-sm btn-warning btn-block"
                 onClick={actions.applyHeightMapToGcode}
                 disabled={!canClick}
               >
@@ -1149,7 +1149,7 @@ class Probe extends PureComponent {
           <div className="col-xs-6" style={{ paddingRight: 5 }}>
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-primary btn-block"
               onClick={actions.startProbing}
               disabled={!canClickStart}
             >
@@ -1159,7 +1159,7 @@ class Probe extends PureComponent {
           <div className="col-xs-6" style={{ paddingLeft: 5 }}>
             <button
               type="button"
-              className="btn btn-sm btn-danger"
+              className="btn btn-sm btn-danger btn-block"
               onClick={actions.stopProbing}
               disabled={!canClickStop}
             >

@@ -380,12 +380,192 @@ class ProbeWidget extends PureComponent {
         this.setState({ setZZeroAtOrigin: !setZZeroAtOrigin });
       },
       autoDetectHeightMapArea: () => {
-        // TODO: Implement auto-detection from program limits
-        console.log('Auto-detect height map area from program limits');
+        // Access the loaded G-code content through the controller context
+        const sender = controller.state && controller.state.sender;
+        if (!sender || !sender.gcode) {
+          console.warn('No G-code loaded to auto-detect limits');
+          return;
+        }
+
+        const gcode = sender.gcode;
+        const lines = gcode.split('\n');
+        
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        
+        // Parse G-code to find X and Y coordinate limits
+        lines.forEach(line => {
+          // Skip comments and empty lines
+          const cleanLine = line.replace(/;.*$/, '').trim();
+          if (!cleanLine) return;
+          
+          // Look for coordinate movements (G0, G1, G2, G3)
+          if (/^[;\s]*G[0-3]/.test(cleanLine) && /[XY]/.test(cleanLine)) {
+            // Extract X and Y coordinates
+            const xMatch = cleanLine.match(/X(-?\d*\.?\d+)/i);
+            const yMatch = cleanLine.match(/Y(-?\d*\.?\d+)/i);
+            
+            if (xMatch) {
+              const x = parseFloat(xMatch[1]);
+              if (!isNaN(x)) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+              }
+            }
+            
+            if (yMatch) {
+              const y = parseFloat(yMatch[1]);
+              if (!isNaN(y)) {
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+              }
+            }
+          }
+        });
+        
+        // Check if we found valid coordinates
+        if (minX === Infinity || minY === Infinity) {
+          console.warn('No valid X/Y coordinates found in G-code');
+          return;
+        }
+        
+        // Calculate width and height with some padding (5% margin)
+        const width = maxX - minX;
+        const height = maxY - minY;
+        const padding = 0.05; // 5% padding
+        
+        const paddedMinX = minX - (width * padding);
+        const paddedMinY = minY - (height * padding);
+        const paddedWidth = width * (1 + 2 * padding);
+        const paddedHeight = height * (1 + 2 * padding);
+        
+        // Update height map parameters
+        this.setState({
+          heightMapStartX: paddedMinX.toFixed(3),
+          heightMapStartY: paddedMinY.toFixed(3),
+          heightMapWidth: paddedWidth.toFixed(3),
+          heightMapHeight: paddedHeight.toFixed(3)
+        });
+        
+        console.log(`Auto-detected height map area: X=${paddedMinX.toFixed(3)} Y=${paddedMinY.toFixed(3)} W=${paddedWidth.toFixed(3)} H=${paddedHeight.toFixed(3)}`);
       },
       applyHeightMapToGcode: () => {
-        // TODO: Implement height map application to G-code
-        console.log('Apply height map to G-code');
+        // Access the loaded G-code content through the controller context
+        const sender = controller.state && controller.state.sender;
+        if (!sender || !sender.gcode) {
+          console.warn('No G-code loaded to apply height map');
+          return;
+        }
+
+        const { heightMapData, heightMapStartX, heightMapStartY, heightMapWidth, heightMapHeight, heightMapGridSizeX, heightMapGridSizeY } = this.state;
+        
+        if (!heightMapData || heightMapData.length === 0) {
+          console.warn('No height map data available. Generate or probe height map first.');
+          return;
+        }
+
+        const startX = parseFloat(heightMapStartX) || 0;
+        const startY = parseFloat(heightMapStartY) || 0;
+        const width = parseFloat(heightMapWidth) || 100;
+        const height = parseFloat(heightMapHeight) || 100;
+        const gridX = parseInt(heightMapGridSizeX) || 3;
+        const gridY = parseInt(heightMapGridSizeY) || 3;
+
+        const originalGcode = sender.gcode;
+        const lines = originalGcode.split('\n');
+        const compensatedLines = [];
+
+        // Function to interpolate height at given X,Y coordinates
+        const interpolateHeight = (x, y) => {
+          // Convert world coordinates to grid coordinates
+          const gridPosX = ((x - startX) / width) * (gridX - 1);
+          const gridPosY = ((y - startY) / height) * (gridY - 1);
+          
+          // Clamp to grid boundaries
+          const clampedX = Math.max(0, Math.min(gridX - 1, gridPosX));
+          const clampedY = Math.max(0, Math.min(gridY - 1, gridPosY));
+          
+          // Get integer grid positions
+          const x1 = Math.floor(clampedX);
+          const y1 = Math.floor(clampedY);
+          const x2 = Math.min(gridX - 1, x1 + 1);
+          const y2 = Math.min(gridY - 1, y1 + 1);
+          
+          // Get fractional parts for interpolation
+          const fx = clampedX - x1;
+          const fy = clampedY - y1;
+          
+          // Bilinear interpolation
+          const h11 = heightMapData[y1] && heightMapData[y1][x1] ? heightMapData[y1][x1] : 0;
+          const h12 = heightMapData[y2] && heightMapData[y2][x1] ? heightMapData[y2][x1] : 0;
+          const h21 = heightMapData[y1] && heightMapData[y1][x2] ? heightMapData[y1][x2] : 0;
+          const h22 = heightMapData[y2] && heightMapData[y2][x2] ? heightMapData[y2][x2] : 0;
+          
+          const h1 = h11 * (1 - fx) + h21 * fx;
+          const h2 = h12 * (1 - fx) + h22 * fx;
+          const interpolatedHeight = h1 * (1 - fy) + h2 * fy;
+          
+          return interpolatedHeight;
+        };
+
+        // Regular expressions to match coordinate parameters
+        const coordRegex = /([XYZ])(-?\d*\.?\d+)/gi;
+
+        lines.forEach(line => {
+          let compensatedLine = line;
+
+          // Check if this line contains coordinate movements (G0, G1, G2, G3)
+          if (/^[;\s]*G[0-3]/.test(line.trim()) && /[XYZ]/.test(line)) {
+            let currentX = null;
+            let currentY = null;
+            let currentZ = null;
+            let hasZ = false;
+
+            // Extract current X, Y, and Z coordinates
+            const matches = [...line.matchAll(coordRegex)];
+            matches.forEach(match => {
+              const axis = match[1].toUpperCase();
+              const value = parseFloat(match[2]);
+
+              if (axis === 'X') {
+                currentX = value;
+              } else if (axis === 'Y') {
+                currentY = value;
+              } else if (axis === 'Z') {
+                currentZ = value;
+                hasZ = true;
+              }
+            });
+
+            // Apply height compensation if this move includes Z and has X,Y coordinates
+            if (hasZ && currentX !== null && currentY !== null && currentZ !== null) {
+              // Check if coordinates are within the height map area
+              if (currentX >= startX && currentX <= startX + width && 
+                  currentY >= startY && currentY <= startY + height) {
+                
+                const heightCompensation = interpolateHeight(currentX, currentY);
+                const compensatedZ = currentZ + heightCompensation;
+
+                // Replace Z coordinate in the line
+                const zPattern = new RegExp(`Z${currentZ.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+                compensatedLine = compensatedLine.replace(zPattern, `Z${compensatedZ.toFixed(6)}`);
+              }
+            }
+          }
+
+          compensatedLines.push(compensatedLine);
+        });
+
+        const compensatedGcode = compensatedLines.join('\n');
+
+        // Reload the compensated G-code
+        const name = sender.name || 'program.nc';
+        const compensatedName = name.replace(/\.(nc|gcode|g)$/i, '_height_compensated.$1') || `${name}_height_compensated`;
+
+        // Use the same mechanism as the workspace to reload G-code
+        pubsub.publish('gcode:load', { name: compensatedName, gcode: compensatedGcode });
+
+        console.log(`Applied height map compensation to G-code. Reloaded as: ${compensatedName}`);
       },
       generateSampleHeightMapData: () => {
         const { heightMapGridSizeX, heightMapGridSizeY } = this.state;
