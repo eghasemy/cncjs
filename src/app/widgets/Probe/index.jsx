@@ -325,7 +325,7 @@ class ProbeWidget extends PureComponent {
         const transformedGcode = transformedLines.join('\n');
 
         // Reload the transformed G-code
-        const name = sender.name || 'program.nc';
+        const name = this.state.gcode.name || 'program.nc';
         const rotatedName = name.replace(/\.(nc|gcode|g)$/i, '_rotated.$1') || `${name}_rotated`;
 
         // Use the same mechanism as the workspace to reload G-code
@@ -558,7 +558,7 @@ class ProbeWidget extends PureComponent {
         const compensatedGcode = compensatedLines.join('\n');
 
         // Reload the compensated G-code
-        const name = sender.name || 'program.nc';
+        const name = this.state.gcode.name || 'program.nc';
         const compensatedName = name.replace(/\.(nc|gcode|g)$/i, '_height_compensated.$1') || `${name}_height_compensated`;
 
         // Use the same mechanism as the workspace to reload G-code
@@ -1652,14 +1652,16 @@ class ProbeWidget extends PureComponent {
       'gcode:load': (name, gcode) => {
         this.setState({
           gcode: {
-            content: gcode
+            content: gcode,
+            name: name
           }
         });
       },
       'gcode:unload': () => {
         this.setState({
           gcode: {
-            content: ''
+            content: '',
+            name: ''
           }
         });
       }
@@ -1840,10 +1842,11 @@ class ProbeWidget extends PureComponent {
         heightMapData: [], // Initialize empty height map data
         pauseBeforeProbing: this.config.get('pauseBeforeProbing', false),
         setZZeroAtOrigin: this.config.get('setZZeroAtOrigin', true),
-        
+
         // G-code storage for height mapping and auto-detect functionality
         gcode: {
-          content: ''
+          content: '',
+          name: ''
         }
       };
     }
