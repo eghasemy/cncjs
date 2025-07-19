@@ -838,14 +838,14 @@ class GrblController {
         // Grbl settings
         if (this.settings !== this.runner.settings) {
           this.settings = this.runner.settings;
-          this.emit('controller:settings', GRBL, this.settings);
+          this.emit('controller:settings', this.type, this.settings);
           this.emit('Grbl:settings', this.settings); // Backward compatibility
         }
 
         // Grbl state
         if (this.state !== this.runner.state) {
           this.state = this.runner.state;
-          this.emit('controller:state', GRBL, this.state);
+          this.emit('controller:state', this.type, this.state);
           this.emit('Grbl:state', this.state); // Backward compatibility
         }
 
@@ -1190,12 +1190,12 @@ class GrblController {
       }
       if (!_.isEmpty(this.settings)) {
         // controller settings
-        socket.emit('controller:settings', GRBL, this.settings);
+        socket.emit('controller:settings', this.type, this.settings);
         socket.emit('Grbl:settings', this.settings); // Backward compatibility
       }
       if (!_.isEmpty(this.state)) {
         // controller state
-        socket.emit('controller:state', GRBL, this.state);
+        socket.emit('controller:state', this.type, this.state);
         socket.emit('Grbl:state', this.state); // Backward compatibility
       }
       if (this.feeder) {
