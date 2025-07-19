@@ -7,6 +7,7 @@ import pubsub from 'pubsub-js';
 import React, { PureComponent } from 'react';
 import Space from 'app/components/Space';
 import Widget from 'app/components/Widget';
+import api from 'app/api';
 import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 import { in2mm, mapValueToUnits } from 'app/lib/units';
@@ -324,15 +325,28 @@ class ProbeWidget extends PureComponent {
 
         const transformedGcode = transformedLines.join('\n');
 
-        // Reload the transformed G-code
+        // Reload the transformed G-code using the proper API
         const name = this.state.gcode.name || 'program.nc';
         const rotatedName = name.replace(/\.(nc|gcode|g)$/i, '_rotated.$1') || `${name}_rotated`;
 
-        // Use the same mechanism as the workspace to reload G-code
-        pubsub.publish('gcode:load', { name: rotatedName, gcode: transformedGcode });
+        // Get the current port from the controller
+        const port = controller.port;
+        if (!port) {
+          console.warn('No controller port available to load rotated G-code');
+          return;
+        }
 
-        console.log(`Applied 2D rotation matrix (${(rotationAngleRadians * 180 / Math.PI).toFixed(2)}°) to G-code`);
-        console.log(`Transformed G-code reloaded as: ${rotatedName}`);
+        // Use the same API mechanism as the workspace to properly load G-code
+        api.loadGCode({ port, name: rotatedName, gcode: transformedGcode })
+          .then((res) => {
+            const { name: loadedName = '', gcode: loadedGcode = '' } = { ...res.body };
+            pubsub.publish('gcode:load', { name: loadedName, gcode: loadedGcode });
+            console.log(`Applied 2D rotation matrix (${(rotationAngleRadians * 180 / Math.PI).toFixed(2)}°) to G-code`);
+            console.log(`Transformed G-code loaded as: ${loadedName}`);
+          })
+          .catch((res) => {
+            console.error('Failed to load rotated G-code:', res);
+          });
       },
       // Manual trigger for applying rotation matrix (useful when probe completes)
       applyRotationMatrixWithAngle: (angleRadians) => {
@@ -557,14 +571,27 @@ class ProbeWidget extends PureComponent {
 
         const compensatedGcode = compensatedLines.join('\n');
 
-        // Reload the compensated G-code
+        // Reload the compensated G-code using the proper API
         const name = this.state.gcode.name || 'program.nc';
         const compensatedName = name.replace(/\.(nc|gcode|g)$/i, '_height_compensated.$1') || `${name}_height_compensated`;
 
-        // Use the same mechanism as the workspace to reload G-code
-        pubsub.publish('gcode:load', { name: compensatedName, gcode: compensatedGcode });
+        // Get the current port from the controller
+        const port = controller.port;
+        if (!port) {
+          console.warn('No controller port available to load height compensated G-code');
+          return;
+        }
 
-        console.log(`Applied height map compensation to G-code. Reloaded as: ${compensatedName}`);
+        // Use the same API mechanism as the workspace to properly load G-code
+        api.loadGCode({ port, name: compensatedName, gcode: compensatedGcode })
+          .then((res) => {
+            const { name: loadedName = '', gcode: loadedGcode = '' } = { ...res.body };
+            pubsub.publish('gcode:load', { name: loadedName, gcode: loadedGcode });
+            console.log(`Applied height map compensation to G-code. Loaded as: ${loadedName}`);
+          })
+          .catch((res) => {
+            console.error('Failed to load height compensated G-code:', res);
+          });
       },
       generateSampleHeightMapData: () => {
         const { heightMapGridSizeX, heightMapGridSizeY } = this.state;
