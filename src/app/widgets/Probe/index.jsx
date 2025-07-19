@@ -498,7 +498,7 @@ class ProbeWidget extends PureComponent {
 
         console.log('Starting height map compensation...');
         console.log('Height map data:', heightMapData);
-        console.log('Height map parameters:', { 
+        console.log('Height map parameters:', {
           startX, startY, width, height, gridX, gridY
         });
 
@@ -564,8 +564,6 @@ class ProbeWidget extends PureComponent {
             let newX = currentX;
             let newY = currentY;
             let newZ = currentZ;
-            let hasX = false;
-            let hasY = false;
             let hasZ = false;
             let originalZ = null;
 
@@ -577,10 +575,8 @@ class ProbeWidget extends PureComponent {
 
               if (axis === 'X') {
                 newX = isAbsoluteMode ? value : currentX + value;
-                hasX = true;
               } else if (axis === 'Y') {
                 newY = isAbsoluteMode ? value : currentY + value;
-                hasY = true;
               } else if (axis === 'Z') {
                 originalZ = value;
                 newZ = isAbsoluteMode ? value : currentZ + value;
@@ -611,25 +607,24 @@ class ProbeWidget extends PureComponent {
 
                 // Replace Z coordinate in the line
                 // Create a more robust regex that handles different number formats
-                const zPattern = new RegExp(`Z(-?\\d*\\.?\\d+)`, 'gi');
+                const zPattern = new RegExp('Z(-?\\d*\\.?\\d+)', 'gi');
                 compensatedLine = compensatedLine.replace(zPattern, (match, zValue) => {
                   if (Math.abs(parseFloat(zValue) - originalZ) < 0.0001) {
                     return `Z${compensatedZ.toFixed(4)}`;
                   }
                   return match;
                 });
-                
+
                 if (compensationCount < 5) {
                   console.log(`  Modified line: "${compensatedLine}"`);
                   console.log('---');
                 }
-                
+
                 compensationCount++;
-              } else {
-                // Debug: coordinates outside height map area
-                if (compensationCount < 3) {
-                  console.log(`Line ${lineIndex + 1}: Coordinates (${targetX}, ${targetY}) outside height map area (${startX} to ${startX + width}, ${startY} to ${startY + height})`);
-                }
+              }
+              // Debug: coordinates outside height map area
+              if (compensationCount < 3) {
+                console.log(`Line ${lineIndex + 1}: Coordinates (${targetX}, ${targetY}) outside height map area (${startX} to ${startX + width}, ${startY} to ${startY + height})`);
               }
             }
 
