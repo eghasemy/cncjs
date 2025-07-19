@@ -18,6 +18,7 @@ import {
   METRIC_UNITS,
   // Grbl
   GRBL,
+  GRBLHAL,
   GRBL_ACTIVE_STATE_IDLE,
   // Marlin
   MARLIN,
@@ -421,7 +422,7 @@ class ProbeWidget extends PureComponent {
       if (workflow.state !== WORKFLOW_STATE_IDLE) {
         return false;
       }
-      if (!includes([GRBL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+      if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
       if (controllerType === GRBL) {

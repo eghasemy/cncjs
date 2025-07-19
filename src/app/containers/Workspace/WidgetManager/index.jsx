@@ -3,7 +3,7 @@ import includes from 'lodash/includes';
 import union from 'lodash/union';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GRBL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
+import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
 import controller from 'app/lib/controller';
 import store from 'app/store';
 import defaultState from 'app/store/defaultState';
@@ -18,7 +18,7 @@ export const getActiveWidgets = () => {
     .map(widgetId => widgetId.split(':')[0]);
   const activeWidgets = union(defaultWidgets, primaryWidgets, secondaryWidgets)
     .filter(widget => {
-      if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL)) {
+      if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
         return false;
       }
       if (widget === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {
@@ -46,7 +46,7 @@ export const getInactiveWidgets = () => {
     .map(widgetId => widgetId.split(':')[0]);
   const inactiveWidgets = difference(allWidgets, defaultWidgets, primaryWidgets, secondaryWidgets)
     .filter(widget => {
-      if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL)) {
+      if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
         return false;
       }
       if (widget === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {
