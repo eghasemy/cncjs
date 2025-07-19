@@ -16,8 +16,11 @@ class Gamepad extends PureComponent {
         gamepads: []
     };
 
+    raf = 0;
+
     componentDidMount() {
         this.updateGamepads();
+        this.pollGamepads();
         window.addEventListener('gamepadconnected', this.updateGamepads);
         window.addEventListener('gamepaddisconnected', this.updateGamepads);
     }
@@ -25,7 +28,13 @@ class Gamepad extends PureComponent {
     componentWillUnmount() {
         window.removeEventListener('gamepadconnected', this.updateGamepads);
         window.removeEventListener('gamepaddisconnected', this.updateGamepads);
+        cancelAnimationFrame(this.raf);
     }
+
+    pollGamepads = () => {
+        this.updateGamepads();
+        this.raf = requestAnimationFrame(this.pollGamepads);
+    };
 
     updateGamepads = () => {
         if (typeof navigator.getGamepads !== 'function') {
