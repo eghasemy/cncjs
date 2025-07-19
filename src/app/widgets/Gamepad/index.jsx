@@ -50,7 +50,7 @@ class GamepadWidget extends PureComponent {
     prevAxes = [];
     modifierPrev = false;
     raf = 0;
-    
+
     // Continuous jogging state
     continuousJogState = {
         activeAxes: new Set(), // Set of active axis keys (e.g., 'X+', 'Y-')
@@ -286,7 +286,7 @@ class GamepadWidget extends PureComponent {
         const baseFeedRate = this.getJogFeedRate(axis);
         const feedRateMultiplier = Math.min(1.0, Math.max(0.3, (magnitude - 0.5) * 2)); // 30% to 100% based on stick position
         const feedRate = Math.round(baseFeedRate * feedRateMultiplier);
-        
+
         // Use large distance for continuous jogging (similar to OpenBuilds CONTROL)
         const units = this.getUnits();
         const distance = units === IMPERIAL_UNITS ? 39.37 : 1000; // 1000mm or ~39 inches
@@ -347,7 +347,9 @@ class GamepadWidget extends PureComponent {
 
     // Extract axis letter from jog action (e.g., 'jog-x+' -> 'X')
     getAxisFromAction = (action) => {
-        if (typeof action !== 'string') return null;
+        if (typeof action !== 'string') {
+ return null;
+}
 
         const jogMatch = action.match(/^jog-([xyzabc])[+-]$/i);
         if (jogMatch) {
@@ -397,7 +399,7 @@ class GamepadWidget extends PureComponent {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
                 const absVal = Math.abs(val);
-                
+
                 // Handle positive direction
                 if (map.positive) {
                     if (continuousJog) {
@@ -411,7 +413,7 @@ class GamepadWidget extends PureComponent {
                         this.handleAction(map.positive);
                     }
                 }
-                
+
                 // Handle negative direction
                 if (map.negative) {
                     if (continuousJog) {
@@ -425,7 +427,7 @@ class GamepadWidget extends PureComponent {
                         this.handleAction(map.negative);
                     }
                 }
-                
+
                 this.prevAxes[i] = val;
             });
         }
@@ -702,35 +704,34 @@ class GamepadWidget extends PureComponent {
                 </div>
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
-              
-                {/* Continuous Jog Settings */}
-                <div style={{ marginTop: 10, padding: 10, border: '1px solid #ddd', borderRadius: 3, backgroundColor: '#f9f9f9' }}>
-                  <div style={{ marginBottom: 8 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={this.state.continuousJog}
-                        onChange={(e) => this.setState({ continuousJog: e.target.checked })}
-                        style={{ marginRight: 8 }}
-                      />
-                      <strong>{i18n._('Enhanced Continuous Jogging')}</strong>
-                    </label>
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
-                      {this.state.continuousJog ?
-                        i18n._('Hold analog stick to jog continuously. Jog speed varies with stick position.') :
-                        i18n._('Single jog moves when stick crosses threshold.')
-                      }
-                    </div>
-                  </div>
 
-                  {/* Active Jog Status */}
-                  {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 && (
-                    <div style={{ fontSize: '12px', color: '#28a745', marginTop: 8 }}>
-                      <i className="fa fa-circle" style={{ marginRight: 4 }} />
-                      {i18n._('Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
-                    </div>
-                  )}
+              {/* Continuous Jog Settings */}
+              <div style={{ marginTop: 10, padding: 10, border: '1px solid #ddd', borderRadius: 3, backgroundColor: '#f9f9f9' }}>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={this.state.continuousJog}
+                      onChange={(e) => this.setState({ continuousJog: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <strong>{i18n._('Enhanced Continuous Jogging')}</strong>
+                  </label>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                    {this.state.continuousJog
+                        ? i18n._('Hold analog stick to jog continuously. Jog speed varies with stick position.')
+                        : i18n._('Single jog moves when stick crosses threshold.')}
+                  </div>
                 </div>
+
+                {/* Active Jog Status */}
+                {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 ? (
+                  <div style={{ fontSize: '12px', color: '#28a745', marginTop: 8 }}>
+                    <i className="fa fa-circle" style={{ marginRight: 4 }} />
+                    {i18n._('Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
+                  </div>
+) : null}
+              </div>
             </Widget.Content>
           </Widget>
         );

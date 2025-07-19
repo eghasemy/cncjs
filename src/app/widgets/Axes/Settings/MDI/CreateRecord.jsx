@@ -50,13 +50,13 @@ class CreateRecord extends PureComponent {
             <Modal.Title>
               {i18n._('Custom Commands')}
               <Space width="8" />
-                        &rsaquo;
+              &rsaquo;
               <Space width="8" />
               {i18n._('New')}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {alertMessage && (
+            {alertMessage ? (
               <ToastNotification
                 style={{ margin: '-16px -24px 10px -24px' }}
                 type="error"
@@ -66,7 +66,7 @@ class CreateRecord extends PureComponent {
               >
                 {alertMessage}
               </ToastNotification>
-            )}
+) : null}
             <Form
               ref={node => {
                 this.form = node;
