@@ -704,33 +704,15 @@ class GamepadWidget extends PureComponent {
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
 
-              {/* Continuous Jog Settings */}
-              <div style={{ marginTop: 10, padding: 10, border: '1px solid #ddd', borderRadius: 3, backgroundColor: '#f9f9f9' }}>
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={this.state.continuousJog}
-                      onChange={(e) => this.setState({ continuousJog: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <strong>{i18n._('Enhanced Continuous Jogging')}</strong>
-                  </label>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
-                    {this.state.continuousJog
-                        ? i18n._('Hold analog stick to jog continuously. Jog speed varies with stick position.')
-                        : i18n._('Single jog moves when stick crosses threshold.')}
+              {/* Continuous Jog Status - shows when enhanced mode is active */}
+              {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 ? (
+                <div style={{ marginTop: 10, padding: 10, border: '1px solid #28a745', borderRadius: 3, backgroundColor: '#d4edda' }}>
+                  <div style={{ fontSize: '12px', color: '#155724' }}>
+                    <i className="fa fa-circle" style={{ marginRight: 4 }} />
+                    {i18n._('Enhanced Continuous Jogging Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
                   </div>
                 </div>
-
-                {/* Active Jog Status */}
-                {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 ? (
-                  <div style={{ fontSize: '12px', color: '#28a745', marginTop: 8 }}>
-                    <i className="fa fa-circle" style={{ marginRight: 4 }} />
-                    {i18n._('Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
-                  </div>
-) : null}
-              </div>
+              ) : null}
             </Widget.Content>
           </Widget>
         );
