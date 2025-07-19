@@ -424,7 +424,7 @@ class FluidNCController {
         }
         const { cmd = '', pauseAfter = 0 } = { ...cmds[i] };
         if (cmd) {
-          this.command(null, cmd);
+          this.command(cmd);
         }
         setTimeout(() => {
           sendInitCommands(i + 1);
@@ -487,7 +487,7 @@ class FluidNCController {
         this.workflow.stop();
 
         // Unload G-code
-        this.command(null, 'unload');
+        this.command('unload');
 
         // Initialize controller
         this.initController();
@@ -764,7 +764,7 @@ class FluidNCController {
 
           this.event.trigger('macro:run');
 
-          this.command(socket, 'gcode', macro.content, context);
+          this.command('gcode', macro.content, context);
           callback(null);
         },
         'watchdir:load': () => {

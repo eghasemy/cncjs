@@ -750,5 +750,7 @@
   "Rotate Right": "",
   "Flip Horizontally": "",
   "Flip Vertically": "",
-  "Crosshair": ""
+  "Crosshair": "",
+  "FluidNC Widget": "",
+  "This widget shows the FluidNC state and provides FluidNC specific features.": ""
 }
