@@ -458,7 +458,7 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; External Edge Probing Sequence'),
-          gcode(`#<_probe_clearance> = ${xyClearing} - ${probeDiameter} / 2`),
+          gcode(`#<_probe_clearance> = [${xyClearing} - [${probeDiameter} / 2]]`),
           gcode('G91') // Relative mode
         ];
 
@@ -750,7 +750,7 @@ class ProbeWidget extends PureComponent {
 
         const commands = [
           gcode('; Internal Edge Probing Sequence'),
-          gcode(`#<_probe_clearance> = ${xyClearing} - ${probeDiameter} / 2`),
+          gcode(`#<_probe_clearance> = [${xyClearing} - [${probeDiameter} / 2]]`),
           gcode('G91') // Relative mode
         ];
 
