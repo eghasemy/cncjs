@@ -515,7 +515,7 @@ class FluidNCController {
     }
 
     isOpen() {
-      return this.connection && this.connection.isOpen();
+      return this.connection && this.connection.isOpen;
     }
 
     isClose() {
