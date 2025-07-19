@@ -607,5 +607,11 @@
   "Modifier Button": "Modifier Button",
   "With Modifier": "With Modifier",
   "Negative": "Negative",
-  "Positive": "Positive"
+  "Positive": "Positive",
+  "Active State": "Active State",
+  "FluidNC": "FluidNC",
+  "FluidNC Settings": "FluidNC Settings",
+  "Overrides": "Overrides",
+  "Feed": "Feed",
+  "Rapid": "Rapid"
 }
