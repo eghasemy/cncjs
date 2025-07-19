@@ -398,7 +398,6 @@ class GamepadWidget extends PureComponent {
             pad.axes.forEach((val, i) => {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
-                const absVal = Math.abs(val);
 
                 // Handle positive direction
                 if (map.positive) {
