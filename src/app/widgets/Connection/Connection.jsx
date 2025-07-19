@@ -14,7 +14,8 @@ import {
   GRBL,
   MARLIN,
   SMOOTHIE,
-  TINYG
+  TINYG,
+  FLUIDNC
 } from '../../constants';
 
 class Connection extends PureComponent {
@@ -118,6 +119,7 @@ class Connection extends PureComponent {
       const hasMarlinController = includes(controller.loadedControllers, MARLIN);
       const hasSmoothieController = includes(controller.loadedControllers, SMOOTHIE);
       const hasTinyGController = includes(controller.loadedControllers, TINYG);
+      const hasFluidNCController = includes(controller.loadedControllers, FLUIDNC);
       const notLoading = !loading;
       const notConnecting = !connecting;
       const notConnected = !connected;
@@ -205,6 +207,22 @@ class Connection extends PureComponent {
                       }}
                     >
                       {TINYG}
+                    </button>
+                  )}
+                  {hasFluidNCController && (
+                    <button
+                      type="button"
+                      className={cx(
+                        'btn',
+                        'btn-default',
+                        { 'btn-select': controllerType === FLUIDNC }
+                      )}
+                      disabled={!canChangeController}
+                      onClick={() => {
+                        actions.changeController(FLUIDNC);
+                      }}
+                    >
+                      {FLUIDNC}
                     </button>
                   )}
                 </div>

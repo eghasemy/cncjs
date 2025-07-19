@@ -68,6 +68,7 @@ export const GRBL = 'Grbl';
 export const MARLIN = 'Marlin';
 export const SMOOTHIE = 'Smoothie';
 export const TINYG = 'TinyG';
+export const FLUIDNC = 'FluidNC';
 
 // Workflow State
 export const WORKFLOW_STATE_IDLE = 'idle';

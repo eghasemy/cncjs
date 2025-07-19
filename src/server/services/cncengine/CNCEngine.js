@@ -13,12 +13,14 @@ import {
   GrblController,
   MarlinController,
   SmoothieController,
-  TinyGController
+  TinyGController,
+  FluidNCController
 } from '../../controllers';
 import { GRBL } from '../../controllers/Grbl/constants';
 import { MARLIN } from '../../controllers/Marlin/constants';
 import { SMOOTHIE } from '../../controllers/Smoothie/constants';
 import { G2CORE, TINYG } from '../../controllers/TinyG/constants';
+import { FLUIDNC } from '../../controllers/FluidNC/constants';
 import {
   authorizeIPAddress,
   validateUser
@@ -46,7 +48,9 @@ const isValidController = (controller) => (
     // g2core
     caseInsensitiveEquals(G2CORE, controller) ||
     // TinyG
-    caseInsensitiveEquals(TINYG, controller)
+    caseInsensitiveEquals(TINYG, controller) ||
+    // FluidNC
+    caseInsensitiveEquals(FLUIDNC, controller)
 );
 
 class CNCEngine {
@@ -112,6 +116,10 @@ class CNCEngine {
       // TinyG / G2core
       if (!controller || caseInsensitiveEquals(G2CORE, controller) || caseInsensitiveEquals(TINYG, controller)) {
         this.controllerClass[TINYG] = TinyGController;
+      }
+      // FluidNC
+      if (!controller || caseInsensitiveEquals(FLUIDNC, controller)) {
+        this.controllerClass[FLUIDNC] = FluidNCController;
       }
 
       if (Object.keys(this.controllerClass).length === 0) {
