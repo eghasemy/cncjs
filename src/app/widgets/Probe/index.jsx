@@ -489,6 +489,19 @@ class ProbeWidget extends PureComponent {
         const lines = originalGcode.split('\n');
         const compensatedLines = [];
 
+        // Track current position through G-code execution
+        let currentX = 0;
+        let currentY = 0;
+        let currentZ = 0;
+        let isAbsoluteMode = true; // G90 = absolute, G91 = relative
+        let compensationCount = 0;
+
+        console.log('Starting height map compensation...');
+        console.log('Height map data:', heightMapData);
+        console.log('Height map parameters:', { 
+          startX, startY, width, height, gridX, gridY
+        });
+
         // Function to interpolate height at given X,Y coordinates
         const interpolateHeight = (x, y) => {
           // Convert world coordinates to grid coordinates
@@ -522,52 +535,122 @@ class ProbeWidget extends PureComponent {
           return interpolatedHeight;
         };
 
-        // Regular expressions to match coordinate parameters
+        // Regular expressions to match coordinate parameters and G-code commands
         const coordRegex = /([XYZ])(-?\d*\.?\d+)/gi;
+        const gCodeRegex = /^[;\s]*([GM]\d+)/i;
 
-        lines.forEach(line => {
-          let compensatedLine = line;
+        lines.forEach((line, lineIndex) => {
+          let compensatedLine = line.trim();
+
+          // Skip empty lines and comments
+          if (!compensatedLine || compensatedLine.startsWith(';') || compensatedLine.startsWith('(')) {
+            compensatedLines.push(line);
+            return;
+          }
+
+          // Check for coordinate system mode changes
+          const gCodeMatch = compensatedLine.match(gCodeRegex);
+          if (gCodeMatch) {
+            const command = gCodeMatch[1].toUpperCase();
+            if (command === 'G90') {
+              isAbsoluteMode = true;
+            } else if (command === 'G91') {
+              isAbsoluteMode = false;
+            }
+          }
 
           // Check if this line contains coordinate movements (G0, G1, G2, G3)
-          if (/^[;\s]*G[0-3]/.test(line.trim()) && /[XYZ]/.test(line)) {
-            let currentX = null;
-            let currentY = null;
-            let currentZ = null;
+          if (/^[;\s]*G[0-3]/.test(compensatedLine) && /[XYZ]/.test(compensatedLine)) {
+            let newX = currentX;
+            let newY = currentY;
+            let newZ = currentZ;
+            let hasX = false;
+            let hasY = false;
             let hasZ = false;
+            let originalZ = null;
 
-            // Extract current X, Y, and Z coordinates
-            const matches = [...line.matchAll(coordRegex)];
+            // Extract coordinates from the line
+            const matches = [...compensatedLine.matchAll(coordRegex)];
             matches.forEach(match => {
               const axis = match[1].toUpperCase();
               const value = parseFloat(match[2]);
 
               if (axis === 'X') {
-                currentX = value;
+                newX = isAbsoluteMode ? value : currentX + value;
+                hasX = true;
               } else if (axis === 'Y') {
-                currentY = value;
+                newY = isAbsoluteMode ? value : currentY + value;
+                hasY = true;
               } else if (axis === 'Z') {
-                currentZ = value;
+                originalZ = value;
+                newZ = isAbsoluteMode ? value : currentZ + value;
                 hasZ = true;
               }
             });
 
-            // Apply height compensation if this move includes Z and has X,Y coordinates
-            if (hasZ && currentX !== null && currentY !== null && currentZ !== null) {
+            // Apply height compensation if this move includes Z coordinate
+            if (hasZ && originalZ !== null) {
+              // Use the target X,Y position for height interpolation
+              const targetX = newX;
+              const targetY = newY;
+
               // Check if coordinates are within the height map area
-              if (currentX >= startX && currentX <= startX + width &&
-                  currentY >= startY && currentY <= startY + height) {
-                const heightCompensation = interpolateHeight(currentX, currentY);
-                const compensatedZ = currentZ + heightCompensation;
+              if (targetX >= startX && targetX <= startX + width &&
+                  targetY >= startY && targetY <= startY + height) {
+                const heightCompensation = interpolateHeight(targetX, targetY);
+                const compensatedZ = originalZ + (isAbsoluteMode ? heightCompensation : 0);
+
+                // Debug output for first few compensations
+                if (compensationCount < 5) {
+                  console.log(`Line ${lineIndex + 1}: "${line.trim()}"`);
+                  console.log(`  Target position: X=${targetX}, Y=${targetY}, Z=${newZ}`);
+                  console.log(`  Mode: ${isAbsoluteMode ? 'Absolute' : 'Relative'}`);
+                  console.log(`  Height compensation: ${heightCompensation}`);
+                  console.log(`  Original Z: ${originalZ}, Compensated Z: ${compensatedZ}`);
+                }
 
                 // Replace Z coordinate in the line
-                const zPattern = new RegExp(`Z${currentZ.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
-                compensatedLine = compensatedLine.replace(zPattern, `Z${compensatedZ.toFixed(6)}`);
+                // Create a more robust regex that handles different number formats
+                const zPattern = new RegExp(`Z(-?\\d*\\.?\\d+)`, 'gi');
+                compensatedLine = compensatedLine.replace(zPattern, (match, zValue) => {
+                  if (Math.abs(parseFloat(zValue) - originalZ) < 0.0001) {
+                    return `Z${compensatedZ.toFixed(4)}`;
+                  }
+                  return match;
+                });
+                
+                if (compensationCount < 5) {
+                  console.log(`  Modified line: "${compensatedLine}"`);
+                  console.log('---');
+                }
+                
+                compensationCount++;
+              } else {
+                // Debug: coordinates outside height map area
+                if (compensationCount < 3) {
+                  console.log(`Line ${lineIndex + 1}: Coordinates (${targetX}, ${targetY}) outside height map area (${startX} to ${startX + width}, ${startY} to ${startY + height})`);
+                }
               }
             }
+
+            // Update current position
+            currentX = newX;
+            currentY = newY;
+            currentZ = newZ;
           }
 
           compensatedLines.push(compensatedLine);
         });
+
+        console.log(`Applied height compensation to ${compensationCount} lines`);
+
+        if (compensationCount === 0) {
+          console.warn('No height compensation was applied. Possible issues:');
+          console.warn('1. G-code coordinates may be outside height map area');
+          console.warn('2. Height map data may be all zeros');
+          console.warn('3. G-code may not contain Z movements');
+          console.warn(`Height map covers: X=${startX} to ${startX + width}, Y=${startY} to ${startY + height}`);
+        }
 
         const compensatedGcode = compensatedLines.join('\n');
 
