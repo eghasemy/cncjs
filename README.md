@@ -32,7 +32,7 @@ For a more complete introduction, see the [Introduction](https://github.com/cncj
 * Events
 * [Keyboard Shortcuts](https://cnc.js.org/docs/user-guide/#keyboard-shortcuts)
 * [Contour ShuttleXpress](https://cnc.js.org/docs/user-guide/#contour-shuttlexpress)
-* Gamepad widget for mapping USB or Bluetooth controllers (improved Bluetooth detection)
+* Gamepad widget for mapping USB or Bluetooth controllers (improved Bluetooth detection, more actions and modifier support)
 * Multi-Language Support
 * Watch Directory
 * [Tool Change](https://github.com/cncjs/cncjs/wiki/Tool-Change) (since 1.9.11)

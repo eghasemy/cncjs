@@ -48,6 +48,7 @@ class GamepadWidget extends PureComponent {
 
     prevButtons = [];
     prevAxes = [];
+    modifierPrev = false;
     raf = 0;
 
     actions = {
@@ -82,7 +83,14 @@ class GamepadWidget extends PureComponent {
             this.setState(state => ({
                 profiles: {
                     ...state.profiles,
-                    [id]: { name: 'Profile', buttonMap: {}, axisMap: {}, gamepadId: null }
+                    [id]: {
+                        name: 'Profile',
+                        buttonMap: {},
+                        modifierMap: {},
+                        modifierButton: null,
+                        axisMap: {},
+                        gamepadId: null
+                    }
                 },
                 currentProfile: id
             }));
@@ -128,6 +136,8 @@ class GamepadWidget extends PureComponent {
                             [id]: {
                                 name: data.name || 'Imported',
                                 buttonMap: data.buttonMap || {},
+                                modifierMap: data.modifierMap || {},
+                                modifierButton: data.modifierButton || null,
                                 axisMap: data.axisMap || {},
                                 gamepadId: data.gamepadId || null
                             }
@@ -233,10 +243,17 @@ class GamepadWidget extends PureComponent {
     loop = () => {
         const { profiles, currentProfile, selectedGamepad, continuousJog } = this.state;
         const profile = profiles[currentProfile] || {};
+        const modifier = profile.modifierButton;
         const pad = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads()[selectedGamepad] : null;
         if (pad) {
+            const modifierPressed = modifier !== null && pad.buttons[modifier] && pad.buttons[modifier].pressed;
             pad.buttons.forEach((btn, i) => {
-                const action = (profile.buttonMap || {})[i];
+                if (i === modifier) {
+                    this.prevButtons[i] = btn.pressed;
+                    return;
+                }
+                const map = modifierPressed ? (profile.modifierMap || {}) : (profile.buttonMap || {});
+                const action = map[i];
                 if (action && btn.pressed && !this.prevButtons[i]) {
                     this.handleAction(action);
                 }
@@ -341,6 +358,45 @@ class GamepadWidget extends PureComponent {
             case 'reset':
                 controller.command('reset');
                 break;
+            case 'feed-decrease-10':
+                controller.command('feedOverride', -10);
+                break;
+            case 'feed-decrease-1':
+                controller.command('feedOverride', -1);
+                break;
+            case 'feed-increase-1':
+                controller.command('feedOverride', 1);
+                break;
+            case 'feed-increase-10':
+                controller.command('feedOverride', 10);
+                break;
+            case 'feed-reset':
+                controller.command('feedOverride', 0);
+                break;
+            case 'spindle-decrease-10':
+                controller.command('spindleOverride', -10);
+                break;
+            case 'spindle-decrease-1':
+                controller.command('spindleOverride', -1);
+                break;
+            case 'spindle-increase-1':
+                controller.command('spindleOverride', 1);
+                break;
+            case 'spindle-increase-10':
+                controller.command('spindleOverride', 10);
+                break;
+            case 'spindle-reset':
+                controller.command('spindleOverride', 0);
+                break;
+            case 'rapid-25':
+                controller.command('rapidOverride', 25);
+                break;
+            case 'rapid-50':
+                controller.command('rapidOverride', 50);
+                break;
+            case 'rapid-100':
+                controller.command('rapidOverride', 100);
+                break;
             default:
                 break;
         }
@@ -349,7 +405,7 @@ class GamepadWidget extends PureComponent {
     render() {
         const { widgetId } = this.props;
         const { minimized, isFullscreen, profiles, currentProfile, selectedGamepad } = this.state;
-        const current = profiles[currentProfile] || { name: '', buttonMap: {}, axisMap: {} };
+        const current = profiles[currentProfile] || { name: '', buttonMap: {}, modifierMap: {}, modifierButton: null, axisMap: {} };
         const isForkedWidget = widgetId.match(/\w+:[\w\-]+/);
         const actions = { ...this.actions };
 
@@ -414,6 +470,8 @@ class GamepadWidget extends PureComponent {
                 <Settings
                   name={current.name}
                   buttonMap={current.buttonMap}
+                  modifierMap={current.modifierMap}
+                  modifierButton={current.modifierButton}
                   axisMap={current.axisMap}
                   gamepadIndex={selectedGamepad}
                   macros={this.state.macros}
@@ -425,12 +483,19 @@ class GamepadWidget extends PureComponent {
                       }
                     }));
                   }}
-                  onSave={({ buttonMap, axisMap }) => {
+                  onSave={({ buttonMap, modifierMap, modifierButton, axisMap }) => {
                     const pad = navigator.getGamepads ? navigator.getGamepads()[selectedGamepad] : null;
                     this.setState(state => ({
                       profiles: {
                         ...state.profiles,
-                        [state.currentProfile]: { ...current, buttonMap, axisMap, gamepadId: pad ? pad.id : null }
+                        [state.currentProfile]: {
+                          ...current,
+                          buttonMap,
+                          modifierMap,
+                          modifierButton,
+                          axisMap,
+                          gamepadId: pad ? pad.id : null
+                        }
                       }
                     }));
                     actions.closeModal();
