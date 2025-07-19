@@ -166,12 +166,18 @@ class Settings extends PureComponent {
         const baseActions = getActions(macros);
         const usedActions = new Set();
         Object.keys(buttonMap).forEach(idx => {
+            if (Number(idx) === modifierButton) {
+                return;
+            }
             const val = buttonMap[idx];
             if (val) {
                 usedActions.add(val);
             }
         });
         Object.keys(modifierMap).forEach(idx => {
+            if (Number(idx) === modifierButton) {
+                return;
+            }
             const val = modifierMap[idx];
             if (val) {
                 usedActions.add(val);
@@ -218,31 +224,33 @@ class Settings extends PureComponent {
                   </thead>
                   <tbody>
                     {Array.from({ length: buttons }).map((_, i) => (
-                      <tr key={i} style={{ backgroundColor: activeButtons[i] ? '#ffeeba' : 'transparent' }}>
-                        <td>{i}</td>
-                        <td>
-                          <select
-                            className="form-control"
-                            value={buttonMap[i] || ''}
-                            onChange={e => this.handleChangeButton(i, e.target.value)}
-                          >
-                            {getAvailable(buttonMap[i] || '').map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <select
-                            className="form-control"
-                            value={modifierMap[i] || ''}
-                            onChange={e => this.handleChangeModifierMap(i, e.target.value)}
-                          >
-                            {getAvailable(modifierMap[i] || '').map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
+                      i === modifierButton ? null : (
+                        <tr key={i} style={{ backgroundColor: activeButtons[i] ? '#ffeeba' : 'transparent' }}>
+                          <td>{i}</td>
+                          <td>
+                            <select
+                              className="form-control"
+                              value={buttonMap[i] || ''}
+                              onChange={e => this.handleChangeButton(i, e.target.value)}
+                            >
+                              {getAvailable(buttonMap[i] || '').map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <select
+                              className="form-control"
+                              value={modifierMap[i] || ''}
+                              onChange={e => this.handleChangeModifierMap(i, e.target.value)}
+                            >
+                              {getAvailable(modifierMap[i] || '').map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                      )
                                 ))}
                   </tbody>
                 </table>
