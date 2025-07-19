@@ -6,9 +6,39 @@ import {
   METRIC_UNITS
 } from '../../constants';
 import {
-  MODAL_PREVIEW
+  PROBE_TYPE_CONFIG,
+  PROBE_TYPE_EXTERNAL_EDGE,
+  PROBE_TYPE_INTERNAL_EDGE,
+  PROBE_TYPE_CENTER,
+  PROBE_TYPE_ROTATION,
+  PROBE_TYPE_HEIGHT_MAP,
+  EXTERNAL_EDGE_X_POSITIVE,
+  EXTERNAL_EDGE_X_NEGATIVE,
+  EXTERNAL_EDGE_Y_POSITIVE,
+  EXTERNAL_EDGE_Y_NEGATIVE,
+  EXTERNAL_EDGE_Z_NEGATIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
+  INTERNAL_EDGE_X_POSITIVE,
+  INTERNAL_EDGE_X_NEGATIVE,
+  INTERNAL_EDGE_Y_POSITIVE,
+  INTERNAL_EDGE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE,
+  INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE,
+  CENTER_PROBE_EXTERNAL,
+  CENTER_PROBE_INTERNAL,
+  ROTATION_EDGE_LEFT,
+  ROTATION_EDGE_RIGHT,
+  ROTATION_EDGE_TOP,
+  ROTATION_EDGE_BOTTOM,
+  ROTATION_METHOD_G68,
+  ROTATION_METHOD_MATRIX
 } from './constants';
-import styles from './index.styl';
+import HeightMapVisualizer from './HeightMapVisualizer';
 
 class Probe extends PureComponent {
     static propTypes = {
@@ -20,13 +50,7 @@ class Probe extends PureComponent {
       const { state, actions } = this.props;
       const {
         canClick,
-        units,
-        probeAxis,
-        probeCommand,
-        probeDepth,
-        probeFeedrate,
-        touchPlateHeight,
-        retractionDistance
+        units
       } = state;
       const displayUnits = (units === METRIC_UNITS) ? i18n._('mm') : i18n._('in');
       const feedrateUnits = (units === METRIC_UNITS) ? i18n._('mm/min') : i18n._('in/min');
@@ -34,8 +58,8 @@ class Probe extends PureComponent {
 
       return (
         <div>
+          {/* Probe Type Tabs */}
           <div className="form-group">
-            <label className="control-label">{i18n._('Probe Axis')}</label>
             <div className="btn-toolbar" role="toolbar" style={{ marginBottom: 5 }}>
               <div className="btn-group btn-group-sm">
                 <button
@@ -43,53 +67,648 @@ class Probe extends PureComponent {
                   className={classNames(
                     'btn',
                     'btn-default',
-                    { 'btn-select': probeAxis === 'Z' }
+                    { 'btn-select': state.probeType === PROBE_TYPE_CONFIG }
                   )}
-                  title={i18n._('Probe Z Axis')}
-                  onClick={() => actions.changeProbeAxis('Z')}
+                  title={i18n._('Probe Configuration')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_CONFIG)}
                 >
-                                Z
+                  {i18n._('Configuration')}
                 </button>
                 <button
                   type="button"
                   className={classNames(
                     'btn',
                     'btn-default',
-                    { 'btn-select': probeAxis === 'X' }
+                    { 'btn-select': state.probeType === PROBE_TYPE_EXTERNAL_EDGE }
                   )}
-                  title={i18n._('Probe X Axis')}
-                  onClick={() => actions.changeProbeAxis('X')}
+                  title={i18n._('External Edge Probing')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_EXTERNAL_EDGE)}
                 >
-                                X
+                  {i18n._('External Edge')}
                 </button>
                 <button
                   type="button"
                   className={classNames(
                     'btn',
                     'btn-default',
-                    { 'btn-select': probeAxis === 'Y' }
+                    { 'btn-select': state.probeType === PROBE_TYPE_INTERNAL_EDGE }
                   )}
-                  title={i18n._('Probe Y Axis')}
-                  onClick={() => actions.changeProbeAxis('Y')}
+                  title={i18n._('Internal Edge Probing')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_INTERNAL_EDGE)}
                 >
-                                Y
+                  {i18n._('Internal Edge')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': state.probeType === PROBE_TYPE_CENTER }
+                  )}
+                  title={i18n._('Center Finding')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_CENTER)}
+                >
+                  {i18n._('Center')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': state.probeType === PROBE_TYPE_ROTATION }
+                  )}
+                  title={i18n._('Rotation Correction')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_ROTATION)}
+                >
+                  {i18n._('Rotation')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': state.probeType === PROBE_TYPE_HEIGHT_MAP }
+                  )}
+                  title={i18n._('Height Mapping')}
+                  onClick={() => actions.changeProbeType(PROBE_TYPE_HEIGHT_MAP)}
+                >
+                  {i18n._('Height Map')}
                 </button>
               </div>
             </div>
-            <p className={styles.probeAxisDescription}>
-              {probeAxis === 'Z' &&
-                <i>{i18n._('Probe Z Axis')}</i>
-              }
-              {probeAxis === 'X' &&
-                <i>{i18n._('Probe X Axis')}</i>
-              }
-              {probeAxis === 'Y' &&
-                <i>{i18n._('Probe Y Axis')}</i>
-              }
-            </p>
           </div>
+
+          {/* Probe Configuration Tab */}
+          {state.probeType === PROBE_TYPE_CONFIG && this.renderConfigurationTab(state, actions, displayUnits, feedrateUnits, step)}
+
+          {/* External Edge Probing Tab */}
+          {state.probeType === PROBE_TYPE_EXTERNAL_EDGE && this.renderExternalEdgeTab(state, actions, canClick)}
+
+          {/* Internal Edge Probing Tab */}
+          {state.probeType === PROBE_TYPE_INTERNAL_EDGE && this.renderInternalEdgeTab(state, actions, canClick)}
+
+          {/* Center Finding Tab */}
+          {state.probeType === PROBE_TYPE_CENTER && this.renderCenterTab(state, actions, displayUnits, step, canClick)}
+
+          {/* Rotation Tab */}
+          {state.probeType === PROBE_TYPE_ROTATION && this.renderRotationTab(state, actions, canClick)}
+
+          {/* Height Map Tab */}
+          {state.probeType === PROBE_TYPE_HEIGHT_MAP && this.renderHeightMapTab(state, actions, displayUnits, step, canClick)}
+        </div>
+      );
+    }
+
+    renderConfigurationTab(state, actions, displayUnits, feedrateUnits, step) {
+      const {
+        probeDiameter,
+        touchPlateHeight,
+        rapidsFeedrate,
+        searchFeedrate,
+        latchFeedrate,
+        probingDistance,
+        latchDistance,
+        xyClearing,
+        probeOffset,
+        probeDepth,
+        showProbeModal
+      } = state;
+
+      return (
+        <div>
+          {/* Probe Tip/Tool Section */}
           <div className="form-group">
-            <label className="control-label">{i18n._('Probe Command')}</label>
+            <label className="control-label">{i18n._('Probe Tip/Tool')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-12">
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Diameter')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={probeDiameter}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleProbeDiameterChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Touch Plate/Fixture Heights Section */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Touch Plate/Fixture Heights')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-12">
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Height')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={touchPlateHeight}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleTouchPlateHeightChange}
+                    />
+                    <span className="input-group-addon">{displayUnits}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Probing Distances and Speed Section */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Probing Distances and Speed')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Rapids Feed Rate')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={rapidsFeedrate}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleRapidsFeedrateChange}
+                    />
+                    <span className="input-group-addon">{feedrateUnits}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Search Feed Rate')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={searchFeedrate}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleSearchFeedrateChange}
+                    />
+                    <span className="input-group-addon">{feedrateUnits}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Latch Feed Rate')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={latchFeedrate}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleLatchFeedrateChange}
+                    />
+                    <span className="input-group-addon">{feedrateUnits}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Probing Distance')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={probingDistance}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleProbingDistanceChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row no-gutters">
+              <div className="col-xs-12">
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Latch Distance')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={latchDistance}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleLatchDistanceChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Probing Clearances Section */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Probing Clearances')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('XY Clearance')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={xyClearing}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleXyClearanceChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Offset')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={probeOffset}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleProbeOffsetChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row no-gutters">
+              <div className="col-xs-12">
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Depth')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={probeDepth}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleProbeDepthChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Probing Behavior Section */}
+          <div className="panel panel-default">
+            <div className="panel-heading">{i18n._('Probing Behavior')}</div>
+            <div className="panel-body">
+              <div className="row no-gutters">
+                <div className="col-xs-12">
+                  <div className="checkbox">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={showProbeModal}
+                        onChange={actions.toggleShowProbeModal}
+                      />
+                      {i18n._('Show probe preview modal before starting')}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    renderExternalEdgeTab(state, actions, canClick) {
+      const { selectedExternalEdge } = state;
+
+      return (
+        <div>
+          <div className="form-group">
+            <label className="control-label">{i18n._('External Edge/Corner Direction')}</label>
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              {/* Top row - corners and edge */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y+ Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE)}
+                >
+                  ↖
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Y+ Edge')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Y_POSITIVE)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y+ Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_POSITIVE_Y_POSITIVE)}
+                >
+                  ↗
+                </button>
+              </div>
+              {/* Middle row - edges and center */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_X_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Edge')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_X_NEGATIVE)}
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_Z_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Z- Probe')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Z_NEGATIVE)}
+                >
+                  O
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_X_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Edge')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_X_POSITIVE)}
+                >
+                  →
+                </button>
+              </div>
+              {/* Bottom row - corners and edge */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y- Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE)}
+                >
+                  ↙
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_EDGE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Y- Edge')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Y_NEGATIVE)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedExternalEdge === EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y- Corner')}
+                  onClick={() => actions.selectExternalEdge(EXTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE)}
+                >
+                  ↘
+                </button>
+              </div>
+            </div>
+          </div>
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
+        </div>
+      );
+    }
+
+    renderInternalEdgeTab(state, actions, canClick) {
+      const { selectedInternalEdge } = state;
+
+      return (
+        <div>
+          <div className="form-group">
+            <label className="control-label">{i18n._('Internal Edge/Corner Direction')}</label>
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              {/* Top row - corners and edge */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y+ Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_NEGATIVE_Y_POSITIVE)}
+                >
+                  ↖
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_EDGE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Y+ Internal Edge')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_EDGE_Y_POSITIVE)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y+ Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_POSITIVE_Y_POSITIVE)}
+                >
+                  ↗
+                </button>
+              </div>
+              {/* Middle row - edges and center */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_EDGE_X_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Internal Edge')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_EDGE_X_NEGATIVE)}
+                >
+                  ←
+                </button>
+                <span style={{ display: 'inline-block', width: '60px', height: '60px', margin: '5px', lineHeight: '60px', fontSize: '24px' }}>○</span>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_EDGE_X_POSITIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Internal Edge')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_EDGE_X_POSITIVE)}
+                >
+                  →
+                </button>
+              </div>
+              {/* Bottom row - corners and edge */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X- Y- Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_NEGATIVE_Y_NEGATIVE)}
+                >
+                  ↙
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_EDGE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('Y- Internal Edge')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_EDGE_Y_NEGATIVE)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    'btn-lg',
+                    { 'btn-select': selectedInternalEdge === INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE }
+                  )}
+                  style={{ margin: '5px', width: '60px', height: '60px', fontSize: '24px' }}
+                  title={i18n._('X+ Y- Internal Corner')}
+                  onClick={() => actions.selectInternalEdge(INTERNAL_CORNER_X_POSITIVE_Y_NEGATIVE)}
+                >
+                  ↘
+                </button>
+              </div>
+            </div>
+          </div>
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
+        </div>
+      );
+    }
+
+    renderCenterTab(state, actions, displayUnits, step, canClick) {
+      const {
+        centerProbeType,
+        setCenterAsOrigin,
+        centerSizeX,
+        centerSizeY,
+        centerPasses,
+        xyClearing
+      } = state;
+
+      // Validation: XY clearance must be less than half of X and Y size
+      const xySizeError = (centerSizeX > 0 && xyClearing >= centerSizeX / 2) ||
+                          (centerSizeY > 0 && xyClearing >= centerSizeY / 2);
+
+      return (
+        <div>
+          <div className="form-group">
+            <label className="control-label">{i18n._('Center Probe Type')}</label>
             <div className="btn-toolbar" role="toolbar" style={{ marginBottom: 5 }}>
               <div className="btn-group btn-group-sm">
                 <button
@@ -97,149 +716,455 @@ class Probe extends PureComponent {
                   className={classNames(
                     'btn',
                     'btn-default',
-                    { 'btn-select': probeCommand === 'G38.2' }
+                    { 'btn-select': centerProbeType === CENTER_PROBE_EXTERNAL }
                   )}
-                  title={i18n._('G38.2 probe toward workpiece, stop on contact, signal error if failure')}
-                  onClick={() => actions.changeProbeCommand('G38.2')}
+                  title={i18n._('External center finding')}
+                  onClick={() => actions.changeCenterProbeType(CENTER_PROBE_EXTERNAL)}
                 >
-                                G38.2
+                  {i18n._('External')}
                 </button>
                 <button
                   type="button"
                   className={classNames(
                     'btn',
                     'btn-default',
-                    { 'btn-select': probeCommand === 'G38.3' }
+                    { 'btn-select': centerProbeType === CENTER_PROBE_INTERNAL }
                   )}
-                  title={i18n._('G38.3 probe toward workpiece, stop on contact')}
-                  onClick={() => actions.changeProbeCommand('G38.3')}
+                  title={i18n._('Internal center finding')}
+                  onClick={() => actions.changeCenterProbeType(CENTER_PROBE_INTERNAL)}
                 >
-                                G38.3
-                </button>
-                <button
-                  type="button"
-                  className={classNames(
-                    'btn',
-                    'btn-default',
-                    { 'btn-select': probeCommand === 'G38.4' }
-                  )}
-                  title={i18n._('G38.4 probe away from workpiece, stop on loss of contact, signal error if failure')}
-                  onClick={() => actions.changeProbeCommand('G38.4')}
-                >
-                                G38.4
-                </button>
-                <button
-                  type="button"
-                  className={classNames(
-                    'btn',
-                    'btn-default',
-                    { 'btn-select': probeCommand === 'G38.5' }
-                  )}
-                  title={i18n._('G38.5 probe away from workpiece, stop on loss of contact')}
-                  onClick={() => actions.changeProbeCommand('G38.5')}
-                >
-                                G38.5
+                  {i18n._('Internal')}
                 </button>
               </div>
             </div>
-            <p className={styles.probeCommandDescription}>
-              {probeCommand === 'G38.2' &&
-                <i>{i18n._('G38.2 probe toward workpiece, stop on contact, signal error if failure')}</i>
-              }
-              {probeCommand === 'G38.3' &&
-                <i>{i18n._('G38.3 probe toward workpiece, stop on contact')}</i>
-              }
-              {probeCommand === 'G38.4' &&
-                <i>{i18n._('G38.4 probe away from workpiece, stop on loss of contact, signal error if failure')}</i>
-              }
-              {probeCommand === 'G38.5' &&
-                <i>{i18n._('G38.5 probe away from workpiece, stop on loss of contact')}</i>
-              }
+          </div>
+
+          <div className="form-group">
+            <div className="checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={setCenterAsOrigin}
+                  onChange={actions.toggleSetCenterAsOrigin}
+                />
+                {i18n._('Set center as X0, Y0')}
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="control-label">{i18n._('Feature Size')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('X Size')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className={classNames('form-control', { 'has-error': xySizeError })}
+                      value={centerSizeX}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleCenterSizeXChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Y Size')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className={classNames('form-control', { 'has-error': xySizeError })}
+                      value={centerSizeY}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleCenterSizeYChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {xySizeError ? (
+              <p className="text-danger">
+                <small>{i18n._('XY Clearance must be less than half of X and Y size to prevent collisions')}</small>
+              </p>
+) : null}
+          </div>
+
+          <div className="form-group">
+            <label className="control-label">{i18n._('Number of Passes')}</label>
+            <div className="input-group input-group-sm">
+              <input
+                type="number"
+                className="form-control"
+                value={centerPasses}
+                placeholder="1"
+                min={1}
+                max={10}
+                step={1}
+                onChange={actions.handleCenterPassesChange}
+              />
+            </div>
+          </div>
+
+          {this.renderProbeControls(actions, state.canClickStart && !xySizeError, state.canClickStop)}
+        </div>
+      );
+    }
+
+    renderRotationTab(state, actions, canClick) {
+      const { selectedRotationEdge, rotationMethod } = state;
+
+      return (
+        <div>
+          <div className="form-group">
+            <label className="control-label">{i18n._('Select Edge for Rotation Probing')}</label>
+            <div className="btn-toolbar" role="toolbar" style={{ marginBottom: 5 }}>
+              <div className="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': selectedRotationEdge === ROTATION_EDGE_LEFT }
+                  )}
+                  title={i18n._('Left Edge')}
+                  onClick={() => actions.selectRotationEdge(ROTATION_EDGE_LEFT)}
+                >
+                  {i18n._('Left')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': selectedRotationEdge === ROTATION_EDGE_RIGHT }
+                  )}
+                  title={i18n._('Right Edge')}
+                  onClick={() => actions.selectRotationEdge(ROTATION_EDGE_RIGHT)}
+                >
+                  {i18n._('Right')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': selectedRotationEdge === ROTATION_EDGE_TOP }
+                  )}
+                  title={i18n._('Top Edge')}
+                  onClick={() => actions.selectRotationEdge(ROTATION_EDGE_TOP)}
+                >
+                  {i18n._('Top')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': selectedRotationEdge === ROTATION_EDGE_BOTTOM }
+                  )}
+                  title={i18n._('Bottom Edge')}
+                  onClick={() => actions.selectRotationEdge(ROTATION_EDGE_BOTTOM)}
+                >
+                  {i18n._('Bottom')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="control-label">{i18n._('Rotation Method')}</label>
+            <div className="btn-toolbar" role="toolbar" style={{ marginBottom: 5 }}>
+              <div className="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': rotationMethod === ROTATION_METHOD_G68 }
+                  )}
+                  title={i18n._('Apply G68 style rotation')}
+                  onClick={() => actions.changeRotationMethod(ROTATION_METHOD_G68)}
+                >
+                  {i18n._('G68 Style')}
+                </button>
+                <button
+                  type="button"
+                  className={classNames(
+                    'btn',
+                    'btn-default',
+                    { 'btn-select': rotationMethod === ROTATION_METHOD_MATRIX }
+                  )}
+                  title={i18n._('Calculate with 2D rotation matrix on loaded G-code')}
+                  onClick={() => actions.changeRotationMethod(ROTATION_METHOD_MATRIX)}
+                >
+                  {i18n._('2D Matrix')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <p className="help-block">
+              {rotationMethod === ROTATION_METHOD_G68
+                ? i18n._('Rotation will be applied using G68 commands with X0 and Y0 as the rotation center.')
+                : i18n._('Rotation will be calculated using a 2D rotation matrix and applied to the loaded G-code with X0 and Y0 as the rotation center.')}
             </p>
           </div>
-          <div className="row no-gutters">
-            <div className="col-xs-6" style={{ paddingRight: 5 }}>
-              <div className="form-group">
-                <label className="control-label">{i18n._('Probe Depth')}</label>
-                <div className="input-group input-group-sm">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={probeDepth}
-                    placeholder="0.00"
-                    min={0}
-                    step={step}
-                    onChange={actions.handleProbeDepthChange}
-                  />
-                  <div className="input-group-addon">{displayUnits}</div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xs-6" style={{ paddingLeft: 5 }}>
-              <div className="form-group">
-                <label className="control-label">{i18n._('Probe Feedrate')}</label>
-                <div className="input-group input-group-sm">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={probeFeedrate}
-                    placeholder="0.00"
-                    min={0}
-                    step={step}
-                    onChange={actions.handleProbeFeedrateChange}
-                  />
-                  <span className="input-group-addon">{feedrateUnits}</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-xs-6" style={{ paddingRight: 5 }}>
-              <div className="form-group">
-                <label className="control-label">{i18n._('Touch Plate Thickness')}</label>
-                <div className="input-group input-group-sm">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={touchPlateHeight}
-                    placeholder="0.00"
-                    min={0}
-                    step={step}
-                    onChange={actions.handleTouchPlateHeightChange}
-                  />
-                  <span className="input-group-addon">{displayUnits}</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-xs-6" style={{ paddingLeft: 5 }}>
-              <div className="form-group">
-                <label className="control-label">{i18n._('Retraction Distance')}</label>
-                <div className="input-group input-group-sm">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={retractionDistance}
-                    placeholder="0.00"
-                    min={0}
-                    step={step}
-                    onChange={actions.handleRetractionDistanceChange}
-                  />
-                  <span className="input-group-addon">{displayUnits}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="row no-gutters">
+
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
+
+          <div className="row no-gutters" style={{ marginTop: '10px' }}>
             <div className="col-xs-12">
               <button
                 type="button"
-                className="btn btn-sm btn-default"
-                onClick={() => {
-                  actions.openModal(MODAL_PREVIEW);
-                }}
-                disabled={!canClick}
+                className="btn btn-sm btn-warning"
+                onClick={actions.applyRotationToGcode}
+                disabled={!canClick || !selectedRotationEdge}
               >
-                {i18n._('Probe')}
+                {i18n._('Apply Rotation to G-code')}
               </button>
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    renderHeightMapTab(state, actions, displayUnits, step, canClick) {
+      const {
+        heightMapStartX,
+        heightMapStartY,
+        heightMapWidth,
+        heightMapHeight,
+        heightMapGridSizeX,
+        heightMapGridSizeY,
+        pauseBeforeProbing,
+        setZZeroAtOrigin
+      } = state;
+
+      return (
+        <div>
+          {/* Area to Probe Section */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Area to Probe')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('X Starting Point')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapStartX}
+                      placeholder="0.00"
+                      step={step}
+                      onChange={actions.handleHeightMapStartXChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Y Starting Point')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapStartY}
+                      placeholder="0.00"
+                      step={step}
+                      onChange={actions.handleHeightMapStartYChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Width of Area')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapWidth}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleHeightMapWidthChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Height of Area')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapHeight}
+                      placeholder="0.00"
+                      min={0}
+                      step={step}
+                      onChange={actions.handleHeightMapHeightChange}
+                    />
+                    <div className="input-group-addon">{displayUnits}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row no-gutters">
+              <div className="col-xs-12">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-default btn-block"
+                  onClick={actions.autoDetectHeightMapArea}
+                  disabled={!canClick}
+                >
+                  {i18n._('Auto-determine from Program Limits')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid Size Section */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Grid Size')}</label>
+            <div className="row no-gutters">
+              <div className="col-xs-6" style={{ paddingRight: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('X Grid Size')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapGridSizeX}
+                      placeholder="3"
+                      min={2}
+                      max={20}
+                      step={1}
+                      onChange={actions.handleHeightMapGridSizeXChange}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+                <div className="form-group">
+                  <label className="control-label">{i18n._('Y Grid Size')}</label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={heightMapGridSizeY}
+                      placeholder="3"
+                      min={2}
+                      max={20}
+                      step={1}
+                      onChange={actions.handleHeightMapGridSizeYChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Height Map Visualization */}
+          <div className="form-group">
+            <label className="control-label">{i18n._('Height Map Preview')}</label>
+            <HeightMapVisualizer
+              heightMapData={state.heightMapData || []}
+              gridSizeX={heightMapGridSizeX}
+              gridSizeY={heightMapGridSizeY}
+              width={320}
+              height={200}
+            />
+            <div style={{ marginTop: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-info btn-block"
+                onClick={actions.generateSampleHeightMapData}
+                disabled={!canClick}
+              >
+                {i18n._('Generate Sample Data')}
+              </button>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="form-group">
+            <div className="checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={pauseBeforeProbing}
+                  onChange={actions.togglePauseBeforeProbing}
+                />
+                {i18n._('Pause before probing')}
+              </label>
+            </div>
+            <div className="checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={setZZeroAtOrigin}
+                  onChange={actions.toggleSetZZeroAtOrigin}
+                />
+                {i18n._('Set Z = 0 at X0Y0')}
+              </label>
+            </div>
+          </div>
+
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
+
+          <div className="row no-gutters" style={{ marginTop: '10px' }}>
+            <div className="col-xs-12">
+              <button
+                type="button"
+                className="btn btn-sm btn-warning btn-block"
+                onClick={actions.applyHeightMapToGcode}
+                disabled={!canClick}
+              >
+                {i18n._('Apply Height Map to G-code')}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    renderProbeControls(actions, canClickStart, canClickStop) {
+      return (
+        <div className="row no-gutters" style={{ marginTop: '20px' }}>
+          <div className="col-xs-6" style={{ paddingRight: 5 }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary btn-block"
+              onClick={actions.startProbing}
+              disabled={!canClickStart}
+            >
+              {i18n._('Start')}
+            </button>
+          </div>
+          <div className="col-xs-6" style={{ paddingLeft: 5 }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger btn-block"
+              onClick={actions.stopProbing}
+              disabled={!canClickStop}
+            >
+              {i18n._('Stop')}
+            </button>
           </div>
         </div>
       );
