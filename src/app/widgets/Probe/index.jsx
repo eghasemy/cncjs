@@ -408,7 +408,10 @@ class ProbeWidget extends PureComponent {
       },
       // Probe control
       stopProbing: () => {
-        // TODO: Implement probe stop functionality
+        // Set probing state to false
+        this.setState({ isProbing: false });
+
+        // Send stop commands to controller
         controller.command('feedhold');
         controller.command('reset');
       },
@@ -1297,10 +1300,15 @@ class ProbeWidget extends PureComponent {
         return commands;
       },
       runProbeCommands: (commands) => {
+        // Set probing state to true when starting probe commands
+        this.setState({ isProbing: true });
         controller.command('gcode', commands);
       },
       startProbing: () => {
         const { showProbeModal } = this.state;
+
+        // Set probing state to true
+        this.setState({ isProbing: true });
 
         if (showProbeModal) {
           // Show modal preview
@@ -1372,11 +1380,20 @@ class ProbeWidget extends PureComponent {
         this.setState({ ...initialState });
       },
       'workflow:state': (workflowState) => {
-        this.setState(state => ({
-          workflow: {
-            state: workflowState
+        this.setState(state => {
+          const newState = {
+            workflow: {
+              state: workflowState
+            }
+          };
+
+          // If workflow becomes idle and we were probing, mark probing as complete
+          if (workflowState === WORKFLOW_STATE_IDLE && state.isProbing) {
+            newState.isProbing = false;
           }
-        }));
+
+          return newState;
+        });
       },
       'controller:state': (type, state) => {
         let units = this.state.units;
@@ -1573,6 +1590,7 @@ class ProbeWidget extends PureComponent {
         minimized: this.config.get('minimized', false),
         isFullscreen: false,
         canClick: true, // Defaults to true
+        isProbing: false, // Track if probing is currently active
         port: controller.port,
         units: METRIC_UNITS,
         controller: {
@@ -1720,13 +1738,38 @@ class ProbeWidget extends PureComponent {
       return true;
     }
 
+    canClickStart() {
+      const { isProbing } = this.state;
+      if (isProbing) {
+        return false; // Disable start button when probing is active
+      }
+      return this.canClick();
+    }
+
+    canClickStop() {
+      const { port, isProbing } = this.state;
+      const controllerType = this.state.controller.type;
+
+      if (!port) {
+        return false;
+      }
+      if (!includes([GRBL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+        return false;
+      }
+
+      // Enable stop button when probing is active OR when machine is generally available
+      return isProbing || this.canClick();
+    }
+
     render() {
       const { widgetId } = this.props;
       const { minimized, isFullscreen } = this.state;
       const isForkedWidget = widgetId.match(/\w+:[\w\-]+/);
       const state = {
         ...this.state,
-        canClick: this.canClick()
+        canClick: this.canClick(),
+        canClickStart: this.canClickStart(),
+        canClickStop: this.canClickStop()
       };
       const actions = {
         ...this.actions

@@ -485,7 +485,7 @@ class Probe extends PureComponent {
                   title={i18n._('Z- Probe')}
                   onClick={() => actions.selectExternalEdge(EXTERNAL_EDGE_Z_NEGATIVE)}
                 >
-                  Z-
+                  O
                 </button>
                 <button
                   type="button"
@@ -549,7 +549,7 @@ class Probe extends PureComponent {
               </div>
             </div>
           </div>
-          {this.renderProbeControls(actions, canClick)}
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
         </div>
       );
     }
@@ -686,7 +686,7 @@ class Probe extends PureComponent {
               </div>
             </div>
           </div>
-          {this.renderProbeControls(actions, canClick)}
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
         </div>
       );
     }
@@ -813,7 +813,7 @@ class Probe extends PureComponent {
             </div>
           </div>
 
-          {this.renderProbeControls(actions, canClick && !xySizeError)}
+          {this.renderProbeControls(actions, state.canClickStart && !xySizeError, state.canClickStop)}
         </div>
       );
     }
@@ -919,7 +919,7 @@ class Probe extends PureComponent {
             </p>
           </div>
 
-          {this.renderProbeControls(actions, canClick)}
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
 
           <div className="row no-gutters" style={{ marginTop: '10px' }}>
             <div className="col-xs-12">
@@ -1125,7 +1125,7 @@ class Probe extends PureComponent {
             </div>
           </div>
 
-          {this.renderProbeControls(actions, canClick)}
+          {this.renderProbeControls(actions, state.canClickStart, state.canClickStop)}
 
           <div className="row no-gutters" style={{ marginTop: '10px' }}>
             <div className="col-xs-12">
@@ -1143,7 +1143,7 @@ class Probe extends PureComponent {
       );
     }
 
-    renderProbeControls(actions, canClick) {
+    renderProbeControls(actions, canClickStart, canClickStop) {
       return (
         <div className="row no-gutters" style={{ marginTop: '20px' }}>
           <div className="col-xs-6" style={{ paddingRight: 5 }}>
@@ -1151,7 +1151,7 @@ class Probe extends PureComponent {
               type="button"
               className="btn btn-sm btn-primary"
               onClick={actions.startProbing}
-              disabled={!canClick}
+              disabled={!canClickStart}
             >
               {i18n._('Start')}
             </button>
@@ -1161,7 +1161,7 @@ class Probe extends PureComponent {
               type="button"
               className="btn btn-sm btn-danger"
               onClick={actions.stopProbing}
-              disabled={!canClick}
+              disabled={!canClickStop}
             >
               {i18n._('Stop')}
             </button>
