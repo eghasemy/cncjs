@@ -389,56 +389,56 @@ class ProbeWidget extends PureComponent {
 
         const gcode = sender.gcode;
         const lines = gcode.split('\n');
-        
+
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
-        
         // Parse G-code to find X and Y coordinate limits
         lines.forEach(line => {
           // Skip comments and empty lines
           const cleanLine = line.replace(/;.*$/, '').trim();
-          if (!cleanLine) return;
-          
+          if (!cleanLine) {
+            return;
+          }
           // Look for coordinate movements (G0, G1, G2, G3)
           if (/^[;\s]*G[0-3]/.test(cleanLine) && /[XY]/.test(cleanLine)) {
             // Extract X and Y coordinates
             const xMatch = cleanLine.match(/X(-?\d*\.?\d+)/i);
             const yMatch = cleanLine.match(/Y(-?\d*\.?\d+)/i);
-            
+
             if (xMatch) {
               const x = parseFloat(xMatch[1]);
-              if (!isNaN(x)) {
+              if (!Number.isNaN(x)) {
                 minX = Math.min(minX, x);
                 maxX = Math.max(maxX, x);
               }
             }
-            
+
             if (yMatch) {
               const y = parseFloat(yMatch[1]);
-              if (!isNaN(y)) {
+              if (!Number.isNaN(y)) {
                 minY = Math.min(minY, y);
                 maxY = Math.max(maxY, y);
               }
             }
           }
         });
-        
+
         // Check if we found valid coordinates
         if (minX === Infinity || minY === Infinity) {
           console.warn('No valid X/Y coordinates found in G-code');
           return;
         }
-        
+
         // Calculate width and height with some padding (5% margin)
         const width = maxX - minX;
         const height = maxY - minY;
         const padding = 0.05; // 5% padding
-        
+
         const paddedMinX = minX - (width * padding);
         const paddedMinY = minY - (height * padding);
         const paddedWidth = width * (1 + 2 * padding);
         const paddedHeight = height * (1 + 2 * padding);
-        
+
         // Update height map parameters
         this.setState({
           heightMapStartX: paddedMinX.toFixed(3),
@@ -446,7 +446,7 @@ class ProbeWidget extends PureComponent {
           heightMapWidth: paddedWidth.toFixed(3),
           heightMapHeight: paddedHeight.toFixed(3)
         });
-        
+
         console.log(`Auto-detected height map area: X=${paddedMinX.toFixed(3)} Y=${paddedMinY.toFixed(3)} W=${paddedWidth.toFixed(3)} H=${paddedHeight.toFixed(3)}`);
       },
       applyHeightMapToGcode: () => {
@@ -458,7 +458,7 @@ class ProbeWidget extends PureComponent {
         }
 
         const { heightMapData, heightMapStartX, heightMapStartY, heightMapWidth, heightMapHeight, heightMapGridSizeX, heightMapGridSizeY } = this.state;
-        
+
         if (!heightMapData || heightMapData.length === 0) {
           console.warn('No height map data available. Generate or probe height map first.');
           return;
@@ -480,31 +480,31 @@ class ProbeWidget extends PureComponent {
           // Convert world coordinates to grid coordinates
           const gridPosX = ((x - startX) / width) * (gridX - 1);
           const gridPosY = ((y - startY) / height) * (gridY - 1);
-          
+
           // Clamp to grid boundaries
           const clampedX = Math.max(0, Math.min(gridX - 1, gridPosX));
           const clampedY = Math.max(0, Math.min(gridY - 1, gridPosY));
-          
+
           // Get integer grid positions
           const x1 = Math.floor(clampedX);
           const y1 = Math.floor(clampedY);
           const x2 = Math.min(gridX - 1, x1 + 1);
           const y2 = Math.min(gridY - 1, y1 + 1);
-          
+
           // Get fractional parts for interpolation
           const fx = clampedX - x1;
           const fy = clampedY - y1;
-          
+
           // Bilinear interpolation
           const h11 = heightMapData[y1] && heightMapData[y1][x1] ? heightMapData[y1][x1] : 0;
           const h12 = heightMapData[y2] && heightMapData[y2][x1] ? heightMapData[y2][x1] : 0;
           const h21 = heightMapData[y1] && heightMapData[y1][x2] ? heightMapData[y1][x2] : 0;
           const h22 = heightMapData[y2] && heightMapData[y2][x2] ? heightMapData[y2][x2] : 0;
-          
+
           const h1 = h11 * (1 - fx) + h21 * fx;
           const h2 = h12 * (1 - fx) + h22 * fx;
           const interpolatedHeight = h1 * (1 - fy) + h2 * fy;
-          
+
           return interpolatedHeight;
         };
 
@@ -540,9 +540,9 @@ class ProbeWidget extends PureComponent {
             // Apply height compensation if this move includes Z and has X,Y coordinates
             if (hasZ && currentX !== null && currentY !== null && currentZ !== null) {
               // Check if coordinates are within the height map area
-              if (currentX >= startX && currentX <= startX + width && 
+              if (currentX >= startX && currentX <= startX + width &&
                   currentY >= startY && currentY <= startY + height) {
-                
+
                 const heightCompensation = interpolateHeight(currentX, currentY);
                 const compensatedZ = currentZ + heightCompensation;
 
