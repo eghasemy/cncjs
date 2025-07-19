@@ -269,13 +269,11 @@ class TinyGWidget extends PureComponent {
                 <i className="fa fa-bars" />
                 <Space width="8" />
               </Widget.Sortable>
-              {isForkedWidget &&
-                <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-              }
-                        TinyG
+              {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
+              TinyG
             </Widget.Title>
             <Widget.Controls className={this.props.sortable.filterClassName}>
-              {isReady && (
+              {isReady ? (
                 <Widget.Button
                   onClick={(event) => {
                     actions.openModal(MODAL_CONTROLLER);
@@ -283,8 +281,8 @@ class TinyGWidget extends PureComponent {
                 >
                   <i className="fa fa-info" />
                 </Widget.Button>
-              )}
-              {isReady && (
+) : null}
+              {isReady ? (
                 <Widget.DropdownButton
                   toggle={<i className="fa fa-th-large" />}
                 >
@@ -348,8 +346,8 @@ class TinyGWidget extends PureComponent {
                     {i18n._('Restore Defaults')}
                   </Widget.DropdownMenuItem>
                 </Widget.DropdownButton>
-              )}
-              {isReady && (
+) : null}
+              {isReady ? (
                 <Widget.Button
                   disabled={isFullscreen}
                   title={minimized ? i18n._('Expand') : i18n._('Collapse')}
@@ -363,7 +361,7 @@ class TinyGWidget extends PureComponent {
                     )}
                   />
                 </Widget.Button>
-              )}
+) : null}
               <Widget.DropdownButton
                 title={i18n._('More')}
                 toggle={<i className="fa fa-ellipsis-v" />}
@@ -402,7 +400,7 @@ class TinyGWidget extends PureComponent {
               </Widget.DropdownButton>
             </Widget.Controls>
           </Widget.Header>
-          {isReady && (
+          {isReady ? (
             <Widget.Content
               className={classNames(
                 styles.widgetContent,
@@ -410,14 +408,13 @@ class TinyGWidget extends PureComponent {
               )}
             >
               {state.modal.name === MODAL_CONTROLLER &&
-                <Controller state={state} actions={actions} />
-              }
+              <Controller state={state} actions={actions} />}
               <TinyG
                 state={state}
                 actions={actions}
               />
             </Widget.Content>
-          )}
+) : null}
         </Widget>
       );
     }

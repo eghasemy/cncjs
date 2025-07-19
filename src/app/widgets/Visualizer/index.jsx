@@ -102,23 +102,23 @@ const displayWebGLErrorMessage = () => {
     <Modal disableOverlay size="xs" onClose={onClose}>
       <Modal.Header>
         <Modal.Title>
-                    WebGL Error Message
+          WebGL Error Message
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <ModalTemplate type="warning">
-          {window.WebGLRenderingContext && (
+          {window.WebGLRenderingContext ? (
             <div>
-                        Your graphics card does not seem to support <Anchor href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</Anchor>.
+              Your graphics card does not seem to support <Anchor href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</Anchor>.
               <br />
-                        Find out how to get it <Anchor href="http://get.webgl.org/">here</Anchor>.
+              Find out how to get it <Anchor href="http://get.webgl.org/">here</Anchor>.
             </div>
-          )}
+) : null}
           {!window.WebGLRenderingContext && (
             <div>
-                        Your browser does not seem to support <Anchor href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</Anchor>.
+              Your browser does not seem to support <Anchor href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</Anchor>.
               <br />
-                        Find out how to get it <Anchor href="http://get.webgl.org/">here</Anchor>.
+              Find out how to get it <Anchor href="http://get.webgl.org/">here</Anchor>.
             </div>
           )}
         </ModalTemplate>
@@ -1044,12 +1044,8 @@ class VisualizerWidget extends PureComponent {
               { [styles.view3D]: capable.view3D }
             )}
           >
-            {state.gcode.loading &&
-              <Loading />
-            }
-            {state.gcode.rendering &&
-              <Rendering />
-            }
+            {state.gcode.loading ? <Loading /> : null}
+            {state.gcode.rendering ? <Rendering /> : null}
             {state.modal.name === MODAL_WATCH_DIRECTORY && (
               <WatchDirectory
                 state={state}
@@ -1074,21 +1070,21 @@ class VisualizerWidget extends PureComponent {
                 state={state}
               />
             )}
-            {(showVisualizer && state.gcode.displayName) && (
+            {(showVisualizer && state.gcode.displayName) ? (
               <GCodeName
                 name={state.gcode.name}
               />
-            )}
-            {showNotifications && (
+) : null}
+            {showNotifications ? (
               <Notifications
                 show={showNotifications}
                 type={state.notification.type}
                 data={state.notification.data}
                 onDismiss={actions.dismissNotification}
               />
-            )}
+) : null}
           </Widget.Content>
-          {showVisualizer && (
+          {showVisualizer ? (
             <Widget.Footer className={styles.widgetFooter}>
               <SecondaryToolbar
                 is3DView={capable.view3D}
@@ -1097,7 +1093,7 @@ class VisualizerWidget extends PureComponent {
                 camera={actions.camera}
               />
             </Widget.Footer>
-          )}
+) : null}
         </Widget>
       );
     }

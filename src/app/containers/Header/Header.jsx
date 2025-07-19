@@ -312,7 +312,7 @@ class Header extends PureComponent {
               >
                 {settings.version}
               </div>
-              {newUpdateAvailable && (
+              {newUpdateAvailable ? (
                 <span
                   className="label label-primary"
                   style={{
@@ -322,9 +322,9 @@ class Header extends PureComponent {
                     right: 2
                   }}
                 >
-                              N
+                  N
                 </span>
-              )}
+) : null}
             </Anchor>
           </Tooltip>
           <Navbar.Toggle />
@@ -416,33 +416,33 @@ class Header extends PureComponent {
                   )}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  {showCommands && (
+                  {showCommands ? (
                     <MenuItem header>
                       {i18n._('Command')}
                       {pushPermission === Push.Permission.GRANTED && (
-                        <span className="pull-right">
-                          <i className="fa fa-fw fa-bell-o" />
-                        </span>
+                      <span className="pull-right">
+                        <i className="fa fa-fw fa-bell-o" />
+                      </span>
                       )}
                       {pushPermission === Push.Permission.DENIED && (
-                        <span className="pull-right">
-                          <i className="fa fa-fw fa-bell-slash-o" />
-                        </span>
+                      <span className="pull-right">
+                        <i className="fa fa-fw fa-bell-slash-o" />
+                      </span>
                       )}
                       {pushPermission === Push.Permission.DEFAULT && (
-                        <span className="pull-right">
-                          <Anchor
-                            className={styles.btnIcon}
-                            onClick={this.actions.requestPushPermission}
-                            title={i18n._('Show notifications')}
-                          >
-                            <i className="fa fa-fw fa-bell" />
-                          </Anchor>
-                        </span>
+                      <span className="pull-right">
+                        <Anchor
+                          className={styles.btnIcon}
+                          onClick={this.actions.requestPushPermission}
+                          title={i18n._('Show notifications')}
+                        >
+                          <i className="fa fa-fw fa-bell" />
+                        </Anchor>
+                      </span>
                       )}
                     </MenuItem>
-                  )}
-                  {showCommands && commands.map((cmd) => {
+) : null}
+                  {showCommands ? commands.map((cmd) => {
                     const isTaskRunning = runningTasks.indexOf(cmd.taskId) >= 0;
 
                     return (
@@ -469,10 +469,8 @@ class Header extends PureComponent {
                         </span>
                       </MenuItem>
                     );
-                  })}
-                  {showCommands &&
-                    <MenuItem divider />
-                  }
+                  }) : null}
+                  {showCommands ? <MenuItem divider /> : null}
                   <MenuItem>
                     <MenuItemLink
                       href="https://github.com/cncjs/cncjs/wiki"

@@ -448,8 +448,7 @@ class Workspace extends PureComponent {
             />
           )}
           {modal.name === MODAL_SERVER_DISCONNECTED &&
-            <ServerDisconnected />
-          }
+            <ServerDisconnected />}
           <div
             className={classNames(
               styles.dropzoneOverlay,
@@ -580,7 +579,7 @@ class Workspace extends PureComponent {
                     onDragEnd={this.widgetEventHandler.onDragEnd}
                   />
                 </div>
-                {hidePrimaryContainer && (
+                {hidePrimaryContainer ? (
                   <div
                     ref={node => {
                       this.primaryToggler = node;
@@ -600,7 +599,7 @@ class Workspace extends PureComponent {
                       </Button>
                     </ButtonGroup>
                   </div>
-                )}
+) : null}
                 <div
                   ref={node => {
                     this.defaultContainer = node;
@@ -612,7 +611,7 @@ class Workspace extends PureComponent {
                 >
                   <DefaultWidgets />
                 </div>
-                {hideSecondaryContainer && (
+                {hideSecondaryContainer ? (
                   <div
                     ref={node => {
                       this.secondaryToggler = node;
@@ -632,7 +631,7 @@ class Workspace extends PureComponent {
                       </Button>
                     </ButtonGroup>
                   </div>
-                )}
+) : null}
                 <div
                   ref={node => {
                     this.secondaryContainer = node;
