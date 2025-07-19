@@ -18,6 +18,7 @@ For a more complete introduction, see the [Introduction](https://github.com/cncj
     - [Smoothieware](https://github.com/Smoothieware/Smoothieware) ([Download](https://github.com/Smoothieware/Smoothieware/tree/edge/FirmwareBin))
     - [TinyG](https://github.com/synthetos/TinyG) (_Recommend: firmware version 0.97 build 449.xx_) ([Download](http://synthetos.github.io/))
     - [g2core](https://github.com/synthetos/g2)
+    - [grblHAL](https://github.com/grblHAL)
 * [Desktop App for Linux, Mac OS X, and Windows](https://github.com/cncjs/cncjs/wiki/Desktop-App)
 * 6-axis digital readout (DRO)
 * Tool path 3D visualization
@@ -147,7 +148,7 @@ pi@rpi3$ cncjs -h
     -w, --watch-directory <path>        Watch a directory for changes
     --access-token-lifetime <lifetime>  Access token lifetime in seconds or a time span string (default: 30d)
     --allow-remote-access               Allow remote access to the server (default: false)
-    --controller <type>                 Specify CNC controller: Grbl|Marlin|Smoothie|TinyG|g2core (default: '')
+    --controller <type>                 Specify CNC controller: Grbl|grblHAL|Marlin|Smoothie|TinyG|g2core (default: '')
     -h, --help                          output usage information
 
   Examples:
@@ -160,6 +161,7 @@ pi@rpi3$ cncjs -h
     $ cncjs --access-token-lifetime 60d  # e.g. 3600, 30m, 12h, 30d
     $ cncjs --allow-remote-access
     $ cncjs --controller Grbl
+    $ cncjs --controller grblHAL
 ```
 
 Instead of passing command line options for `--watch-directory`, `--access-token-lifetime`, `--allow-remote-access`, and `--controller`, you can create a `~/.cncrc` file that contains the following configuration in JSON format:

@@ -34,6 +34,7 @@ import {
   METRIC_UNITS,
   // Grbl
   GRBL,
+  GRBLHAL,
   GRBL_ACTIVE_STATE_RUN,
   // Marlin
   MARLIN,
@@ -981,7 +982,7 @@ class VisualizerWidget extends PureComponent {
       if (!objects.cuttingTool.visible) {
         return false;
       }
-      if (!includes([GRBL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+      if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
       if (controllerType === GRBL) {
