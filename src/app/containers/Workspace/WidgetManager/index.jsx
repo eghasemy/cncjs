@@ -21,6 +21,9 @@ export const getActiveWidgets = () => {
       if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
         return false;
       }
+      if (widget === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
+        return false;
+      }
       if (widget === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {
         return false;
       }
@@ -47,6 +50,9 @@ export const getInactiveWidgets = () => {
   const inactiveWidgets = difference(allWidgets, defaultWidgets, primaryWidgets, secondaryWidgets)
     .filter(widget => {
       if (widget === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
+        return false;
+      }
+      if (widget === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
         return false;
       }
       if (widget === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {

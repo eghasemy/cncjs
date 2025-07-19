@@ -190,7 +190,10 @@ class PrimaryWidgets extends Component {
         .filter(widgetId => {
           // e.g. "webcam" or "webcam:d8e6352f-80a9-475f-a4f5-3e9197a48a23"
           const name = widgetId.split(':')[0];
-          if (name === 'grbl' && !includes(controller.loadedControllers, GRBL)) {
+          if (name === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
+            return false;
+          }
+          if (name === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
             return false;
           }
           if (name === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {

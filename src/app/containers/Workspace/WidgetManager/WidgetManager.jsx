@@ -51,6 +51,13 @@ class WidgetManager extends PureComponent {
         disabled: false
       },
       {
+        id: 'grblhal',
+        caption: i18n._('grblHAL Widget'),
+        details: i18n._('This widget shows the grblHAL state and provides grblHAL specific features.'),
+        visible: true,
+        disabled: false
+      },
+      {
         id: 'marlin',
         caption: i18n._('Marlin Widget'),
         details: i18n._('This widget shows the Marlin state and provides Marlin specific features.'),
@@ -163,7 +170,10 @@ class WidgetManager extends PureComponent {
       super(props);
 
       this.widgetList = this.widgetList.filter(widgetItem => {
-        if (widgetItem.id === 'grbl' && !includes(controller.loadedControllers, GRBL)) {
+        if (widgetItem.id === 'grbl' && !includes(controller.loadedControllers, GRBL) && !includes(controller.loadedControllers, GRBLHAL)) {
+          return false;
+        }
+        if (widgetItem.id === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
           return false;
         }
         if (widgetItem.id === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {
