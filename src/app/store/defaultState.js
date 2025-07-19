@@ -103,6 +103,20 @@ const defaultState = {
         }
       }
     },
+    grblhal: {
+      minimized: false,
+      panel: {
+        queueReports: {
+          expanded: true
+        },
+        statusReports: {
+          expanded: true
+        },
+        modalGroups: {
+          expanded: true
+        }
+      }
+    },
     laser: {
       minimized: false,
       panel: {

@@ -251,6 +251,7 @@ class CNCEngine {
 
             const engine = this;
             controller = new Controller(engine, {
+              type: controllerType,
               port: port,
               baudrate: baudrate,
               rtscts: !!rtscts,

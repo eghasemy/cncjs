@@ -148,11 +148,12 @@ class GrblController {
     // Workflow
     workflow = null;
 
-    constructor(engine, options) {
+    constructor(engine, options = {}) {
       if (!engine) {
         throw new Error('engine must be specified');
       }
       this.engine = engine;
+      this.type = options.type || GRBL;
 
       const { port, baudrate, rtscts, pin } = { ...options };
       this.options = {
