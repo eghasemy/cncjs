@@ -54,31 +54,31 @@ class Gamepad extends PureComponent {
         const { gamepads } = this.state;
         const { selectedIndex, onSelectIndex } = this.props;
         return (
-            <div>
-                {gamepads.length === 0 && (
-                    <div>{i18n._('No gamepad connected')}</div>
+          <div>
+            {gamepads.length === 0 && (
+            <div>{i18n._('No gamepad connected')}</div>
                 )}
-                {gamepads.length > 0 && (
-                    <div style={{ marginBottom: 10 }}>
-                        <select
-                          className="form-control"
-                          value={selectedIndex}
-                          onChange={e => onSelectIndex(Number(e.target.value))}
-                        >
-                          {gamepads.map(pad => (
-                              <option key={pad.index} value={pad.index}>{pad.id}</option>
-                          ))}
-                        </select>
-                    </div>
-                )}
+            {gamepads.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <select
+                className="form-control"
+                value={selectedIndex}
+                onChange={e => onSelectIndex(Number(e.target.value))}
+              >
                 {gamepads.map(pad => (
-                    <div key={pad.index} style={{ marginBottom: 10 }}>
-                        <strong>{pad.id}</strong>
-                        <div>{i18n._('Buttons')}: {pad.buttons.length}</div>
-                        <div>{i18n._('Axes')}: {pad.axes.length}</div>
-                    </div>
-                ))}
+                  <option key={pad.index} value={pad.index}>{pad.id}</option>
+                          ))}
+              </select>
             </div>
+                )}
+            {gamepads.map(pad => (
+              <div key={pad.index} style={{ marginBottom: 10 }}>
+                <strong>{pad.id}</strong>
+                <div>{i18n._('Buttons')}: {pad.buttons.length}</div>
+                <div>{i18n._('Axes')}: {pad.axes.length}</div>
+              </div>
+                ))}
+          </div>
         );
     }
 }

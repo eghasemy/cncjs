@@ -44,17 +44,15 @@ class Connection extends PureComponent {
       return (
         <div style={styles.option} title={label}>
           <div>
-            {inuse && (
+            {inuse ? (
               <span>
                 <i className="fa fa-lock" />
                 <Space width="8" />
               </span>
-            )}
+) : null}
             {label}
           </div>
-          {manufacturer &&
-            <i>{i18n._('Manufacturer: {{manufacturer}}', { manufacturer })}</i>
-          }
+          {manufacturer ? <i>{i18n._('Manufacturer: {{manufacturer}}', { manufacturer })}</i> : null}
         </div>
       );
     };
@@ -71,12 +69,12 @@ class Connection extends PureComponent {
       };
       return (
         <div style={style} title={label}>
-          {inuse && (
+          {inuse ? (
             <span>
               <i className="fa fa-lock" />
               <Space width="8" />
             </span>
-          )}
+) : null}
           {label}
         </div>
       );
@@ -132,7 +130,7 @@ class Connection extends PureComponent {
 
       return (
         <div>
-          {alertMessage && (
+          {alertMessage ? (
             <ToastNotification
               style={{ margin: '-10px -10px 10px -10px' }}
               type="error"
@@ -140,12 +138,12 @@ class Connection extends PureComponent {
             >
               {alertMessage}
             </ToastNotification>
-          )}
-          {canSelectControllers && (
+) : null}
+          {canSelectControllers ? (
             <div className="form-group">
               <div className="input-group input-group-sm">
                 <div className="input-group-btn">
-                  {hasGrblController && (
+                  {hasGrblController ? (
                     <button
                       type="button"
                       className={cx(
@@ -160,8 +158,8 @@ class Connection extends PureComponent {
                     >
                       {GRBL}
                     </button>
-                  )}
-                  {hasGrblHALController && (
+) : null}
+                  {hasGrblHALController ? (
                     <button
                       type="button"
                       className={cx(
@@ -176,8 +174,8 @@ class Connection extends PureComponent {
                     >
                       {GRBLHAL}
                     </button>
-                  )}
-                  {hasMarlinController && (
+) : null}
+                  {hasMarlinController ? (
                     <button
                       type="button"
                       className={cx(
@@ -192,8 +190,8 @@ class Connection extends PureComponent {
                     >
                       {MARLIN}
                     </button>
-                  )}
-                  {hasSmoothieController && (
+) : null}
+                  {hasSmoothieController ? (
                     <button
                       type="button"
                       className={cx(
@@ -208,8 +206,8 @@ class Connection extends PureComponent {
                     >
                       {SMOOTHIE}
                     </button>
-                  )}
-                  {hasTinyGController && (
+) : null}
+                  {hasTinyGController ? (
                     <button
                       type="button"
                       className={cx(
@@ -224,11 +222,11 @@ class Connection extends PureComponent {
                     >
                       {TINYG}
                     </button>
-                  )}
+) : null}
                 </div>
               </div>
             </div>
-          )}
+) : null}
           <div className="form-group">
             <label className="control-label">{i18n._('Port')}</label>
             <div className="input-group input-group-sm">
@@ -307,7 +305,7 @@ class Connection extends PureComponent {
               {i18n._('Set DTR line status upon opening')}
             </label>
           </div>
-          {enableDTRPin && (
+          {enableDTRPin ? (
             <div style={{ marginLeft: 20 }}>
               <div className="input-group input-group-xs">
                 <div className="input-group-btn">
@@ -336,7 +334,7 @@ class Connection extends PureComponent {
                 </div>
               </div>
             </div>
-          )}
+) : null}
           <div
             className={cx('checkbox', {
               'disabled': connected,
@@ -352,7 +350,7 @@ class Connection extends PureComponent {
               {i18n._('Set RTS line status upon opening')}
             </label>
           </div>
-          {enableRTSPin && (
+          {enableRTSPin ? (
             <div style={{ marginLeft: 20 }}>
               <div className="input-group input-group-xs">
                 <div className="input-group-btn">
@@ -381,7 +379,7 @@ class Connection extends PureComponent {
                 </div>
               </div>
             </div>
-          )}
+) : null}
           <div
             className={cx('checkbox', {
               'disabled': connected,
@@ -408,7 +406,7 @@ class Connection extends PureComponent {
             </label>
           </div>
           <div className="btn-group btn-group-sm">
-            {notConnected && (
+            {notConnected ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -419,8 +417,8 @@ class Connection extends PureComponent {
                 <Space width="8" />
                 {i18n._('Open')}
               </button>
-            )}
-            {connected && (
+) : null}
+            {connected ? (
               <button
                 type="button"
                 className="btn btn-danger"
@@ -431,7 +429,7 @@ class Connection extends PureComponent {
                 <Space width="8" />
                 {i18n._('Close')}
               </button>
-            )}
+) : null}
           </div>
         </div>
       );
