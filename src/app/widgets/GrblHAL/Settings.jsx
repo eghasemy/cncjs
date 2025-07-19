@@ -22,7 +22,8 @@ class Settings extends PureComponent {
       values: { ...all },
       all
     };
-    this.fileInputRef = React.createRef();
+    // React 15 does not support createRef(), use a callback ref instead
+    this.fileInputRef = null;
   }
 
   handleChange = (name, value) => {
@@ -55,8 +56,8 @@ class Settings extends PureComponent {
   };
 
   handleImport = () => {
-    if (this.fileInputRef.current) {
-      this.fileInputRef.current.click();
+    if (this.fileInputRef) {
+      this.fileInputRef.click();
     }
   };
 
@@ -148,7 +149,14 @@ class Settings extends PureComponent {
                 </Panel.Body>
               </Panel>
             )}
-            <input type="file" style={{ display: 'none' }} ref={this.fileInputRef} onChange={this.onImportFile} />
+            <input
+              type="file"
+              style={{ display: 'none' }}
+              ref={(el) => {
+                this.fileInputRef = el;
+              }}
+              onChange={this.onImportFile}
+            />
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={this.handleImport}>{i18n._('Import')}</Button>
