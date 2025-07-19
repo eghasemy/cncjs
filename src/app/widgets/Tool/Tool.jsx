@@ -467,12 +467,12 @@ class Tool extends PureComponent {
                       content={i18n._('Edit')}
                     >
                       <IconButton
-          onClick={() => {
+                        onClick={() => {
                             this.setState({ isToolProbeCustomCommandsEditable: true });
                           }}
-        >
-          <i className="fa fa-fw fa-edit" />
-        </IconButton>
+                      >
+                        <i className="fa fa-fw fa-edit" />
+                      </IconButton>
                     </Tooltip>
                   </div>
                   )}
@@ -496,18 +496,18 @@ class Tool extends PureComponent {
                         content={i18n._('Import predefined tool probe commands to update the Z-axis offset in the Work Coordinate System (WCS)')}
                       >
                         <Button
-        btnSize="xs"
-        btnStyle="flat"
-        style={{
+                          btnSize="xs"
+                          btnStyle="flat"
+                          style={{
                             minWidth: 'auto',
                           }}
-        onClick={() => {
+                          onClick={() => {
                             const value = TOOL_PROBE_OVERRIDE_WCS_EXAMPLE;
                             this.setState({ toolProbeCustomCommands: value });
                           }}
-      >
-        <i className="fa fa-fw fa-upload" />
-        WCS
+                        >
+                          <i className="fa fa-fw fa-upload" />
+                          WCS
                         </Button>
                       </Tooltip>
                       <Tooltip
@@ -515,18 +515,18 @@ class Tool extends PureComponent {
                         content={i18n._('Import predefined tool probe commands to update the Tool Length Offset (TLO)')}
                       >
                         <Button
-        btnSize="xs"
-        btnStyle="flat"
-        style={{
+                          btnSize="xs"
+                          btnStyle="flat"
+                          style={{
                             minWidth: 'auto',
                           }}
-        onClick={() => {
+                          onClick={() => {
                             const value = TOOL_PROBE_OVERRIDE_TLO_EXAMPLE;
                             this.setState({ toolProbeCustomCommands: value });
                           }}
-      >
-        <i className="fa fa-fw fa-upload" />
-        TLO
+                        >
+                          <i className="fa fa-fw fa-upload" />
+                          TLO
                         </Button>
                       </Tooltip>
                       <Dropdown.Toggle btnSize="xs" />
@@ -712,12 +712,12 @@ class Tool extends PureComponent {
                       <label className="control-label">{i18n._('Probe Distance')}</label>
                       <div className="input-group input-group-sm">
                         <input
-            type="number"
-            className="form-control"
-            value={toolProbeDistance}
-            min={0}
-            step={step}
-            onChange={(event) => {
+                          type="number"
+                          className="form-control"
+                          value={toolProbeDistance}
+                          min={0}
+                          step={step}
+                          onChange={(event) => {
                             const value = ensureNumber(event.target.value);
                             if (value > 0) {
                               actions.setToolProbeDistance(value);
@@ -727,7 +727,7 @@ class Tool extends PureComponent {
                               actions.setToolProbeDistance(adjustedValue);
                             }
                           }}
-          />
+                        />
                         <div className="input-group-addon">{displayUnits}</div>
                       </div>
                     </div>
@@ -737,12 +737,12 @@ class Tool extends PureComponent {
                       <label className="control-label">{i18n._('Probe Feedrate')}</label>
                       <div className="input-group input-group-sm">
                         <input
-            type="number"
-            className="form-control"
-            value={toolProbeFeedrate}
-            min={0}
-            step={step}
-            onChange={(event) => {
+                          type="number"
+                          className="form-control"
+                          value={toolProbeFeedrate}
+                          min={0}
+                          step={step}
+                          onChange={(event) => {
                             const value = event.target.value;
                             if (value > 0) {
                               actions.setToolProbeFeedrate(value);
@@ -752,7 +752,7 @@ class Tool extends PureComponent {
                               actions.setToolProbeFeedrate(adjustedValue);
                             }
                           }}
-          />
+                        />
                         <span className="input-group-addon">{feedrateUnits}</span>
                       </div>
                     </div>
@@ -764,16 +764,16 @@ class Tool extends PureComponent {
                       <label className="control-label">{i18n._('Touch Plate Height')}</label>
                       <div className="input-group input-group-sm">
                         <input
-            type="number"
-            className="form-control"
-            value={touchPlateHeight}
-            min={0}
-            step={step}
-            onChange={(event) => {
+                          type="number"
+                          className="form-control"
+                          value={touchPlateHeight}
+                          min={0}
+                          step={step}
+                          onChange={(event) => {
                             const value = event.target.value;
                             actions.setTouchPlateHeight(value);
                           }}
-          />
+                        />
                         <span className="input-group-addon">{displayUnits}</span>
                       </div>
                     </div>
@@ -793,18 +793,18 @@ class Tool extends PureComponent {
                     {isReady ? (
                       <div style={{ marginBottom: 5 }}>
                         <Tooltip
-            placement="bottom"
-            content={this.state.isToolProbeCommandsCopied ? i18n._('Copied') : i18n._('Copy')}
-            onMouseLeave={() => {
+                          placement="bottom"
+                          content={this.state.isToolProbeCommandsCopied ? i18n._('Copied') : i18n._('Copy')}
+                          onMouseLeave={() => {
                             this.setState({ isToolProbeCommandsCopied: false });
                           }}
-          >
-            <IconButton
+                        >
+                          <IconButton
                             onClick={handleClickCopyToolProbeCommands}
                           >
                             <i className="fa fa-copy" />
                           </IconButton>
-          </Tooltip>
+                        </Tooltip>
                       </div>
 ) : null}
                   </div>

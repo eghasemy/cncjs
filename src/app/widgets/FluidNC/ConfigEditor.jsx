@@ -48,7 +48,7 @@ class ConfigEditor extends PureComponent {
     };
 
     handleReset = () => {
-      // TODO: Add proper confirmation modal  
+      // TODO: Add proper confirmation modal
       this.setState({
         editedConfig: this.props.config,
         hasChanges: false
