@@ -692,5 +692,9 @@
   "Negative": "Negative",
   "Positive": "Positive",
   "grblHAL Settings": "grblHAL Settings",
-  "Save": "Save"
+  "Save": "Save",
+  "Enhanced Continuous Jogging": "Enhanced Continuous Jogging",
+  "Hold analog stick to jog continuously. Jog speed varies with stick position.": "Hold analog stick to jog continuously. Jog speed varies with stick position.",
+  "Single jog moves when stick crosses threshold.": "Single jog moves when stick crosses threshold.",
+  "Active: {{axes}}": "Active: {{axes}}"
 }

@@ -50,6 +50,13 @@ class GamepadWidget extends PureComponent {
     prevAxes = [];
     modifierPrev = false;
     raf = 0;
+    
+    // Continuous jogging state
+    continuousJogState = {
+        activeAxes: new Set(), // Set of active axis keys (e.g., 'X+', 'Y-')
+        lastCommandTime: {},
+        jogCancelTimeout: null
+    };
 
     actions = {
         toggleFullscreen: () => {
@@ -183,6 +190,8 @@ class GamepadWidget extends PureComponent {
     }
 
     componentWillUnmount() {
+        // Stop any active continuous jogging
+        this.stopAllContinuousJogging();
         cancelAnimationFrame(this.raf);
     }
 
@@ -220,6 +229,131 @@ class GamepadWidget extends PureComponent {
         const custom = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
         const steps = [...custom, ...METRIC_STEPS];
         return Number(steps[step]) || 0;
+    };
+
+    // Get jog feed rate for continuous jogging
+    getJogFeedRate = (axis = 'XY') => {
+        const units = this.getUnits();
+        // Use feed rates similar to OpenBuilds CONTROL
+        const baseRates = {
+            X: units === IMPERIAL_UNITS ? 157 : 4000, // ~157 IPM = 4000 mm/min
+            Y: units === IMPERIAL_UNITS ? 157 : 4000,
+            Z: units === IMPERIAL_UNITS ? 79 : 2000, // ~79 IPM = 2000 mm/min
+            A: units === IMPERIAL_UNITS ? 79 : 2000
+        };
+
+        if (axis.includes('X') || axis.includes('Y')) {
+            return Math.max(baseRates.X, baseRates.Y);
+        }
+        if (axis.includes('Z')) {
+            return baseRates.Z;
+        }
+        if (axis.includes('A')) {
+            return baseRates.A;
+        }
+        return baseRates.X; // Default
+    };
+
+    // Enhanced continuous jogging implementation inspired by OpenBuilds CONTROL
+    handleContinuousJog = (axis, direction, magnitude) => {
+        const { continuousJog } = this.state;
+        if (!continuousJog) {
+            return false; // Let normal jogging handle it
+        }
+
+        const axisKey = `${axis}${direction}`;
+        const isActive = magnitude > 0.5;
+        const wasActive = this.continuousJogState.activeAxes.has(axisKey);
+
+        if (isActive && !wasActive) {
+            // Start continuous jog
+            this.startContinuousJog(axis, direction, magnitude);
+            this.continuousJogState.activeAxes.add(axisKey);
+        } else if (!isActive && wasActive) {
+            // Stop continuous jog
+            this.stopContinuousJog(axisKey);
+            this.continuousJogState.activeAxes.delete(axisKey);
+        } else if (isActive && wasActive) {
+            // Update jog rate based on magnitude change
+            this.updateContinuousJog(axis, direction, magnitude);
+        }
+
+        return true; // Handled by continuous jogging
+    };
+
+    startContinuousJog = (axis, direction, magnitude) => {
+        // Calculate variable feed rate based on stick magnitude (0.5 to 1.0 maps to 50% to 100% of max rate)
+        const baseFeedRate = this.getJogFeedRate(axis);
+        const feedRateMultiplier = Math.min(1.0, Math.max(0.3, (magnitude - 0.5) * 2)); // 30% to 100% based on stick position
+        const feedRate = Math.round(baseFeedRate * feedRateMultiplier);
+        
+        // Use large distance for continuous jogging (similar to OpenBuilds CONTROL)
+        const units = this.getUnits();
+        const distance = units === IMPERIAL_UNITS ? 39.37 : 1000; // 1000mm or ~39 inches
+
+        const directionSign = direction === '+' ? '' : '-';
+
+        // Use $J command for GRBL real-time jogging
+        const jogCommand = `$J=G91 G21 ${axis}${directionSign}${distance} F${feedRate}`;
+
+        console.log(`[Gamepad] Starting continuous jog: ${jogCommand}`);
+        controller.command('gcode', jogCommand);
+
+        this.continuousJogState.lastCommandTime[`${axis}${direction}`] = Date.now();
+    };
+
+    updateContinuousJog = (axis, direction, magnitude) => {
+        const axisKey = `${axis}${direction}`;
+        const lastCommandTime = this.continuousJogState.lastCommandTime[axisKey] || 0;
+        const now = Date.now();
+
+        // Only update if enough time has passed to avoid spamming commands
+        if (now - lastCommandTime > 100) { // 100ms throttle
+            // Cancel current jog and start new one with updated feed rate
+            this.stopContinuousJog(axisKey, false);
+            // Small delay to ensure cancel is processed
+            setTimeout(() => {
+                this.startContinuousJog(axis, direction, magnitude);
+            }, 10);
+        }
+    };
+
+    stopContinuousJog = (axisKey, removeFromActive = true) => {
+        console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
+
+        // Send jog cancel command
+        controller.command('jogCancel');
+
+        if (removeFromActive) {
+            this.continuousJogState.activeAxes.delete(axisKey);
+        }
+
+        // Clear the timeout if it exists
+        if (this.continuousJogState.jogCancelTimeout) {
+            clearTimeout(this.continuousJogState.jogCancelTimeout);
+            this.continuousJogState.jogCancelTimeout = null;
+        }
+    };
+
+    // Stop all continuous jogging (useful for emergency stops)
+    stopAllContinuousJogging = () => {
+        if (this.continuousJogState.activeAxes.size > 0) {
+            console.log('[Gamepad] Emergency stop - canceling all continuous jogs');
+            controller.command('jogCancel');
+            this.continuousJogState.activeAxes.clear();
+            this.continuousJogState.lastCommandTime = {};
+        }
+    };
+
+    // Extract axis letter from jog action (e.g., 'jog-x+' -> 'X')
+    getAxisFromAction = (action) => {
+        if (typeof action !== 'string') return null;
+
+        const jogMatch = action.match(/^jog-([xyzabc])[+-]$/i);
+        if (jogMatch) {
+            return jogMatch[1].toUpperCase();
+        }
+        return null;
     };
 
     stepForward = () => {
@@ -262,35 +396,36 @@ class GamepadWidget extends PureComponent {
             pad.axes.forEach((val, i) => {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
-                const now = Date.now();
-                const posKey = `${i}-pos`;
-                const negKey = `${i}-neg`;
-                if (map.positive && val > 0.5) {
+                const absVal = Math.abs(val);
+                
+                // Handle positive direction
+                if (map.positive) {
                     if (continuousJog) {
-                        if (!this.lastJogTime) {
-                            this.lastJogTime = {};
+                        // Use enhanced continuous jogging
+                        const axis = this.getAxisFromAction(map.positive);
+                        if (axis) {
+                            this.handleContinuousJog(axis, '+', val > 0 ? val : 0);
                         }
-                        if (now - (this.lastJogTime[posKey] || 0) > 200) {
-                            this.handleAction(map.positive);
-                            this.lastJogTime[posKey] = now;
-                        }
-                    } else if (prev <= 0.5) {
+                    } else if (val > 0.5 && prev <= 0.5) {
+                        // Traditional single jog on threshold crossing
                         this.handleAction(map.positive);
                     }
                 }
-                if (map.negative && val < -0.5) {
+                
+                // Handle negative direction
+                if (map.negative) {
                     if (continuousJog) {
-                        if (!this.lastJogTime) {
-                            this.lastJogTime = {};
+                        // Use enhanced continuous jogging
+                        const axis = this.getAxisFromAction(map.negative);
+                        if (axis) {
+                            this.handleContinuousJog(axis, '-', val < 0 ? Math.abs(val) : 0);
                         }
-                        if (now - (this.lastJogTime[negKey] || 0) > 200) {
-                            this.handleAction(map.negative);
-                            this.lastJogTime[negKey] = now;
-                        }
-                    } else if (prev >= -0.5) {
+                    } else if (val < -0.5 && prev >= -0.5) {
+                        // Traditional single jog on threshold crossing
                         this.handleAction(map.negative);
                     }
                 }
+                
                 this.prevAxes[i] = val;
             });
         }
@@ -350,12 +485,14 @@ class GamepadWidget extends PureComponent {
                 controller.command('gcode', 'M9');
                 break;
             case 'feedhold':
+                this.stopAllContinuousJogging(); // Stop any continuous jogging before feedhold
                 controller.command('feedhold');
                 break;
             case 'resume':
                 controller.command('cyclestart');
                 break;
             case 'reset':
+                this.stopAllContinuousJogging(); // Stop any continuous jogging before reset
                 controller.command('reset');
                 break;
             case 'feed-decrease-10':
@@ -565,6 +702,35 @@ class GamepadWidget extends PureComponent {
                 </div>
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
+              
+                {/* Continuous Jog Settings */}
+                <div style={{ marginTop: 10, padding: 10, border: '1px solid #ddd', borderRadius: 3, backgroundColor: '#f9f9f9' }}>
+                  <div style={{ marginBottom: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={this.state.continuousJog}
+                        onChange={(e) => this.setState({ continuousJog: e.target.checked })}
+                        style={{ marginRight: 8 }}
+                      />
+                      <strong>{i18n._('Enhanced Continuous Jogging')}</strong>
+                    </label>
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                      {this.state.continuousJog ?
+                        i18n._('Hold analog stick to jog continuously. Jog speed varies with stick position.') :
+                        i18n._('Single jog moves when stick crosses threshold.')
+                      }
+                    </div>
+                  </div>
+
+                  {/* Active Jog Status */}
+                  {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 && (
+                    <div style={{ fontSize: '12px', color: '#28a745', marginTop: 8 }}>
+                      <i className="fa fa-circle" style={{ marginRight: 4 }} />
+                      {i18n._('Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
+                    </div>
+                  )}
+                </div>
             </Widget.Content>
           </Widget>
         );
