@@ -581,7 +581,7 @@ class FluidNCController {
       return this.emitAll(eventName, ...args);
     }
 
-    command(socket, cmd, ...args) {
+    command(cmd, ...args) {
       const handler = {
         'load': () => {
           const [name, gcode, callback = noop] = args;
@@ -624,44 +624,44 @@ class FluidNCController {
           this.event.trigger('gcode:stop');
 
           this.workflow.stop();
-          this.writeln(socket, '!'); // Hold
+          this.writeln('!'); // Hold
           setTimeout(() => {
-            this.writeln(socket, '\x18'); // Reset
+            this.writeln('\x18'); // Reset
           }, 250);
         },
         'pause': () => {
           this.event.trigger('gcode:pause');
 
           this.workflow.pause();
-          this.writeln(socket, '!'); // Hold
+          this.writeln('!'); // Hold
         },
         'resume': () => {
           this.event.trigger('gcode:resume');
 
-          this.writeln(socket, '~'); // Resume
+          this.writeln('~'); // Resume
           this.workflow.resume();
         },
         'feedhold': () => {
-          this.writeln(socket, '!');
+          this.writeln('!');
         },
         'cyclestart': () => {
-          this.writeln(socket, '~');
+          this.writeln('~');
         },
         'statusreport': () => {
-          this.writeln(socket, '?');
+          this.writeln('?');
         },
         'homing': () => {
           this.event.trigger('gcode:homing');
 
-          this.writeln(socket, '$H');
+          this.writeln('$H');
         },
         'sleep': () => {
           this.event.trigger('gcode:sleep');
 
-          this.writeln(socket, '$SLP');
+          this.writeln('$SLP');
         },
         'unlock': () => {
-          this.writeln(socket, '$X');
+          this.writeln('$X');
         },
         'reset': () => {
           this.workflow.stop();
@@ -672,7 +672,7 @@ class FluidNCController {
           // Sender
           this.sender.reset();
 
-          this.writeln(socket, '\x18'); // ^x
+          this.writeln('\x18'); // ^x
         },
         'feedOverride': () => {
           const [value] = args;
@@ -690,7 +690,7 @@ class FluidNCController {
             data = '0x94';
           }
 
-          this.writeln(socket, data);
+          this.writeln(data);
         },
         'spindleOverride': () => {
           const [value] = args;
@@ -706,7 +706,7 @@ class FluidNCController {
             data = '0x9D';
           }
 
-          this.writeln(socket, data);
+          this.writeln(data);
         },
         'rapidOverride': () => {
           const [value] = args;
@@ -721,19 +721,19 @@ class FluidNCController {
             data = '0x97';
           }
 
-          this.writeln(socket, data);
+          this.writeln(data);
         },
         'lasertest': () => {
           const [power = 0, duration = 0] = args;
           const durationMs = ensurePositiveNumber(duration);
 
           // Turn on the laser at the specified power level
-          this.writeln(socket, 'M3 S' + ensurePositiveNumber(power));
+          this.writeln('M3 S' + ensurePositiveNumber(power));
 
           if (durationMs > 0) {
             // Turn off the laser after the specified duration
             setTimeout(() => {
-              this.writeln(socket, 'M5');
+              this.writeln('M5');
             }, durationMs);
           }
         },
@@ -776,8 +776,85 @@ class FluidNCController {
               return;
             }
 
-            this.command(socket, 'load', file, data, callback);
+            this.command('load', file, data, callback);
           });
+        },
+        'gcode:load': () => {
+          let [name, gcode, context = {}, callback = noop] = args;
+          if (typeof context === 'function') {
+            callback = context;
+            context = {};
+          }
+
+          const ok = this.sender.load(name, gcode, context);
+          if (!ok) {
+            callback(new Error(`Invalid G-code: name=${name}`));
+            return;
+          }
+
+          this.event.trigger('gcode:load');
+
+          log.debug(`Load G-code: name="${this.sender.state.name}", size=${this.sender.state.gcode.length}, total=${this.sender.state.total}`);
+
+          this.workflow.stop();
+
+          // Sender
+          this.sender.unload(); // Unload previous G-code
+          this.sender.load(name, gcode);
+          this.emitAll('sender:status', this.sender.toJSON());
+
+          callback(null, this.sender.toJSON());
+        },
+        'gcode:unload': () => {
+          this.workflow.stop();
+
+          // Sender
+          this.sender.unload();
+          this.emitAll('sender:status', this.sender.toJSON());
+
+          this.event.trigger('gcode:unload');
+        },
+        'gcode:start': () => {
+          this.event.trigger('gcode:start');
+
+          this.workflow.start();
+
+          // Feeder
+          this.feeder.reset();
+
+          // Sender
+          this.sender.next();
+        },
+        'gcode:stop': () => {
+          this.event.trigger('gcode:stop');
+
+          this.workflow.stop();
+          this.writeln('!'); // Hold
+          setTimeout(() => {
+            this.writeln('\x18'); // Reset
+          }, 250);
+        },
+        'gcode:pause': () => {
+          this.event.trigger('gcode:pause');
+
+          this.workflow.pause();
+          this.writeln('!'); // Hold
+        },
+        'gcode:resume': () => {
+          this.event.trigger('gcode:resume');
+
+          this.writeln('~'); // Resume
+          this.workflow.resume();
+        },
+        // Common commands that might be called by widgets
+        'status': () => {
+          this.writeln('?');
+        },
+        'settings': () => {
+          this.writeln('$$');
+        },
+        'gcode_parsers': () => {
+          this.writeln('$G');
         }
       };
 
@@ -793,7 +870,7 @@ class FluidNCController {
       }
     }
 
-    write(socket, data, context = {}) {
+    write(data, context = {}) {
       // Assertion check
       if (this.isClose()) {
         log.error(`Serial port "${this.options.port}" is not accessible`);
@@ -810,11 +887,11 @@ class FluidNCController {
       log.silly(`> ${cmd}`);
     }
 
-    writeln(socket, data, context = {}) {
+    writeln(data, context = {}) {
       if (_.includes(FLUIDNC_REALTIME_COMMANDS, data)) {
-        this.write(socket, data, context);
+        this.write(data, context);
       } else {
-        this.write(socket, data + '\n', context);
+        this.write(data + '\n', context);
       }
     }
 
