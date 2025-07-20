@@ -283,9 +283,7 @@ class SpindleWidget extends PureComponent {
                 <i className="fa fa-bars" />
                 <Space width="8" />
               </Widget.Sortable>
-              {isForkedWidget &&
-                <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-              }
+              {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
               {i18n._('Spindle')}
             </Widget.Title>
             <Widget.Controls className={this.props.sortable.filterClassName}>

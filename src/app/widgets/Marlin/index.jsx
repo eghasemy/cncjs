@@ -301,13 +301,11 @@ class MarlinWidget extends PureComponent {
                 <i className="fa fa-bars" />
                 <Space width="8" />
               </Widget.Sortable>
-              {isForkedWidget &&
-                <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-              }
-                        Marlin
+              {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
+              Marlin
             </Widget.Title>
             <Widget.Controls className={this.props.sortable.filterClassName}>
-              {isReady && (
+              {isReady ? (
                 <Widget.Button
                   onClick={(event) => {
                     actions.openModal(MODAL_CONTROLLER);
@@ -315,8 +313,8 @@ class MarlinWidget extends PureComponent {
                 >
                   <i className="fa fa-info" />
                 </Widget.Button>
-              )}
-              {isReady && (
+) : null}
+              {isReady ? (
                 <Widget.DropdownButton
                   toggle={<i className="fa fa-th-large" />}
                 >
@@ -339,8 +337,8 @@ class MarlinWidget extends PureComponent {
                     {i18n._('Get Firmware Version and Capabilities (M115)')}
                   </Widget.DropdownMenuItem>
                 </Widget.DropdownButton>
-              )}
-              {isReady && (
+) : null}
+              {isReady ? (
                 <Widget.Button
                   disabled={isFullscreen}
                   title={minimized ? i18n._('Expand') : i18n._('Collapse')}
@@ -354,7 +352,7 @@ class MarlinWidget extends PureComponent {
                     )}
                   />
                 </Widget.Button>
-              )}
+) : null}
               <Widget.DropdownButton
                 title={i18n._('More')}
                 toggle={<i className="fa fa-ellipsis-v" />}
@@ -393,7 +391,7 @@ class MarlinWidget extends PureComponent {
               </Widget.DropdownButton>
             </Widget.Controls>
           </Widget.Header>
-          {isReady && (
+          {isReady ? (
             <Widget.Content
               className={classNames(
                 styles['widget-content'],
@@ -401,14 +399,13 @@ class MarlinWidget extends PureComponent {
               )}
             >
               {state.modal.name === MODAL_CONTROLLER &&
-                <Controller state={state} actions={actions} />
-              }
+              <Controller state={state} actions={actions} />}
               <Marlin
                 state={state}
                 actions={actions}
               />
             </Widget.Content>
-          )}
+) : null}
         </Widget>
       );
     }

@@ -83,7 +83,7 @@ class Laser extends PureComponent {
                     >
                       <i className="fa fa-arrow-down" style={{ fontSize: 14 }} />
                       <span style={{ marginLeft: 5 }}>
-                                            -10%
+                        -10%
                       </span>
                     </RepeatButton>
                     <RepeatButton
@@ -96,7 +96,7 @@ class Laser extends PureComponent {
                     >
                       <i className="fa fa-arrow-down" style={{ fontSize: 10 }} />
                       <span style={{ marginLeft: 5 }}>
-                                            -1%
+                        -1%
                       </span>
                     </RepeatButton>
                     <RepeatButton
@@ -109,7 +109,7 @@ class Laser extends PureComponent {
                     >
                       <i className="fa fa-arrow-up" style={{ fontSize: 10 }} />
                       <span style={{ marginLeft: 5 }}>
-                                            1%
+                        1%
                       </span>
                     </RepeatButton>
                     <RepeatButton
@@ -122,7 +122,7 @@ class Laser extends PureComponent {
                     >
                       <i className="fa fa-arrow-up" style={{ fontSize: 14 }} />
                       <span style={{ marginLeft: 5 }}>
-                                            10%
+                        10%
                       </span>
                     </RepeatButton>
                     <button
@@ -155,7 +155,7 @@ class Laser extends PureComponent {
                 />
               </Toggler>
             </Panel.Heading>
-            {panel.laserTest.expanded && (
+            {panel.laserTest.expanded ? (
               <Panel.Body>
                 <div className="table-form" style={{ marginBottom: 15 }}>
                   <div className="table-form-row">
@@ -238,7 +238,7 @@ class Laser extends PureComponent {
                   </div>
                 </div>
               </Panel.Body>
-            )}
+) : null}
           </Panel>
         </div>
       );

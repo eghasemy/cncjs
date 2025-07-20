@@ -3,7 +3,7 @@ import includes from 'lodash/includes';
 import union from 'lodash/union';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
+import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG, FLUIDNC } from 'app/constants';
 import controller from 'app/lib/controller';
 import store from 'app/store';
 import defaultState from 'app/store/defaultState';
@@ -31,6 +31,9 @@ export const getActiveWidgets = () => {
         return false;
       }
       if (widget === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
+        return false;
+      }
+      if (widget === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
         return false;
       }
       return true;
@@ -62,6 +65,9 @@ export const getInactiveWidgets = () => {
         return false;
       }
       if (widget === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
+        return false;
+      }
+      if (widget === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
         return false;
       }
       return true;

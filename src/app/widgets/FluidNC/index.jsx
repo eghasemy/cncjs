@@ -1,0 +1,382 @@
+import classNames from 'classnames';
+import PropTypes from 'prop-types';
+import React, { PureComponent } from 'react';
+import Space from 'app/components/Space';
+import Widget from 'app/components/Widget';
+import i18n from 'app/lib/i18n';
+import controller from 'app/lib/controller';
+import WidgetConfig from '../WidgetConfig';
+import FluidNC from './FluidNC';
+import Controller from './Controller';
+import Settings from './Settings';
+import {
+  FLUIDNC
+} from '../../constants';
+import {
+  MODAL_NONE,
+  MODAL_CONTROLLER,
+  MODAL_SETTINGS
+} from './constants';
+import styles from './index.styl';
+
+class FluidNCWidget extends PureComponent {
+    static propTypes = {
+      widgetId: PropTypes.string.isRequired,
+      onFork: PropTypes.func.isRequired,
+      onRemove: PropTypes.func.isRequired,
+      sortable: PropTypes.object
+    };
+
+    _isMounted = false;
+
+    // Public methods
+    collapse = () => {
+      if (this._isMounted) {
+        this.setState({ minimized: true });
+      }
+    };
+
+    expand = () => {
+      if (this._isMounted) {
+        this.setState({ minimized: false });
+      }
+    };
+
+    config = new WidgetConfig(this.props.widgetId);
+
+    state = this.getInitialState();
+
+    actions = {
+      toggleFullscreen: () => {
+        if (this._isMounted) {
+          const { minimized, isFullscreen } = this.state;
+          this.setState({
+            minimized: isFullscreen ? minimized : false,
+            isFullscreen: !isFullscreen
+          });
+        }
+      },
+      toggleMinimized: () => {
+        if (this._isMounted) {
+          const { minimized } = this.state;
+          this.setState({ minimized: !minimized });
+        }
+      },
+      openModal: (name = MODAL_NONE, params = {}) => {
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              name: name,
+              params: params
+            }
+          });
+        }
+      },
+      closeModal: () => {
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              name: MODAL_NONE,
+              params: {}
+            }
+          });
+        }
+      },
+      updateModalParams: (params = {}) => {
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              ...this.state.modal,
+              params: {
+                ...this.state.modal.params,
+                ...params
+              }
+            }
+          });
+        }
+      },
+      toggleQueueReports: () => {
+        if (this._isMounted) {
+          const expanded = this.state.panel.queueReports.expanded;
+
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              queueReports: {
+                ...this.state.panel.queueReports,
+                expanded: !expanded
+              }
+            }
+          });
+        }
+      },
+      toggleStatusReports: () => {
+        if (this._isMounted) {
+          const expanded = this.state.panel.statusReports.expanded;
+
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              statusReports: {
+                ...this.state.panel.statusReports,
+                expanded: !expanded
+              }
+            }
+          });
+        }
+      },
+      toggleModalGroups: () => {
+        if (this._isMounted) {
+          const expanded = this.state.panel.modalGroups.expanded;
+
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              modalGroups: {
+                ...this.state.panel.modalGroups,
+                expanded: !expanded
+              }
+            }
+          });
+        }
+      }
+    };
+
+    controllerEvents = {
+      'serialport:open': (options) => {
+        const { port, controllerType } = options;
+        if (this._isMounted) {
+          this.setState({
+            isReady: controllerType === FLUIDNC,
+            port: port
+          });
+        }
+      },
+      'serialport:close': (options) => {
+        if (this._isMounted) {
+          const initialState = this.getInitialState();
+          this.setState({ ...initialState });
+        }
+      },
+      'controller:settings': (type, controllerSettings) => {
+        if (type === FLUIDNC && this._isMounted) {
+          this.setState(state => ({
+            controller: {
+              ...state.controller,
+              type: type,
+              settings: controllerSettings
+            }
+          }));
+        }
+      },
+      'controller:state': (type, controllerState) => {
+        if (type === FLUIDNC && this._isMounted) {
+          this.setState(state => ({
+            controller: {
+              ...state.controller,
+              type: type,
+              state: controllerState
+            }
+          }));
+        }
+      },
+      'FluidNC:state': (state) => {
+        if (this._isMounted) {
+          this.setState(prevState => ({
+            controller: {
+              ...prevState.controller,
+              state: state
+            }
+          }));
+        }
+      },
+      'FluidNC:settings': (settings) => {
+        if (this._isMounted) {
+          const { name, value } = { ...settings };
+          this.setState(prevState => ({
+            controller: {
+              ...prevState.controller,
+              settings: {
+                ...prevState.controller.settings,
+                [name]: value
+              }
+            }
+          }));
+        }
+      }
+    };
+
+    componentDidMount() {
+      this._isMounted = true;
+      this.addControllerEvents();
+    }
+
+    componentWillUnmount() {
+      this._isMounted = false;
+      this.removeControllerEvents();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+      const {
+        minimized
+      } = this.state;
+
+      this.config.set('minimized', minimized);
+    }
+
+    getInitialState() {
+      return {
+        minimized: this.config.get('minimized', false),
+        isFullscreen: false,
+        isReady: (controller.loadedControllers.length === 1) || (controller.type === FLUIDNC),
+        canClick: true, // Defaults to true
+        port: controller.port,
+        controller: {
+          type: controller.type,
+          state: controller.state,
+          settings: controller.settings
+        },
+        modal: {
+          name: MODAL_NONE,
+          params: {}
+        },
+        panel: {
+          queueReports: {
+            expanded: false
+          },
+          statusReports: {
+            expanded: false
+          },
+          modalGroups: {
+            expanded: false
+          }
+        }
+      };
+    }
+
+    addControllerEvents() {
+      Object.keys(this.controllerEvents).forEach(eventName => {
+        const callback = this.controllerEvents[eventName];
+        controller.addListener(eventName, callback);
+      });
+    }
+
+    removeControllerEvents() {
+      Object.keys(this.controllerEvents).forEach(eventName => {
+        const callback = this.controllerEvents[eventName];
+        controller.removeListener(eventName, callback);
+      });
+    }
+
+    canClick() {
+      const { port, isReady } = this.state;
+
+      if (!port) {
+        return false;
+      }
+      if (!isReady) {
+        return false;
+      }
+
+      return true;
+    }
+
+    render() {
+      const { widgetId } = this.props;
+      const { minimized, isFullscreen } = this.state;
+      const isForkedWidget = widgetId.match(/\w+:[\w\-]+/);
+      const state = {
+        ...this.state,
+        canClick: this.canClick()
+      };
+      const actions = {
+        ...this.actions
+      };
+
+      return (
+        <Widget fullscreen={isFullscreen}>
+          <Widget.Header>
+            <Widget.Title>
+              <Widget.Anchor href="#fluidnc">
+                {isForkedWidget ? <i className="fa fa-code-fork" style={{ marginRight: 5 }} /> : null}
+                {i18n._('FluidNC')}
+              </Widget.Anchor>
+            </Widget.Title>
+            <Widget.Controls className={styles.widgetControls}>
+              <Widget.Button
+                disabled={!state.canClick}
+                title={i18n._('Controller')}
+                onClick={(event) => {
+                  actions.openModal(MODAL_CONTROLLER);
+                }}
+              >
+                <i className="fa fa-info" />
+              </Widget.Button>
+              <Widget.Button
+                disabled={!state.canClick}
+                title={i18n._('FluidNC Settings')}
+                onClick={(event) => {
+                  actions.openModal(MODAL_SETTINGS);
+                }}
+              >
+                <i className="fa fa-cogs" />
+              </Widget.Button>
+              <Widget.DropdownButton
+                title={i18n._('More')}
+                toggle={<i className="fa fa-ellipsis-v" />}
+                onSelect={(eventKey) => {
+                  if (eventKey === 'fullscreen') {
+                    actions.toggleFullscreen();
+                  } else if (eventKey === 'fork') {
+                    this.props.onFork();
+                  } else if (eventKey === 'remove') {
+                    this.props.onRemove();
+                  }
+                }}
+              >
+                <Widget.DropdownMenuItem eventKey="fullscreen">
+                  <i
+                    className={classNames(
+                      'fa',
+                      'fa-fw',
+                      { 'fa-expand': !isFullscreen },
+                      { 'fa-compress': isFullscreen }
+                    )}
+                  />
+                  <Space width="4" />
+                  {!isFullscreen ? i18n._('Enter Full Screen') : i18n._('Exit Full Screen')}
+                </Widget.DropdownMenuItem>
+                <Widget.DropdownMenuItem eventKey="fork">
+                  <i className="fa fa-fw fa-code-fork" />
+                  <Space width="4" />
+                  {i18n._('Fork Widget')}
+                </Widget.DropdownMenuItem>
+                <Widget.DropdownMenuItem eventKey="remove">
+                  <i className="fa fa-fw fa-times" />
+                  <Space width="4" />
+                  {i18n._('Remove Widget')}
+                </Widget.DropdownMenuItem>
+              </Widget.DropdownButton>
+            </Widget.Controls>
+          </Widget.Header>
+          <Widget.Content
+            className={classNames(
+              styles['widget-content'],
+              { [styles.hidden]: minimized }
+            )}
+          >
+            <FluidNC
+              state={state}
+              actions={actions}
+            />
+          </Widget.Content>
+          {state.modal.name === MODAL_CONTROLLER &&
+            <Controller state={state} actions={actions} />}
+          {state.modal.name === MODAL_SETTINGS &&
+            <Settings state={state} actions={actions} />}
+        </Widget>
+      );
+    }
+}
+
+export default FluidNCWidget;

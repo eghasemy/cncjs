@@ -99,23 +99,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 X0 Y0 Z0"
               disabled={!canClick}
@@ -233,23 +227,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 X0"
               disabled={!canClick}
@@ -362,23 +350,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 Y0"
               disabled={!canClick}
@@ -491,23 +473,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 Z0"
               disabled={!canClick}
@@ -620,23 +596,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 A0"
               disabled={!canClick}
@@ -749,23 +719,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 B0"
               disabled={!canClick}
@@ -878,23 +842,17 @@ class DisplayPanel extends PureComponent {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {wcs === 'G54' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G54)')}</MenuItem>}
             {wcs === 'G55' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G55)')}</MenuItem>}
             {wcs === 'G56' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G56)')}</MenuItem>}
             {wcs === 'G57' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G57)')}</MenuItem>}
             {wcs === 'G58' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G58)')}</MenuItem>}
             {wcs === 'G59' &&
-              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>
-            }
+              <MenuItem header>{i18n._('Work Coordinate System (G59)')}</MenuItem>}
             <MenuItem
               eventKey="G0 C0"
               disabled={!canClick}
@@ -1072,7 +1030,7 @@ class DisplayPanel extends PureComponent {
             </Taskbar>
           </td>
           <td className={styles.workPosition}>
-            {showPositionInput && (
+            {showPositionInput ? (
               <PositionInput
                 style={{ margin: '5px 0' }}
                 onSave={chainedFunction(
@@ -1083,10 +1041,9 @@ class DisplayPanel extends PureComponent {
                 )}
                 onCancel={this.hidePositionInput(axis)}
               />
-            )}
+) : null}
             {!showPositionInput &&
-              <PositionLabel value={wpos} />
-            }
+              <PositionLabel value={wpos} />}
             <Taskbar>
               <div className="clearfix">
                 <div className="pull-right">
@@ -1187,13 +1144,13 @@ class DisplayPanel extends PureComponent {
               </tr>
             </thead>
             <tbody>
-              {hasAxisE && this.renderAxis(AXIS_E)}
-              {hasAxisX && this.renderAxis(AXIS_X)}
-              {hasAxisY && this.renderAxis(AXIS_Y)}
-              {hasAxisZ && this.renderAxis(AXIS_Z)}
-              {hasAxisA && this.renderAxis(AXIS_A)}
-              {hasAxisB && this.renderAxis(AXIS_B)}
-              {hasAxisC && this.renderAxis(AXIS_C)}
+              {hasAxisE ? this.renderAxis(AXIS_E) : null}
+              {hasAxisX ? this.renderAxis(AXIS_X) : null}
+              {hasAxisY ? this.renderAxis(AXIS_Y) : null}
+              {hasAxisZ ? this.renderAxis(AXIS_Z) : null}
+              {hasAxisA ? this.renderAxis(AXIS_A) : null}
+              {hasAxisB ? this.renderAxis(AXIS_B) : null}
+              {hasAxisC ? this.renderAxis(AXIS_C) : null}
             </tbody>
           </table>
         </Panel>

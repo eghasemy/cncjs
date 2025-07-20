@@ -5,7 +5,7 @@ import union from 'lodash/union';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import Modal from 'app/components/Modal';
-import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
+import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG, FLUIDNC } from 'app/constants';
 import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 import store from 'app/store';
@@ -75,6 +75,13 @@ class WidgetManager extends PureComponent {
         id: 'tinyg',
         caption: i18n._('TinyG Widget'),
         details: i18n._('This widget shows the TinyG state and provides TinyG specific features.'),
+        visible: true,
+        disabled: false
+      },
+      {
+        id: 'fluidnc',
+        caption: i18n._('FluidNC Widget'),
+        details: i18n._('This widget shows the FluidNC state and provides FluidNC specific features.'),
         visible: true,
         disabled: false
       },
@@ -183,6 +190,9 @@ class WidgetManager extends PureComponent {
           return false;
         }
         if (widgetItem.id === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
+          return false;
+        }
+        if (widgetItem.id === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
           return false;
         }
         return true;
