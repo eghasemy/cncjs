@@ -190,7 +190,7 @@ class FileManager extends PureComponent {
                     >
                       <i className="fa fa-download" />
                     </Button>
-                    {(file.type === 'yaml' || file.type === 'yml') && (
+                    {(file.type === 'yaml' || file.type === 'yml') ? (
                       <Button
                         bsSize="xs"
                         bsStyle="info"
@@ -199,7 +199,7 @@ class FileManager extends PureComponent {
                       >
                         <i className="fa fa-edit" />
                       </Button>
-                    )}
+                    ) : null}
                     <Button
                       bsSize="xs"
                       bsStyle="danger"

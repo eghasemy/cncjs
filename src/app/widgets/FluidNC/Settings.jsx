@@ -52,18 +52,18 @@ class Settings extends PureComponent {
               </NavItem>
             </Nav>
             <div style={{ padding: '20px' }}>
-              {activeTab === 'filemanager' && (
+              {activeTab === 'filemanager' ? (
                 <FileManager
                   state={state}
                   actions={actions}
                 />
-              )}
-              {activeTab === 'calibrate' && (
+              ) : null}
+              {activeTab === 'calibrate' ? (
                 <Calibrate
                   state={state}
                   actions={actions}
                 />
-              )}
+              ) : null}
             </div>
           </Modal.Body>
         </Modal>

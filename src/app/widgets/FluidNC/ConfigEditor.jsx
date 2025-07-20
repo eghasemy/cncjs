@@ -198,7 +198,7 @@ class ConfigEditor extends PureComponent {
             </Checkbox>
           </FormGroup>
 
-          {axisConfig.homing && (
+          {axisConfig.homing ? (
             <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '3px' }}>
               <h6>{i18n._('Homing Settings')}</h6>
               <div className="row">
@@ -242,7 +242,7 @@ class ConfigEditor extends PureComponent {
                 </Checkbox>
               </FormGroup>
             </div>
-          )}
+          ) : null}
         </div>
       );
     };
@@ -297,7 +297,7 @@ class ConfigEditor extends PureComponent {
                   </div>
                 </div>
 
-                {config.stepping && (
+                {config.stepping ? (
                   <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fcf8e3', borderRadius: '4px' }}>
                     <h5>{i18n._('Stepping Settings')}</h5>
                     <div className="row">
@@ -323,16 +323,16 @@ class ConfigEditor extends PureComponent {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
 
-                {config.axes && (
+                {config.axes ? (
                   <div>
                     <h4>{i18n._('Axis Configuration')}</h4>
                     {Object.keys(config.axes).map(axisName => 
                       this.renderAxisConfig(axisName, config.axes[axisName])
                     )}
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </Modal.Body>

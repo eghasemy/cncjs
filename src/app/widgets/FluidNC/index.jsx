@@ -254,9 +254,9 @@ class FluidNCWidget extends PureComponent {
                 <i className="fa fa-bars" />
                 <Space width="8" />
               </Widget.Sortable>
-              {isForkedWidget &&
+              {isForkedWidget ? (
                 <i className="fa fa-code-fork" style={{ marginRight: 5 }} />
-              }
+              ) : null}
                         FluidNC
             </Widget.Title>
             <Widget.Controls className={this.props.sortable.filterClassName}>
@@ -411,12 +411,12 @@ class FluidNCWidget extends PureComponent {
                 { [styles.hidden]: minimized }
               )}
             >
-              {state.modal.name === MODAL_CONTROLLER &&
+              {state.modal.name === MODAL_CONTROLLER ? (
                 <Controller state={state} actions={actions} />
-              }
-              {state.modal.name === MODAL_SETTINGS &&
+              ) : null}
+              {state.modal.name === MODAL_SETTINGS ? (
                 <Settings state={state} actions={actions} />
-              }
+              ) : null}
               <FluidNC
                 state={state}
                 actions={actions}
