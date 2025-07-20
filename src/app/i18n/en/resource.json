@@ -739,5 +739,7 @@
   "No files found": "No files found",
   "FluidNC Settings": "FluidNC Settings",
   "File Manager": "File Manager",
-  "Calibrate": "Calibrate"
+  "Calibrate": "Calibrate",
+  "FluidNC Widget": "FluidNC Widget",
+  "This widget shows the FluidNC state and provides FluidNC specific features including file management and calibration.": "This widget shows the FluidNC state and provides FluidNC specific features including file management and calibration."
 }
