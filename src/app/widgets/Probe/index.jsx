@@ -21,6 +21,7 @@ import {
   // Grbl
   GRBL,
   GRBLHAL,
+  FLUIDNC,
   GRBL_ACTIVE_STATE_IDLE,
   // Marlin
   MARLIN,
