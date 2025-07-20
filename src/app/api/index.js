@@ -706,6 +706,18 @@ fluidnc.list = () => new Promise((resolve, reject) => {
     });
 });
 
+fluidnc.download = (name) => new Promise((resolve, reject) => {
+  authrequest
+    .get('/api/fluidnc/files/' + encodeURIComponent(name))
+    .end((err, res) => {
+      if (err) {
+        reject(res);
+      } else {
+        resolve(res);
+      }
+    });
+});
+
 fluidnc.upload = (options) => new Promise((resolve, reject) => {
   authrequest
     .post('/api/fluidnc/files')
@@ -722,6 +734,19 @@ fluidnc.upload = (options) => new Promise((resolve, reject) => {
 fluidnc.remove = (name) => new Promise((resolve, reject) => {
   authrequest
     .delete('/api/fluidnc/files/' + encodeURIComponent(name))
+    .end((err, res) => {
+      if (err) {
+        reject(res);
+      } else {
+        resolve(res);
+      }
+    });
+});
+
+fluidnc.setActive = (name) => new Promise((resolve, reject) => {
+  authrequest
+    .post('/api/fluidnc/active')
+    .send({ name })
     .end((err, res) => {
       if (err) {
         reject(res);
