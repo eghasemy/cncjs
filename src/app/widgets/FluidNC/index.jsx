@@ -27,13 +27,19 @@ class FluidNCWidget extends PureComponent {
       sortable: PropTypes.object
     };
 
+    _isMounted = false;
+
     // Public methods
     collapse = () => {
-      this.setState({ minimized: true });
+      if (this._isMounted) {
+        this.setState({ minimized: true });
+      }
     };
 
     expand = () => {
-      this.setState({ minimized: false });
+      if (this._isMounted) {
+        this.setState({ minimized: false });
+      }
     };
 
     config = new WidgetConfig(this.props.widgetId);
@@ -42,98 +48,118 @@ class FluidNCWidget extends PureComponent {
 
     actions = {
       toggleFullscreen: () => {
-        const { minimized, isFullscreen } = this.state;
-        this.setState({
-          minimized: isFullscreen ? minimized : false,
-          isFullscreen: !isFullscreen
-        });
+        if (this._isMounted) {
+          const { minimized, isFullscreen } = this.state;
+          this.setState({
+            minimized: isFullscreen ? minimized : false,
+            isFullscreen: !isFullscreen
+          });
+        }
       },
       toggleMinimized: () => {
-        const { minimized } = this.state;
-        this.setState({ minimized: !minimized });
+        if (this._isMounted) {
+          const { minimized } = this.state;
+          this.setState({ minimized: !minimized });
+        }
       },
       openModal: (name = MODAL_NONE, params = {}) => {
-        this.setState({
-          modal: {
-            name: name,
-            params: params
-          }
-        });
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              name: name,
+              params: params
+            }
+          });
+        }
       },
       closeModal: () => {
-        this.setState({
-          modal: {
-            name: MODAL_NONE,
-            params: {}
-          }
-        });
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              name: MODAL_NONE,
+              params: {}
+            }
+          });
+        }
       },
       updateModalParams: (params = {}) => {
-        this.setState({
-          modal: {
-            ...this.state.modal,
-            params: {
-              ...this.state.modal.params,
-              ...params
+        if (this._isMounted) {
+          this.setState({
+            modal: {
+              ...this.state.modal,
+              params: {
+                ...this.state.modal.params,
+                ...params
+              }
             }
-          }
-        });
+          });
+        }
       },
       toggleQueueReports: () => {
-        const expanded = this.state.panel.queueReports.expanded;
+        if (this._isMounted) {
+          const expanded = this.state.panel.queueReports.expanded;
 
-        this.setState({
-          panel: {
-            ...this.state.panel,
-            queueReports: {
-              ...this.state.panel.queueReports,
-              expanded: !expanded
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              queueReports: {
+                ...this.state.panel.queueReports,
+                expanded: !expanded
+              }
             }
-          }
-        });
+          });
+        }
       },
       toggleStatusReports: () => {
-        const expanded = this.state.panel.statusReports.expanded;
+        if (this._isMounted) {
+          const expanded = this.state.panel.statusReports.expanded;
 
-        this.setState({
-          panel: {
-            ...this.state.panel,
-            statusReports: {
-              ...this.state.panel.statusReports,
-              expanded: !expanded
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              statusReports: {
+                ...this.state.panel.statusReports,
+                expanded: !expanded
+              }
             }
-          }
-        });
+          });
+        }
       },
       toggleModalGroups: () => {
-        const expanded = this.state.panel.modalGroups.expanded;
+        if (this._isMounted) {
+          const expanded = this.state.panel.modalGroups.expanded;
 
-        this.setState({
-          panel: {
-            ...this.state.panel,
-            modalGroups: {
-              ...this.state.panel.modalGroups,
-              expanded: !expanded
+          this.setState({
+            panel: {
+              ...this.state.panel,
+              modalGroups: {
+                ...this.state.panel.modalGroups,
+                expanded: !expanded
+              }
             }
-          }
-        });
+          });
+        }
       }
     };
 
     controllerEvents = {
       'serialport:open': (options) => {
         const { port, controllerType } = options;
-        this.setState({
-          isReady: controllerType === FLUIDNC,
-          port: port
-        });
+        if (this._isMounted) {
+          this.setState({
+            isReady: controllerType === FLUIDNC,
+            port: port
+          });
+        }
       },
       'serialport:close': (options) => {
-        const initialState = this.getInitialState();
-        this.setState({ ...initialState });
+        if (this._isMounted) {
+          const initialState = this.getInitialState();
+          this.setState({ ...initialState });
+        }
       },
       'controller:settings': (type, controllerSettings) => {
-        if (type === FLUIDNC) {
+        if (type === FLUIDNC && this._isMounted) {
           this.setState(state => ({
             controller: {
               ...state.controller,
@@ -144,7 +170,7 @@ class FluidNCWidget extends PureComponent {
         }
       },
       'controller:state': (type, controllerState) => {
-        if (type === FLUIDNC) {
+        if (type === FLUIDNC && this._isMounted) {
           this.setState(state => ({
             controller: {
               ...state.controller,
@@ -155,32 +181,38 @@ class FluidNCWidget extends PureComponent {
         }
       },
       'FluidNC:state': (state) => {
-        this.setState(prevState => ({
-          controller: {
-            ...prevState.controller,
-            state: state
-          }
-        }));
+        if (this._isMounted) {
+          this.setState(prevState => ({
+            controller: {
+              ...prevState.controller,
+              state: state
+            }
+          }));
+        }
       },
       'FluidNC:settings': (settings) => {
-        const { name, value } = { ...settings };
-        this.setState(prevState => ({
-          controller: {
-            ...prevState.controller,
-            settings: {
-              ...prevState.controller.settings,
-              [name]: value
+        if (this._isMounted) {
+          const { name, value } = { ...settings };
+          this.setState(prevState => ({
+            controller: {
+              ...prevState.controller,
+              settings: {
+                ...prevState.controller.settings,
+                [name]: value
+              }
             }
-          }
-        }));
+          }));
+        }
       }
     };
 
     componentDidMount() {
+      this._isMounted = true;
       this.addControllerEvents();
     }
 
     componentWillUnmount() {
+      this._isMounted = false;
       this.removeControllerEvents();
     }
 
