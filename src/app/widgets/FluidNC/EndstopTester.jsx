@@ -16,7 +16,31 @@ class EndstopTester extends PureComponent {
       testResults: {}
     };
 
+    _isMounted = false;
+    _testTimeout = null;
+    _checkTimeout = null;
+
+    componentDidMount() {
+      this._isMounted = true;
+    }
+
+    componentWillUnmount() {
+      this._isMounted = false;
+      if (this._testTimeout) {
+        clearTimeout(this._testTimeout);
+        this._testTimeout = null;
+      }
+      if (this._checkTimeout) {
+        clearTimeout(this._checkTimeout);
+        this._checkTimeout = null;
+      }
+    }
+
     testEndstop = (axis, direction) => {
+      if (!this._isMounted) {
+        return;
+      }
+
       this.setState({ testing: true });
 
       // Send a small movement command to test endstop
@@ -26,11 +50,16 @@ class EndstopTester extends PureComponent {
       controller.command('gcode', command);
 
       // Check status after movement
-      setTimeout(() => {
+      this._testTimeout = setTimeout(() => {
+        if (!this._isMounted) {
+          return;
+        }
         controller.command('gcode', '?');
-        setTimeout(() => {
-          this.setState({ testing: false });
-          this.props.onRefresh();
+        this._checkTimeout = setTimeout(() => {
+          if (this._isMounted) {
+            this.setState({ testing: false });
+            this.props.onRefresh();
+          }
         }, 500);
       }, 1000);
     };

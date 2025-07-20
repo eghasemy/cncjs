@@ -17,12 +17,16 @@ class ConfigEditor extends PureComponent {
       saving: false
     };
 
+    _isMounted = false;
+    _saveTimeout = null;
+
     componentDidMount() {
+      this._isMounted = true;
       this.setState({ editedConfig: this.props.config });
     }
 
     componentDidUpdate(prevProps) {
-      if (prevProps.config !== this.props.config) {
+      if (prevProps.config !== this.props.config && this._isMounted) {
         this.setState({
           editedConfig: this.props.config,
           hasChanges: false
@@ -30,7 +34,18 @@ class ConfigEditor extends PureComponent {
       }
     }
 
+    componentWillUnmount() {
+      this._isMounted = false;
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
+      }
+    }
+
     handleConfigChange = (e) => {
+      if (!this._isMounted) {
+        return;
+      }
       const editedConfig = e.target.value;
       this.setState({
         editedConfig,
@@ -39,15 +54,23 @@ class ConfigEditor extends PureComponent {
     };
 
     handleSave = () => {
+      if (!this._isMounted) {
+        return;
+      }
       // TODO: Add proper confirmation modal
       this.setState({ saving: true });
       this.props.onSave(this.state.editedConfig);
-      setTimeout(() => {
+      this._saveTimeout = setTimeout(() => {
+        if (this._isMounted) {
           this.setState({ saving: false, hasChanges: false });
-        }, 2000);
+        }
+      }, 2000);
     };
 
     handleReset = () => {
+      if (!this._isMounted) {
+        return;
+      }
       // TODO: Add proper confirmation modal
       this.setState({
         editedConfig: this.props.config,

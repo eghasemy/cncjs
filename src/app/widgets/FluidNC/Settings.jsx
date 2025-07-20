@@ -22,10 +22,17 @@ class Settings extends PureComponent {
       endstopStatus: {}
     };
 
+    _isMounted = false;
+
     componentDidMount() {
+      this._isMounted = true;
       this.refreshFiles();
       this.refreshConfig();
       this.refreshEndstops();
+    }
+
+    componentWillUnmount() {
+      this._isMounted = false;
     }
 
     refreshFiles = () => {

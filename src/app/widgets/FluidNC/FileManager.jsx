@@ -18,20 +18,27 @@ class FileManager extends PureComponent {
     };
 
     fileInputRef = React.createRef();
+    _isMounted = false;
 
     handleDragOver = (e) => {
       e.preventDefault();
-      this.setState({ dragOver: true });
+      if (this._isMounted) {
+        this.setState({ dragOver: true });
+      }
     };
 
     handleDragLeave = (e) => {
       e.preventDefault();
-      this.setState({ dragOver: false });
+      if (this._isMounted) {
+        this.setState({ dragOver: false });
+      }
     };
 
     handleDrop = (e) => {
       e.preventDefault();
-      this.setState({ dragOver: false });
+      if (this._isMounted) {
+        this.setState({ dragOver: false });
+      }
 
       const files = Array.from(e.dataTransfer.files);
       files.forEach(file => this.uploadFile(file));
@@ -44,16 +51,24 @@ class FileManager extends PureComponent {
     };
 
     uploadFile = (file) => {
+      if (!this._isMounted) {
+        return;
+      }
+
       this.setState({ uploading: true });
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.props.onUpload(file.name, e.target.result);
-        this.setState({ uploading: false });
+        if (this._isMounted) {
+          this.props.onUpload(file.name, e.target.result);
+          this.setState({ uploading: false });
+        }
       };
       reader.onerror = () => {
-        console.error(i18n._('Failed to read file: {{filename}}', { filename: file.name }));
-        this.setState({ uploading: false });
+        if (this._isMounted) {
+          console.error(i18n._('Failed to read file: {{filename}}', { filename: file.name }));
+          this.setState({ uploading: false });
+        }
       };
       reader.readAsText(file);
     };
@@ -67,6 +82,14 @@ class FileManager extends PureComponent {
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / k ** i).toFixed(2)) + ' ' + sizes[i];
     };
+
+    componentDidMount() {
+      this._isMounted = true;
+    }
+
+    componentWillUnmount() {
+      this._isMounted = false;
+    }
 
     render() {
       const { files, onRefresh, onDelete } = this.props;
