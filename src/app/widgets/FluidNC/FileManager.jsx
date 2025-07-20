@@ -75,8 +75,8 @@ class FileManager extends PureComponent {
 
     formatFileSize = (bytes) => {
       if (bytes === 0) {
- return '0 B';
-}
+        return '0 B';
+      }
       const k = 1024;
       const sizes = ['B', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -186,7 +186,7 @@ class FileManager extends PureComponent {
                           <span className="space" />
                           <i className="fa fa-star" title={i18n._('Active Configuration')} />
                         </span>
-) : null}
+                      ) : null}
                     </div>
                     <div className="col-sm-2">
                       {this.formatFileSize(file.size || 0)}

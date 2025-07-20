@@ -126,7 +126,7 @@ class FluidNC extends PureComponent {
                   </div>
                 </div>
               </Panel.Body>
-) : null}
+            ) : null}
           </Panel>
           <Panel className={styles.panel}>
             <Panel.Heading className={styles['panel-heading']}>
@@ -174,7 +174,7 @@ class FluidNC extends PureComponent {
                 </div>
                 <Overrides ovF={ovF} ovR={ovR} ovS={ovS} />
               </Panel.Body>
-) : null}
+            ) : null}
           </Panel>
           <Panel className={styles.panel}>
             <Panel.Heading className={styles['panel-heading']}>
@@ -277,7 +277,7 @@ class FluidNC extends PureComponent {
                   </div>
                 </div>
               </Panel.Body>
-) : null}
+            ) : null}
           </Panel>
         </div>
       );
