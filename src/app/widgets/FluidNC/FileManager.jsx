@@ -228,7 +228,7 @@ class FileManager extends PureComponent {
                       <i className="fa fa-trash" />
                     </Button>
                   </td>
-                </tr>
+                  </tr>
                 );
               })}
             </tbody>
