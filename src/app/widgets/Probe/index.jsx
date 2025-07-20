@@ -2108,8 +2108,8 @@ class ProbeWidget extends PureComponent {
       'controller:state': (type, state) => {
         let units = this.state.units;
 
-        // Grbl
-        if (type === GRBL) {
+        // Grbl / FluidNC
+        if (type === GRBL || type === FLUIDNC) {
           const { parserstate } = { ...state };
           const { modal = {} } = { ...parserstate };
           units = {
@@ -2401,7 +2401,7 @@ class ProbeWidget extends PureComponent {
       const controllerState = this.state.controller.state;
       const defaultWCS = 'G54';
 
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         return get(controllerState, 'parserstate.modal.wcs') || defaultWCS;
       }
 
@@ -2431,10 +2431,10 @@ class ProbeWidget extends PureComponent {
       if (workflow.state !== WORKFLOW_STATE_IDLE) {
         return false;
       }
-      if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+      if (!includes([GRBL, GRBLHAL, FLUIDNC, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const activeState = get(controllerState, 'status.activeState');
         const states = [
           GRBL_ACTIVE_STATE_IDLE
@@ -2485,7 +2485,7 @@ class ProbeWidget extends PureComponent {
       if (!port) {
         return false;
       }
-      if (!includes([GRBL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+      if (!includes([GRBL, FLUIDNC, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
 
