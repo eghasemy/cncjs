@@ -51,8 +51,9 @@ class Settings extends PureComponent {
 
   fetchConfig = async (name) => {
     const file = name || this.state.activeConfig || 'config.yaml';
+    const path = encodeURIComponent(`/localfs/${file}`);
     try {
-      const res = await fetch(`/edit/${encodeURIComponent(file)}`);
+      const res = await fetch(`/edit?download=${path}`);
       const text = await res.text();
       this.setState({ configText: text });
     } catch (err) {
@@ -105,8 +106,9 @@ class Settings extends PureComponent {
     }
     const form = new FormData();
     form.append('data', file);
+    const path = encodeURIComponent(`/localfs/${file.name}`);
     try {
-      await fetch(`/edit/${encodeURIComponent(file.name)}`, { method: 'POST', body: form });
+      await fetch(`/edit?path=${path}`, { method: 'POST', body: form });
       this.fetchFiles();
     } catch (err) {
       // ignore
@@ -134,8 +136,9 @@ class Settings extends PureComponent {
     const form = new FormData();
     const name = this.state.activeConfig || 'config.yaml';
     form.append('data', blob, name);
+    const path = encodeURIComponent(`/localfs/${name}`);
     try {
-      await fetch(`/edit/${encodeURIComponent(name)}`, { method: 'POST', body: form });
+      await fetch(`/edit?path=${path}`, { method: 'POST', body: form });
     } catch (err) {
       // ignore
     }
