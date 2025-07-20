@@ -18,12 +18,16 @@ class Settings extends PureComponent {
     files: [],
     activeConfig: '',
     configText: '',
-    gpioStatus: []
+    gpioStatus: [],
+    ip: '',
+    httpPort: 80,
+    telnetPort: 23
   };
 
   filesBuffer = [];
   pending = null;
   gpioBuffer = [];
+  networkInfo = { ip: '', httpPort: 80, telnetPort: 23 };
 
   // React 15 does not support createRef(), use a callback ref instead
   fileInput = null;
@@ -41,6 +45,7 @@ class Settings extends PureComponent {
     this.fetchFiles();
     this.fetchConfig();
     this.fetchEndstops();
+    this.fetchNetwork();
   };
 
   fetchFiles = () => {
@@ -53,7 +58,9 @@ class Settings extends PureComponent {
     const file = name || this.state.activeConfig || 'config.yaml';
     const path = encodeURIComponent(`/localfs/${file}`);
     try {
-      const res = await fetch(`/edit?download=${path}`);
+      const { ip, httpPort } = this.state;
+      const base = ip ? `http://${ip}:${httpPort}` : '';
+      const res = await fetch(`${base}/edit?download=${path}`);
       const text = await res.text();
       this.setState({ configText: text });
     } catch (err) {
@@ -65,6 +72,12 @@ class Settings extends PureComponent {
     this.gpioBuffer = [];
     this.pending = 'gpio';
     controller.writeln('$GPIO/Dump');
+  };
+
+  fetchNetwork = () => {
+    this.pending = 'net';
+    this.networkInfo = { ip: '', httpPort: 80, telnetPort: 23 };
+    controller.writeln('$Settings/List');
   };
 
   handleSerialRead = (data) => {
@@ -96,6 +109,23 @@ class Settings extends PureComponent {
         this.gpioBuffer = [];
         this.pending = null;
       }
+    } else if (this.pending === 'net') {
+      if (line.startsWith('$Sta/IP=')) {
+        this.networkInfo.ip = line.substring(8);
+      } else if (line.startsWith('$AP/IP=')) {
+        this.networkInfo.ip = this.networkInfo.ip || line.substring(7);
+      } else if (line.startsWith('$HTTP/Port=')) {
+        this.networkInfo.httpPort = Number(line.substring(11));
+      } else if (line.startsWith('$Telnet/Port=')) {
+        this.networkInfo.telnetPort = Number(line.substring(13));
+      } else if (line === 'ok' || line.startsWith('error')) {
+        this.pending = null;
+        this.setState({
+          ip: this.networkInfo.ip,
+          httpPort: this.networkInfo.httpPort,
+          telnetPort: this.networkInfo.telnetPort
+        });
+      }
     }
   };
 
@@ -108,7 +138,9 @@ class Settings extends PureComponent {
     form.append('data', file);
     const path = encodeURIComponent(`/localfs/${file.name}`);
     try {
-      await fetch(`/edit?path=${path}`, { method: 'POST', body: form });
+      const { ip, httpPort } = this.state;
+      const base = ip ? `http://${ip}:${httpPort}` : '';
+      await fetch(`${base}/edit?path=${path}`, { method: 'POST', body: form });
       this.fetchFiles();
     } catch (err) {
       // ignore
@@ -138,7 +170,9 @@ class Settings extends PureComponent {
     form.append('data', blob, name);
     const path = encodeURIComponent(`/localfs/${name}`);
     try {
-      await fetch(`/edit?path=${path}`, { method: 'POST', body: form });
+      const { ip, httpPort } = this.state;
+      const base = ip ? `http://${ip}:${httpPort}` : '';
+      await fetch(`${base}/edit?path=${path}`, { method: 'POST', body: form });
     } catch (err) {
       // ignore
     }
