@@ -19,6 +19,13 @@ class FluidNCRunner {
 
       const result = this.parser.parse(data) || {};
       const { type, payload } = result;
+      
+      // Debug logging for FluidNC runner
+      if (type) {
+        console.log(`FluidNC parsed event: ${type}, payload:`, payload);
+      } else {
+        console.log(`FluidNC unrecognized data: ${JSON.stringify(data)}`);
+      }
 
       if (type === FluidNCLineParser.TYPE_STATUS) {
         this.state.status = { ...payload };

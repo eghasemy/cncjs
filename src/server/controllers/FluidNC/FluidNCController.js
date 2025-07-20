@@ -45,6 +45,8 @@ class FluidNCController {
     connectionEventListener = {
       data: (data) => {
         log.silly(`< ${data}`);
+        // Add debug logging for FluidNC data
+        log.debug(`FluidNC received: ${JSON.stringify(data.toString())}`);
         this.runner.parse('' + data);
       },
       close: (err) => {
@@ -406,31 +408,9 @@ class FluidNCController {
     }
 
     initController() {
-      const cmds = [
-        { pauseAfter: 500 },
-
-        // Wait for the startup message
-        { pauseAfter: 1000 },
-
-        { cmd: 'status', pauseAfter: 50 },
-        { cmd: 'gcode_parsers', pauseAfter: 50 },
-        { cmd: 'settings', pauseAfter: 50 }
-      ];
-
-      const sendInitCommands = (i = 0) => {
-        if (i >= cmds.length) {
-          this.ready = true;
-          return;
-        }
-        const { cmd = '', pauseAfter = 0 } = { ...cmds[i] };
-        if (cmd) {
-          this.command(cmd);
-        }
-        setTimeout(() => {
-          sendInitCommands(i + 1);
-        }, pauseAfter);
-      };
-      sendInitCommands();
+      // Mark controller as ready immediately after connection
+      this.ready = true;
+      this.event.trigger('controller:ready');
     }
 
     get status() {
