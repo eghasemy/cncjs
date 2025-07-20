@@ -8078,6 +8078,7 @@ __metadata:
     is-electron: ~2.2.1
     jimp: ^0.10.3
     js-polyfills: ~0.1.42
+    js-yaml: ^4.1.0
     json-loader: ~0.5.7
     jsonlint: ^1.6.3
     jsonwebtoken: ~9.0.0
