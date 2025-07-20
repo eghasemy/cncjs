@@ -11,6 +11,7 @@ import log from 'app/lib/log';
 import {
   // Grbl
   GRBL,
+  FLUIDNC,
   GRBL_ACTIVE_STATE_ALARM,
   // Marlin
   MARLIN,
@@ -95,7 +96,7 @@ class WorkflowControl extends PureComponent {
       if (!includes([WORKFLOW_STATE_IDLE, WORKFLOW_STATE_PAUSED], workflow.state)) {
         return false;
       }
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const activeState = get(controllerState, 'status.activeState');
         const states = [
           GRBL_ACTIVE_STATE_ALARM

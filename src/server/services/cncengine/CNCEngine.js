@@ -16,6 +16,7 @@ import {
   TinyGController
 } from '../../controllers';
 import { GRBL, GRBLHAL } from '../../controllers/Grbl/constants';
+import { FLUIDNC } from '../../controllers/FluidNC/constants';
 import { MARLIN } from '../../controllers/Marlin/constants';
 import { SMOOTHIE } from '../../controllers/Smoothie/constants';
 import { G2CORE, TINYG } from '../../controllers/TinyG/constants';
@@ -40,6 +41,7 @@ const isValidController = (controller) => (
   // Grbl / grblHAL
   caseInsensitiveEquals(GRBL, controller) ||
     caseInsensitiveEquals(GRBLHAL, controller) ||
+    caseInsensitiveEquals(FLUIDNC, controller) ||
     // Marlin
     caseInsensitiveEquals(MARLIN, controller) ||
     // Smoothie
@@ -99,9 +101,10 @@ class CNCEngine {
       }
 
       // Grbl / grblHAL
-      if (!controller || caseInsensitiveEquals(GRBL, controller) || caseInsensitiveEquals(GRBLHAL, controller)) {
+      if (!controller || caseInsensitiveEquals(GRBL, controller) || caseInsensitiveEquals(GRBLHAL, controller) || caseInsensitiveEquals(FLUIDNC, controller)) {
         this.controllerClass[GRBLHAL] = GrblController;
         this.controllerClass[GRBL] = GrblController;
+        this.controllerClass[FLUIDNC] = GrblController;
       }
       // Marlin
       if (!controller || caseInsensitiveEquals(MARLIN, controller)) {

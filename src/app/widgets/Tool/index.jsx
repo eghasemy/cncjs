@@ -23,6 +23,7 @@ import {
   // Grbl
   GRBL,
   GRBLHAL,
+  FLUIDNC,
   // Marlin
   MARLIN,
   // Smoothie
@@ -197,7 +198,7 @@ class ToolWidget extends PureComponent {
       let workPosition = this.state.workPosition;
 
       // Grbl
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const { status, parserstate } = { ...controllerState };
         const { mpos, wpos } = status;
         const { modal = {} } = { ...parserstate };
@@ -479,7 +480,7 @@ class ToolWidget extends PureComponent {
     const controllerState = this.state.controller.state;
     const defaultWCS = 'G54';
 
-    if (controllerType === GRBL) {
+    if (controllerType === GRBL || controllerType === FLUIDNC) {
       return get(controllerState, 'parserstate.modal.wcs') || defaultWCS;
     }
 
@@ -505,7 +506,7 @@ class ToolWidget extends PureComponent {
     if (!port) {
       return false;
     }
-    if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+    if (!includes([GRBL, GRBLHAL, FLUIDNC, MARLIN, SMOOTHIE, TINYG], controllerType)) {
       return false;
     }
     return true;
