@@ -43,8 +43,11 @@ class Settings extends PureComponent {
       }
 
       if (readingFiles) {
-        if (!line.startsWith('[') && !line.startsWith('$')) {
-          files.push(line);
+        if (line.startsWith('[FILE:')) {
+          const match = line.match(/^\[FILE:(.*)\|SIZE:/);
+          if (match) {
+            files.push(match[1]);
+          }
         }
         return;
       }
