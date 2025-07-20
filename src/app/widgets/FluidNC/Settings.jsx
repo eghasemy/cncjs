@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { Nav, NavItem } from 'app/components/Navs';
 import Modal from 'app/components/Modal';
-import api from 'app/api';
+import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 
 class Settings extends PureComponent {
@@ -21,10 +21,41 @@ class Settings extends PureComponent {
   }
 
   fetch = () => {
-    api.fluidnc.list().then(res => {
-      const { files = [], active } = res.body || {};
-      this.setState({ files, active });
-    });
+    const files = [];
+    let active = '';
+    let readingFiles = true;
+
+    const handleData = (line) => {
+      line = String(line).trim();
+      if (!line) {
+        return;
+      }
+
+      if (line === 'ok') {
+        if (readingFiles) {
+          readingFiles = false;
+          controller.writeln('$N');
+          return;
+        }
+        controller.removeListener('serialport:read', handleData);
+        this.setState({ files, active });
+        return;
+      }
+
+      if (readingFiles) {
+        if (!line.startsWith('[') && !line.startsWith('$')) {
+          files.push(line);
+        }
+        return;
+      }
+
+      if (line.startsWith('$Config/Filename=')) {
+        active = line.split('=')[1];
+      }
+    };
+
+    controller.addListener('serialport:read', handleData);
+    controller.writeln('$LocalFS/List');
   };
 
   render() {
