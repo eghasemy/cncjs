@@ -5,6 +5,7 @@ import Modal from 'app/components/Modal';
 import { Nav, NavItem } from 'app/components/Navs';
 import i18n from 'app/lib/i18n';
 import controller from 'app/lib/controller';
+import { XModem, XModemSocketAdapter } from 'app/lib/xmodem';
 import styles from './index.styl';
 
 class Settings extends PureComponent {
@@ -158,21 +159,30 @@ class Settings extends PureComponent {
 
   handleUpload = async (event) => {
     const file = event.target.files[0];
+    event.target.value = '';
     if (!file) {
       return;
     }
-    const form = new FormData();
-    form.append('data', file);
-    const path = encodeURIComponent(`/localfs/${file.name}`);
+
+    const data = await file.arrayBuffer();
     try {
-      const { ip, httpPort } = this.state;
-      const base = ip ? `http://${ip}:${httpPort}` : '';
-      await fetch(`${base}/edit?path=${path}`, { method: 'POST', body: form });
+      controller.writeln('$X');
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 300));
+      controller.writeln(`$Xmodem/Receive=/localfs/${file.name}`);
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const socket = new XModemSocketAdapter(controller);
+      const xm = new XModem(socket);
+      await xm.send(Buffer.from(data));
+      socket.close();
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 3000));
       this.fetchFiles();
     } catch (err) {
       // ignore
     }
-    event.target.value = '';
   };
 
   handleDelete = (name) => {
@@ -191,15 +201,22 @@ class Settings extends PureComponent {
   };
 
   handleSaveConfig = async () => {
-    const blob = new Blob([this.state.configText], { type: 'text/plain' });
-    const form = new FormData();
+    const text = this.state.configText;
     const name = this.state.activeConfig || 'config.yaml';
-    form.append('data', blob, name);
-    const path = encodeURIComponent(`/localfs/${name}`);
     try {
-      const { ip, httpPort } = this.state;
-      const base = ip ? `http://${ip}:${httpPort}` : '';
-      await fetch(`${base}/edit?path=${path}`, { method: 'POST', body: form });
+      controller.writeln('$X');
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 300));
+      controller.writeln(`$Xmodem/Receive=/localfs/${name}`);
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const socket = new XModemSocketAdapter(controller);
+      const xm = new XModem(socket);
+      await xm.send(Buffer.from(text, 'utf8'));
+      socket.close();
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (err) {
       // ignore
     }
