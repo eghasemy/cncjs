@@ -61,7 +61,9 @@ class Settings extends PureComponent {
 
   handleUpload = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     const form = new FormData();
     form.append('data', file);
     try {
@@ -74,7 +76,10 @@ class Settings extends PureComponent {
   };
 
   handleDelete = async (name) => {
-    if (!window.confirm(i18n._('Delete file?'))) return;
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(i18n._('Delete file?'))) {
+      return;
+    }
     try {
       await fetch(`/edit/${encodeURIComponent(name)}`, { method: 'DELETE' });
       this.fetchFiles();
