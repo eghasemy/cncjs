@@ -25,7 +25,8 @@ class Settings extends PureComponent {
   pending = null;
   gpioBuffer = [];
 
-  fileInput = React.createRef();
+  // React 15 does not support createRef(), use a callback ref instead
+  fileInput = null;
 
   componentDidMount() {
     controller.addListener('serialport:read', this.handleSerialRead);
@@ -150,11 +151,13 @@ class Settings extends PureComponent {
       <div>
         <input
           type="file"
-          ref={this.fileInput}
           style={{ display: 'none' }}
+          ref={(el) => {
+            this.fileInput = el;
+          }}
           onChange={this.handleUpload}
         />
-        <Button btnStyle="primary" btnSize="sm" onClick={() => this.fileInput.current.click()} style={{ marginBottom: 5 }}>
+        <Button btnStyle="primary" btnSize="sm" onClick={() => this.fileInput && this.fileInput.click()} style={{ marginBottom: 5 }}>
           {i18n._('Upload')}
         </Button>
         <table className={styles.filesTable}>
