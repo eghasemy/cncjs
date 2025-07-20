@@ -15,34 +15,61 @@ class FileManager extends PureComponent {
       files: [],
       activeConfig: null,
       loading: false,
-      editingFile: null
+      editingFile: null,
+      deviceInfo: {}
     };
 
     componentDidMount() {
+      this.subscribe();
+      this.loadDeviceInfo();
       this.loadFiles();
     }
 
+    componentWillUnmount() {
+      this.unsubscribe();
+    }
+
+    subscribe() {
+      const tokens = [
+        controller.addListener('fluidnc:deviceInfo', (deviceInfo) => {
+          this.setState({ deviceInfo });
+        }),
+        controller.addListener('fluidnc:activeConfig', (activeConfig) => {
+          this.setState({ activeConfig });
+        }),
+        controller.addListener('fluidnc:fileList', (files) => {
+          this.setState({ files, loading: false });
+        })
+      ];
+      this.subscriptionTokens = tokens;
+    }
+
+    unsubscribe() {
+      this.subscriptionTokens.forEach((token) => {
+        controller.removeListener(token);
+      });
+      this.subscriptionTokens = [];
+    }
+
+    loadDeviceInfo = () => {
+      // Request device info from FluidNC
+      controller.command('fluidnc:getInfo');
+    };
+
+    loadActiveConfig = () => {
+      // Request active config from FluidNC
+      controller.command('fluidnc:getActiveConfig');
+    };
+
     loadFiles = () => {
       this.setState({ loading: true });
-
-      // For now, simulate file loading
-      // In a real implementation, this would make an API call to get files from FluidNC filesystem
-      setTimeout(() => {
-        this.setState({
-          files: [
-            { name: 'config.yaml', size: 2048, type: 'yaml', isActive: true },
-            { name: 'backup.yaml', size: 1024, type: 'yaml', isActive: false },
-            { name: 'test.gcode', size: 512, type: 'gcode', isActive: false }
-          ],
-          activeConfig: 'config.yaml',
-          loading: false
-        });
-      }, 500);
+      // Request file list from FluidNC
+      controller.command('fluidnc:listFiles');
     };
 
     handleDownload = (file) => {
-      // Send command to download file from FluidNC
-      controller.writeln(`$F/download=${file.name}`);
+      // TODO: Implement file download from FluidNC
+      console.log('Downloading file:', file.name);
     };
 
     handleUpload = () => {
@@ -62,22 +89,13 @@ class FileManager extends PureComponent {
     uploadFile = (file) => {
       // In a real implementation, this would upload the file to FluidNC
       console.log('Uploading file:', file.name);
-      // For now, just add it to the local list
-      this.setState(prevState => ({
-        files: [
-          ...prevState.files,
-          {
-            name: file.name,
-            size: file.size,
-            type: file.name.split('.').pop(),
-            isActive: false
-          }
-        ]
-      }));
+      // TODO: Implement file upload to FluidNC device
+      // For now, just refresh the file list
+      this.loadFiles();
     };
 
     handleDelete = (file) => {
-      if (file.isActive) {
+      if (file.name === this.state.activeConfig) {
         // eslint-disable-next-line no-alert
         alert(i18n._('Cannot delete the active configuration file'));
         return;
@@ -86,12 +104,7 @@ class FileManager extends PureComponent {
       // eslint-disable-next-line no-alert, no-restricted-globals
       if (confirm(i18n._('Are you sure you want to delete {{filename}}?', { filename: file.name }))) {
         // Send command to delete file from FluidNC
-        controller.writeln(`$F/delete=${file.name}`);
-
-        // Remove from local state
-        this.setState(prevState => ({
-          files: prevState.files.filter(f => f.name !== file.name)
-        }));
+        controller.command('fluidnc:deleteFile', file.name);
       }
     };
 
@@ -106,7 +119,7 @@ class FileManager extends PureComponent {
     };
 
     render() {
-      const { files, loading, editingFile } = this.state;
+      const { files, loading, editingFile, activeConfig } = this.state;
 
       if (editingFile) {
         return (
@@ -160,23 +173,25 @@ class FileManager extends PureComponent {
               </tr>
             </thead>
             <tbody>
-              {files.map((file, index) => (
-                <tr key={index}>
+              {files.map((file, index) => {
+                const isActive = file.name === activeConfig;
+                return (
+                  <tr key={index}>
                   <td>
                     {file.name}
-                    {file.isActive ? (
+                    {isActive ? (
                       <span
                         className="label label-success"
                         style={{ marginLeft: '10px' }}
                       >
                         {i18n._('Active')}
                       </span>
-) : null}
+                    ) : null}
                   </td>
                   <td>{(file.size / 1024).toFixed(1)} KB</td>
                   <td>{file.type.toUpperCase()}</td>
                   <td>
-                    {file.isActive ? (
+                    {isActive ? (
                       <span className="text-success">
                         <i className="fa fa-check-circle" />
                         <span style={{ marginLeft: '5px' }}>{i18n._('Active Config')}</span>
@@ -207,14 +222,15 @@ class FileManager extends PureComponent {
                     <Button
                       bsSize="xs"
                       bsStyle="danger"
-                      disabled={file.isActive}
+                      disabled={isActive}
                       onClick={() => this.handleDelete(file)}
                     >
                       <i className="fa fa-trash" />
                     </Button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </Table>
 

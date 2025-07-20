@@ -12,6 +12,8 @@ import FluidNCLineParserResultEcho from './FluidNCLineParserResultEcho';
 import FluidNCLineParserResultFeedback from './FluidNCLineParserResultFeedback';
 import FluidNCLineParserResultSettings from './FluidNCLineParserResultSettings';
 import FluidNCLineParserResultStartup from './FluidNCLineParserResultStartup';
+import FluidNCLineParserResultMessage from './FluidNCLineParserResultMessage';
+import FluidNCLineParserResultLocalFS from './FluidNCLineParserResultLocalFS';
 
 // FluidNC (based on Grbl v1.1)
 // https://github.com/gnea/grbl/blob/edge/doc/markdown/interface.md
@@ -63,6 +65,12 @@ class FluidNCLineParser {
       // [] (v0.9)
       // [MSG:] (v1.1)
       FluidNCLineParserResultFeedback,
+
+      // FluidNC [MSG:...] format messages
+      FluidNCLineParserResultMessage,
+
+      // LocalFS responses
+      FluidNCLineParserResultLocalFS,
 
       // $xx
       FluidNCLineParserResultSettings,

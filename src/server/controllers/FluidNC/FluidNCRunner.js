@@ -11,6 +11,8 @@ import FluidNCLineParserResultParameters from './FluidNCLineParserResultParamete
 import FluidNCLineParserResultFeedback from './FluidNCLineParserResultFeedback';
 import FluidNCLineParserResultSettings from './FluidNCLineParserResultSettings';
 import FluidNCLineParserResultStartup from './FluidNCLineParserResultStartup';
+import FluidNCLineParserResultMessage from './FluidNCLineParserResultMessage';
+import FluidNCLineParserResultLocalFS from './FluidNCLineParserResultLocalFS';
 import {
   GRBL_ACTIVE_STATE_IDLE,
   GRBL_ACTIVE_STATE_ALARM
@@ -56,6 +58,20 @@ class FluidNCRunner extends events.EventEmitter {
       },
       settings: {
       }
+    };
+
+    // FluidNC-specific state
+    fluidnc = {
+      deviceInfo: {
+        ip: '',
+        machine: '',
+        mode: '',
+        ssid: '',
+        status: '',
+        mac: ''
+      },
+      activeConfig: '',
+      files: []
     };
 
     parser = new FluidNCLineParser();
@@ -174,6 +190,12 @@ class FluidNCRunner extends events.EventEmitter {
       }
       if (type === FluidNCLineParserResultSettings) {
         const { name, value } = payload;
+        
+        // Check if this is the active config setting
+        if (name === '$Config/Filename') {
+          this.fluidnc.activeConfig = value;
+        }
+        
         const nextSettings = {
           ...this.settings,
           settings: {
@@ -197,6 +219,47 @@ class FluidNCRunner extends events.EventEmitter {
           this.settings = nextSettings; // enforce change
         }
         this.emit('startup', payload);
+        return;
+      }
+      if (type === FluidNCLineParserResultMessage) {
+        // Handle FluidNC [MSG:...] messages
+        const { message, data } = payload;
+        
+        // Parse device info from status messages
+        if (data && data.IP) {
+          this.fluidnc.deviceInfo = {
+            ...this.fluidnc.deviceInfo,
+            ip: data.IP,
+            mode: data.Mode || this.fluidnc.deviceInfo.mode,
+            ssid: data.SSID || this.fluidnc.deviceInfo.ssid,
+            status: data.Status || this.fluidnc.deviceInfo.status,
+            mac: data.MAC || this.fluidnc.deviceInfo.mac
+          };
+        }
+        
+        // Extract machine name from messages like "Machine: Leroy"
+        if (message.startsWith('Machine: ')) {
+          this.fluidnc.deviceInfo.machine = message.substring(9);
+        }
+        
+        this.emit('fluidnc:message', payload);
+        return;
+      }
+      if (type === FluidNCLineParserResultLocalFS) {
+        // Handle LocalFS responses
+        const { command, file, response } = payload;
+        
+        if (command === 'list' && file) {
+          // Add or update file in the list
+          const existingIndex = this.fluidnc.files.findIndex(f => f.name === file.name);
+          if (existingIndex >= 0) {
+            this.fluidnc.files[existingIndex] = file;
+          } else {
+            this.fluidnc.files.push(file);
+          }
+        }
+        
+        this.emit('fluidnc:localfs', payload);
         return;
       }
       if (data.length > 0) {
@@ -238,6 +301,27 @@ class FluidNCRunner extends events.EventEmitter {
     isIdle() {
       const activeState = _.get(this.state, 'status.activeState');
       return activeState === GRBL_ACTIVE_STATE_IDLE;
+    }
+
+    // FluidNC-specific methods
+    getDeviceInfo() {
+      return this.fluidnc.deviceInfo;
+    }
+
+    getActiveConfig() {
+      return this.fluidnc.activeConfig;
+    }
+
+    getFileList() {
+      return this.fluidnc.files;
+    }
+
+    setActiveConfig(filename) {
+      this.fluidnc.activeConfig = filename;
+    }
+
+    clearFileList() {
+      this.fluidnc.files = [];
     }
 }
 

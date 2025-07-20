@@ -697,6 +697,11 @@ class FluidNCController {
       this.runner.on('settings', (res) => {
         const setting = _.find(GRBL_SETTINGS, { setting: res.name });
 
+        // Check if this is an active config setting
+        if (res.name === '$Config/Filename') {
+          this.emit('fluidnc:activeConfig', res.value);
+        }
+
         if (!res.message && setting) {
           // Grbl v1.1
           this.emit('serialport:read', `${res.name}=${res.value} (${setting.message}, ${setting.units})`);
@@ -724,6 +729,18 @@ class FluidNCController {
           // Initialize controller
           this.initController();
         }
+      });
+
+      this.runner.on('fluidnc:message', (res) => {
+        // Emit device info when it changes
+        this.emit('fluidnc:deviceInfo', this.runner.getDeviceInfo());
+        this.emit('fluidnc:message', res);
+      });
+
+      this.runner.on('fluidnc:localfs', (res) => {
+        // Emit file list when it changes
+        this.emit('fluidnc:fileList', this.runner.getFileList());
+        this.emit('fluidnc:localfs', res);
       });
 
       this.runner.on('others', (res) => {
@@ -1037,6 +1054,11 @@ class FluidNCController {
           settings: this.settings,
           state: this.state
         },
+        fluidnc: this.runner ? {
+          deviceInfo: this.runner.getDeviceInfo(),
+          activeConfig: this.runner.getActiveConfig(),
+          fileList: this.runner.getFileList()
+        } : null,
         feeder: this.feeder.toJSON(),
         sender: this.sender.toJSON(),
         workflow: {
@@ -1214,6 +1236,13 @@ class FluidNCController {
       if (this.workflow) {
         // workflow state
         socket.emit('workflow:state', this.workflow.state);
+      }
+      
+      // Send FluidNC-specific state
+      if (this.runner) {
+        socket.emit('fluidnc:deviceInfo', this.runner.getDeviceInfo());
+        socket.emit('fluidnc:activeConfig', this.runner.getActiveConfig());
+        socket.emit('fluidnc:fileList', this.runner.getFileList());
       }
     }
 
@@ -1650,6 +1679,37 @@ class FluidNCController {
           lines.push('%wait 5');
 
           this.command('gcode', lines, context);
+        },
+        // FluidNC-specific commands
+        'fluidnc:getInfo': () => {
+          // Send $I command to get device info including IP address
+          this.writeln('$I');
+        },
+        'fluidnc:getActiveConfig': () => {
+          // Send $N command to get active config
+          this.writeln('$N');
+        },
+        'fluidnc:listFiles': () => {
+          // Clear existing file list
+          this.runner.clearFileList();
+          // Send LocalFS list command
+          this.writeln('$LocalFS/List');
+        },
+        'fluidnc:deleteFile': () => {
+          const [filename, callback = noop] = args;
+          if (!filename) {
+            callback(new Error('Filename is required'));
+            return;
+          }
+          this.writeln(`$LocalFS/Delete=${filename}`);
+        },
+        'fluidnc:runFile': () => {
+          const [filename, callback = noop] = args;
+          if (!filename) {
+            callback(new Error('Filename is required'));
+            return;
+          }
+          this.writeln(`$LocalFS/Run=${filename}`);
         },
       }[cmd];
 
