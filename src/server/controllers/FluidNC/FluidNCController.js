@@ -5,6 +5,9 @@ import {
 } from 'ensure-type';
 import * as gcodeParser from 'gcode-parser';
 import _ from 'lodash';
+import http from 'http';
+import https from 'https';
+import url from 'url';
 import SerialConnection from '../../lib/SerialConnection';
 import EventTrigger from '../../lib/EventTrigger';
 import Feeder from '../../lib/Feeder';
@@ -1695,13 +1698,29 @@ class FluidNCController {
           // Send LocalFS list command
           this.writeln('$LocalFS/List');
         },
-        'fluidnc:deleteFile': () => {
+        'fluidnc:deleteFile': async () => {
           const [filename, callback = noop] = args;
           if (!filename) {
             callback(new Error('Filename is required'));
             return;
           }
-          this.writeln(`$LocalFS/Delete=${filename}`);
+          
+          try {
+            // Try HTTP delete first, fallback to serial command
+            const deviceInfo = this.runner.getDeviceInfo();
+            if (deviceInfo.ip) {
+              await this.deleteFileFromDevice(filename);
+            } else {
+              // Fallback to serial command
+              this.writeln(`$LocalFS/Delete=${filename}`);
+            }
+            
+            // Refresh file list after delete
+            this.command('fluidnc:listFiles');
+            callback(null);
+          } catch (error) {
+            callback(error);
+          }
         },
         'fluidnc:runFile': () => {
           const [filename, callback = noop] = args;
@@ -1711,6 +1730,26 @@ class FluidNCController {
           }
           this.writeln(`$LocalFS/Run=${filename}`);
         },
+        'fluidnc:uploadFile': async () => {
+          const [fileData, filename, callback = noop] = args;
+          try {
+            await this.uploadFileToDevice(fileData, filename);
+            // Refresh file list after upload
+            this.command('fluidnc:listFiles');
+            callback(null);
+          } catch (error) {
+            callback(error);
+          }
+        },
+        'fluidnc:downloadFile': async () => {
+          const [filename, callback = noop] = args;
+          try {
+            const fileData = await this.downloadFileFromDevice(filename);
+            callback(null, fileData);
+          } catch (error) {
+            callback(error);
+          }
+        },
       }[cmd];
 
       if (!handler) {
@@ -1719,6 +1758,120 @@ class FluidNCController {
       }
 
       handler();
+    }
+
+    // FluidNC HTTP file operations
+    async uploadFileToDevice(fileData, filename) {
+      const deviceInfo = this.runner.getDeviceInfo();
+      if (!deviceInfo.ip) {
+        throw new Error('Device IP not available. Send $I command first.');
+      }
+
+      // Try different possible upload endpoints
+      const possiblePaths = ['/upload', '/files', '/localfs'];
+      
+      for (const uploadPath of possiblePaths) {
+        try {
+          const boundary = '----formdata-cncjs-' + Math.random().toString(16);
+          const postData = this.createMultipartFormData(fileData, filename, boundary);
+
+          const options = {
+            hostname: deviceInfo.ip,
+            port: 80,
+            path: uploadPath,
+            method: 'POST',
+            headers: {
+              'Content-Type': `multipart/form-data; boundary=${boundary}`,
+              'Content-Length': Buffer.byteLength(postData)
+            }
+          };
+
+          await this.makeHttpRequest(options, postData);
+          return; // Success, exit early
+        } catch (error) {
+          // Try next endpoint
+          continue;
+        }
+      }
+      
+      throw new Error('Failed to upload file to any endpoint');
+    }
+
+    async downloadFileFromDevice(filename) {
+      const deviceInfo = this.runner.getDeviceInfo();
+      if (!deviceInfo.ip) {
+        throw new Error('Device IP not available. Send $I command first.');
+      }
+
+      const options = {
+        hostname: deviceInfo.ip,
+        port: 80,
+        path: `/files/${filename}`,
+        method: 'GET'
+      };
+
+      return this.makeHttpRequest(options);
+    }
+
+    async deleteFileFromDevice(filename) {
+      const deviceInfo = this.runner.getDeviceInfo();
+      if (!deviceInfo.ip) {
+        throw new Error('Device IP not available. Send $I command first.');
+      }
+
+      const options = {
+        hostname: deviceInfo.ip,
+        port: 80,
+        path: `/files/${filename}`,
+        method: 'DELETE'
+      };
+
+      return this.makeHttpRequest(options);
+    }
+
+    createMultipartFormData(fileData, filename, boundary) {
+      const header = `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
+        `Content-Type: application/octet-stream\r\n\r\n`;
+      
+      const footer = `\r\n--${boundary}--\r\n`;
+      
+      return Buffer.concat([
+        Buffer.from(header, 'utf8'),
+        Buffer.from(fileData),
+        Buffer.from(footer, 'utf8')
+      ]);
+    }
+
+    makeHttpRequest(options, postData = null) {
+      return new Promise((resolve, reject) => {
+        const protocol = options.port === 443 ? https : http;
+        const req = protocol.request(options, (res) => {
+          let data = '';
+          
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+          
+          res.on('end', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(data);
+            } else {
+              reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          reject(error);
+        });
+
+        if (postData) {
+          req.write(postData);
+        }
+        
+        req.end();
+      });
     }
 
     write(data, context) {

@@ -15,6 +15,7 @@ class FileManager extends PureComponent {
       files: [],
       activeConfig: null,
       loading: false,
+      loadingMessage: 'Loading files...',
       editingFile: null,
       deviceInfo: {}
     };
@@ -62,14 +63,31 @@ class FileManager extends PureComponent {
     };
 
     loadFiles = () => {
-      this.setState({ loading: true });
+      this.setState({ loading: true, loadingMessage: 'Loading files...' });
       // Request file list from FluidNC
       controller.command('fluidnc:listFiles');
     };
 
     handleDownload = (file) => {
-      // TODO: Implement file download from FluidNC
-      console.log('Downloading file:', file.name);
+      // Request file download from FluidNC device
+      controller.command('fluidnc:downloadFile', file.name, (error, fileData) => {
+        if (error) {
+          // eslint-disable-next-line no-alert
+          alert(i18n._('Failed to download file: {{error}}', { error: error.message }));
+          return;
+        }
+        
+        // Create blob and download link
+        const blob = new Blob([fileData]);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      });
     };
 
     handleUpload = () => {
@@ -87,11 +105,34 @@ class FileManager extends PureComponent {
     };
 
     uploadFile = (file) => {
-      // In a real implementation, this would upload the file to FluidNC
-      console.log('Uploading file:', file.name);
-      // TODO: Implement file upload to FluidNC device
-      // For now, just refresh the file list
-      this.loadFiles();
+      // Show uploading state
+      this.setState({ loading: true, loadingMessage: `Uploading ${file.name}...` });
+      
+      // Create a FileReader to read the file data
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileData = e.target.result;
+        
+        // Send file data to server for upload
+        controller.command('fluidnc:uploadFile', fileData, file.name, (error) => {
+          this.setState({ loading: false });
+          if (error) {
+            // eslint-disable-next-line no-alert
+            alert(i18n._('Failed to upload file: {{error}}', { error: error.message }));
+          } else {
+            console.log('File uploaded successfully:', file.name);
+            // File list will be refreshed automatically by the server
+          }
+        });
+      };
+      
+      reader.onerror = () => {
+        this.setState({ loading: false });
+        // eslint-disable-next-line no-alert
+        alert(i18n._('Failed to read file'));
+      };
+      
+      reader.readAsArrayBuffer(file);
     };
 
     handleDelete = (file) => {
@@ -104,7 +145,12 @@ class FileManager extends PureComponent {
       // eslint-disable-next-line no-alert, no-restricted-globals
       if (confirm(i18n._('Are you sure you want to delete {{filename}}?', { filename: file.name }))) {
         // Send command to delete file from FluidNC
-        controller.command('fluidnc:deleteFile', file.name);
+        controller.command('fluidnc:deleteFile', file.name, (error) => {
+          if (error) {
+            // eslint-disable-next-line no-alert
+            alert(i18n._('Failed to delete file: {{error}}', { error: error.message }));
+          }
+        });
       }
     };
 
@@ -119,7 +165,7 @@ class FileManager extends PureComponent {
     };
 
     render() {
-      const { files, loading, editingFile, activeConfig } = this.state;
+      const { files, loading, loadingMessage, editingFile, activeConfig } = this.state;
 
       if (editingFile) {
         return (
@@ -134,7 +180,7 @@ class FileManager extends PureComponent {
         return (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <i className="fa fa-spinner fa-spin" />
-            <span style={{ marginLeft: '10px' }}>{i18n._('Loading files...')}</span>
+            <span style={{ marginLeft: '10px' }}>{i18n._(loadingMessage)}</span>
           </div>
         );
       }
