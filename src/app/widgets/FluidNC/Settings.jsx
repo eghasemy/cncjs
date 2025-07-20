@@ -23,38 +23,41 @@ class Settings extends PureComponent {
   fetch = () => {
     const files = [];
     let active = '';
-    let readingFiles = true;
+    let stage = 'list';
 
-    const handleData = (line) => {
-      line = String(line).trim();
-      if (!line) {
-        return;
-      }
-
-      if (line === 'ok') {
-        if (readingFiles) {
-          readingFiles = false;
-          controller.writeln('$N');
-          return;
-        }
-        controller.removeListener('serialport:read', handleData);
-        this.setState({ files, active });
-        return;
-      }
-
-      if (readingFiles) {
-        if (line.startsWith('[FILE:')) {
-          const match = line.match(/^\[FILE:(.*)\|SIZE:/);
-          if (match) {
-            files.push(match[1]);
+    const handleData = (data) => {
+      String(data)
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line)
+        .forEach((line) => {
+          if (stage === 'list') {
+            if (line.startsWith('[FILE:')) {
+              const match = line.match(/^\[FILE:([^|]+)\|SIZE:/);
+              if (match) {
+                files.push(match[1]);
+              }
+              return;
+            }
+            if (line === 'ok') {
+              stage = 'startup';
+              controller.writeln('$N');
+              return;
+            }
+            return;
           }
-        }
-        return;
-      }
 
-      if (line.startsWith('$Config/Filename=')) {
-        active = line.split('=')[1];
-      }
+          if (stage === 'startup') {
+            if (line.startsWith('$Config/Filename=')) {
+              active = line.split('=')[1];
+              return;
+            }
+            if (line === 'ok') {
+              controller.removeListener('serialport:read', handleData);
+              this.setState({ files, active });
+            }
+          }
+        });
     };
 
     controller.addListener('serialport:read', handleData);
