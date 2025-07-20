@@ -5,10 +5,19 @@ import config from '../services/configstore';
 import { ERR_BAD_REQUEST, ERR_NOT_FOUND, ERR_INTERNAL_SERVER_ERROR } from '../constants';
 
 const dir = path.resolve(settings.fluidnc.dir);
+
+const ensureDir = () => {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (err) {
+    // ignore
+  }
+};
 const ACTIVE_KEY = 'fluidnc.activeConfig';
 
 export const list = (req, res) => {
   try {
+    ensureDir();
     const files = fs.readdirSync(dir);
     const active = config.get(ACTIVE_KEY, '');
     res.send({ files, active });
@@ -24,6 +33,7 @@ export const upload = (req, res) => {
     return;
   }
   try {
+    ensureDir();
     fs.writeFileSync(path.join(dir, name), data, 'utf8');
     res.send({ err: null });
   } catch (err) {
@@ -39,6 +49,7 @@ export const remove = (req, res) => {
     return;
   }
   try {
+    ensureDir();
     fs.unlinkSync(path.join(dir, name));
     res.send({ err: null });
   } catch (err) {
