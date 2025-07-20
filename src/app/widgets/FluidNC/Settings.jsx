@@ -92,21 +92,24 @@ class Settings extends PureComponent {
 
   handleSerialRead = (data) => {
     const lines = String(data).trim().split(/\r?\n/);
-    lines.forEach(line => {
+    lines.forEach((line) => {
       line = line.trim();
-      if (!line) { return; }
-      if (this.pending === 'list') {
-      const m = line.match(/\[FILE:\s*(.*?)\|SIZE:(\d+)/i);
-      if (m) {
-        this.filesBuffer.push({ name: m[1].trim(), size: Number(m[2]) });
-      } else if (line.startsWith('[ /') && line.includes('Free:')) {
-        // summary line
-      } else if (line === 'ok' || line.startsWith('error')) {
-        this.setState({ files: this.filesBuffer });
-        this.filesBuffer = [];
-        this.pending = 'configfile';
-        controller.writeln('$Config/Filename');
+      if (!line) {
+        return;
       }
+
+      if (this.pending === 'list') {
+        const m = line.match(/\[FILE:\s*(.*?)\|SIZE:(\d+)/i);
+        if (m) {
+          this.filesBuffer.push({ name: m[1].trim(), size: Number(m[2]) });
+        } else if (line.startsWith('[ /') && line.includes('Free:')) {
+          // summary line
+        } else if (line === 'ok' || line.startsWith('error')) {
+          this.setState({ files: this.filesBuffer });
+          this.filesBuffer = [];
+          this.pending = 'configfile';
+          controller.writeln('$Config/Filename');
+        }
       } else if (this.pending === 'configfile') {
         if (line.startsWith('$Config/Filename=')) {
           const name = line.substring(17);
@@ -115,41 +118,41 @@ class Settings extends PureComponent {
         } else if (line === 'ok' || line.startsWith('error')) {
           this.pending = null;
         }
-    } else if (this.pending === 'configdump') {
-      if (line === 'ok' || line.startsWith('error')) {
-        this.setState({ configText: this.configBuffer.join('\n') });
-        this.configBuffer = [];
-        this.pending = null;
-      } else {
-        this.configBuffer.push(line);
+      } else if (this.pending === 'configdump') {
+        if (line === 'ok' || line.startsWith('error')) {
+          this.setState({ configText: this.configBuffer.join('\n') });
+          this.configBuffer = [];
+          this.pending = null;
+        } else {
+          this.configBuffer.push(line);
+        }
+      } else if (this.pending === 'gpio') {
+        const m2 = line.match(/^(\d+)\s+(GPIO\d+)\s+[IO]([01])/);
+        if (m2) {
+          this.gpioBuffer.push({ pin: m2[2], state: Number(m2[3]) });
+        } else if (line === 'ok' || line.startsWith('error')) {
+          this.setState({ gpioStatus: this.gpioBuffer });
+          this.gpioBuffer = [];
+          this.pending = null;
+        }
+      } else if (this.pending === 'net') {
+        if (line.startsWith('$Sta/IP=')) {
+          this.networkInfo.ip = line.substring(8);
+        } else if (line.startsWith('$AP/IP=')) {
+          this.networkInfo.ip = this.networkInfo.ip || line.substring(7);
+        } else if (line.startsWith('$HTTP/Port=')) {
+          this.networkInfo.httpPort = Number(line.substring(11));
+        } else if (line.startsWith('$Telnet/Port=')) {
+          this.networkInfo.telnetPort = Number(line.substring(13));
+        } else if (line === 'ok' || line.startsWith('error')) {
+          this.pending = null;
+          this.setState({
+            ip: this.networkInfo.ip,
+            httpPort: this.networkInfo.httpPort,
+            telnetPort: this.networkInfo.telnetPort
+          });
+        }
       }
-    } else if (this.pending === 'gpio') {
-      const m = line.match(/^(\d+)\s+(GPIO\d+)\s+[IO]([01])/);
-      if (m) {
-        this.gpioBuffer.push({ pin: m[2], state: Number(m[3]) });
-      } else if (line === 'ok' || line.startsWith('error')) {
-        this.setState({ gpioStatus: this.gpioBuffer });
-        this.gpioBuffer = [];
-        this.pending = null;
-      }
-    } else if (this.pending === 'net') {
-      if (line.startsWith('$Sta/IP=')) {
-        this.networkInfo.ip = line.substring(8);
-      } else if (line.startsWith('$AP/IP=')) {
-        this.networkInfo.ip = this.networkInfo.ip || line.substring(7);
-      } else if (line.startsWith('$HTTP/Port=')) {
-        this.networkInfo.httpPort = Number(line.substring(11));
-      } else if (line.startsWith('$Telnet/Port=')) {
-        this.networkInfo.telnetPort = Number(line.substring(13));
-      } else if (line === 'ok' || line.startsWith('error')) {
-        this.pending = null;
-        this.setState({
-          ip: this.networkInfo.ip,
-          httpPort: this.networkInfo.httpPort,
-          telnetPort: this.networkInfo.telnetPort
-        });
-      }
-    }
     });
   };
 
