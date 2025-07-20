@@ -458,8 +458,8 @@ class AxesWidget extends PureComponent {
         }));
       },
       'controller:state': (type, controllerState) => {
-        // Grbl
-        if (type === GRBL) {
+        // Grbl / FluidNC
+        if (type === GRBL || type === FLUIDNC) {
           const { status, parserstate } = { ...controllerState };
           const { mpos, wpos } = status;
           const { modal = {} } = { ...parserstate };
