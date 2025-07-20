@@ -19,7 +19,7 @@ class FluidNCRunner {
 
       const result = this.parser.parse(data) || {};
       const { type, payload } = result;
-      
+
       // Debug logging for FluidNC runner
       if (type) {
         console.log(`FluidNC parsed event: ${type}, payload:`, payload);

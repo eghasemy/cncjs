@@ -243,6 +243,12 @@ class FluidNCController {
       this.runner.on('status', (res) => {
         this.queryTimer && clearTimeout(this.queryTimer);
 
+        // Mark controller as ready when first status is received (like Grbl)
+        if (!this.ready) {
+          this.ready = true;
+          this.event.trigger('controller:ready');
+        }
+
         if (this.actionMask.queryStatusReport) {
           this.actionMask.queryStatusReport = false;
           this.actionMask.replyStatusReport = true;
@@ -408,9 +414,9 @@ class FluidNCController {
     }
 
     initController() {
-      // Mark controller as ready immediately after connection
-      this.ready = true;
-      this.event.trigger('controller:ready');
+      // Initialize FluidNC controller by querying status
+      // Similar to Grbl pattern - wait for response before marking as ready
+      this.writeln('?'); // Query status to initialize communication
     }
 
     get status() {
