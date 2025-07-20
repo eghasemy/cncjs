@@ -8,6 +8,7 @@ import controller from 'app/lib/controller';
 import WidgetConfig from '../WidgetConfig';
 import FluidNC from './FluidNC';
 import Controller from './Controller';
+import Settings from './Settings';
 import {
   FLUIDNC
 } from '../../constants';
@@ -269,6 +270,15 @@ class FluidNCWidget extends PureComponent {
                 </Widget.Button>
               )}
               {isReady && (
+                <Widget.Button
+                  onClick={(event) => {
+                    actions.openModal(MODAL_SETTINGS);
+                  }}
+                >
+                  <i className="fa fa-cog" />
+                </Widget.Button>
+              )}
+              {isReady && (
                 <Widget.DropdownButton
                   toggle={<i className="fa fa-th-large" />}
                 >
@@ -403,6 +413,9 @@ class FluidNCWidget extends PureComponent {
             >
               {state.modal.name === MODAL_CONTROLLER &&
                 <Controller state={state} actions={actions} />
+              }
+              {state.modal.name === MODAL_SETTINGS &&
+                <Settings state={state} actions={actions} />
               }
               <FluidNC
                 state={state}
