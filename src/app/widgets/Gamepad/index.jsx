@@ -55,7 +55,8 @@ class GamepadWidget extends PureComponent {
     continuousJogState = {
         activeAxes: new Set(), // Set of active axis keys (e.g., 'X+', 'Y-')
         lastCommandTime: {},
-        jogCancelTimeout: null
+        jogCancelTimeout: null,
+        pendingStarts: {} // Track pending setTimeout calls for axis starts
     };
 
     actions = {
@@ -262,15 +263,22 @@ class GamepadWidget extends PureComponent {
         }
 
         const axisKey = `${axis}${direction}`;
-        const isActive = magnitude > 0.5;
+        const isActive = magnitude > 0.2; // Lowered threshold from 0.5 to 0.2 for better responsiveness
         const wasActive = this.continuousJogState.activeAxes.has(axisKey);
+
+        // Debug logging
+        if (magnitude > 0.1 || wasActive) {
+            console.log(`[Gamepad] handleContinuousJog: ${axisKey}, magnitude=${magnitude.toFixed(3)}, isActive=${isActive}, wasActive=${wasActive}, activeAxes=[${Array.from(this.continuousJogState.activeAxes).join(',')}]`);
+        }
 
         if (isActive && !wasActive) {
             // Start continuous jog
+            console.log(`[Gamepad] Starting continuous jog: ${axisKey}`);
             this.startContinuousJog(axis, direction, magnitude);
             this.continuousJogState.activeAxes.add(axisKey);
         } else if (!isActive && wasActive) {
             // Stop continuous jog
+            console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
             this.stopContinuousJog(axisKey);
             this.continuousJogState.activeAxes.delete(axisKey);
         } else if (isActive && wasActive) {
@@ -311,15 +319,33 @@ class GamepadWidget extends PureComponent {
         if (now - lastCommandTime > 100) { // 100ms throttle
             // Cancel current jog and start new one with updated feed rate
             this.stopContinuousJog(axisKey, false);
-            // Small delay to ensure cancel is processed
-            setTimeout(() => {
-                this.startContinuousJog(axis, direction, magnitude);
+
+            // Cancel any pending start for this axis
+            if (this.continuousJogState.pendingStarts[axisKey]) {
+                clearTimeout(this.continuousJogState.pendingStarts[axisKey]);
+                delete this.continuousJogState.pendingStarts[axisKey];
+            }
+
+            // Schedule new start with proper tracking
+            this.continuousJogState.pendingStarts[axisKey] = setTimeout(() => {
+                // Only start if the axis is still supposed to be active
+                if (this.continuousJogState.activeAxes.has(axisKey)) {
+                    this.startContinuousJog(axis, direction, magnitude);
+                }
+                delete this.continuousJogState.pendingStarts[axisKey];
             }, 10);
         }
     };
 
     stopContinuousJog = (axisKey, removeFromActive = true) => {
         console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
+
+        // Cancel any pending start for this axis
+        if (this.continuousJogState.pendingStarts[axisKey]) {
+            console.log(`[Gamepad] Canceling pending start for: ${axisKey}`);
+            clearTimeout(this.continuousJogState.pendingStarts[axisKey]);
+            delete this.continuousJogState.pendingStarts[axisKey];
+        }
 
         // Send jog cancel command
         controller.command('jogCancel');
@@ -337,8 +363,21 @@ class GamepadWidget extends PureComponent {
 
     // Stop all continuous jogging (useful for emergency stops)
     stopAllContinuousJogging = () => {
-        if (this.continuousJogState.activeAxes.size > 0) {
+        const hasActiveAxes = this.continuousJogState.activeAxes.size > 0;
+        const hasPendingStarts = this.continuousJogState.pendingStarts &&
+            Object.keys(this.continuousJogState.pendingStarts).length > 0;
+
+        if (hasActiveAxes || hasPendingStarts) {
             console.log('[Gamepad] Emergency stop - canceling all continuous jogs');
+
+            // Cancel all pending starts
+            if (hasPendingStarts) {
+                Object.values(this.continuousJogState.pendingStarts).forEach(timeout => {
+                    clearTimeout(timeout);
+                });
+                this.continuousJogState.pendingStarts = {};
+            }
+
             controller.command('jogCancel');
             this.continuousJogState.activeAxes.clear();
             this.continuousJogState.lastCommandTime = {};
@@ -410,6 +449,11 @@ class GamepadWidget extends PureComponent {
 
                 if (continuousJog) {
                     // Enhanced continuous jogging mode
+
+                    // Debug: Log significant axis changes
+                    if (Math.abs(val - prev) > 0.1 || Math.abs(val) > 0.1) {
+                        console.log(`[Gamepad] Axis ${i}: val=${val.toFixed(3)}, prev=${prev.toFixed(3)}, positive=${map.positive}, negative=${map.negative}`);
+                    }
 
                     // Handle positive direction
                     if (map.positive) {
