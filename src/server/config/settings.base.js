@@ -95,6 +95,9 @@ export default {
   siofu: { // SocketIOFileUploader
     dir: './tmp/siofu'
   },
+  fluidnc: {
+    dir: path.resolve(getUserHome(), 'fluidnc')
+  },
   i18next: {
     lowerCaseLng: true,
 

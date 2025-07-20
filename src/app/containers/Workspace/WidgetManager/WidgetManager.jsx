@@ -5,7 +5,7 @@ import union from 'lodash/union';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import Modal from 'app/components/Modal';
-import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
+import { GRBL, GRBLHAL, FLUIDNC, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
 import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 import store from 'app/store';
@@ -54,6 +54,13 @@ class WidgetManager extends PureComponent {
         id: 'grblhal',
         caption: i18n._('grblHAL Widget'),
         details: i18n._('This widget shows the grblHAL state and provides grblHAL specific features.'),
+        visible: true,
+        disabled: false
+      },
+      {
+        id: 'fluidnc',
+        caption: i18n._('FluidNC Widget'),
+        details: i18n._('This widget shows the FluidNC state and provides FluidNC specific features.'),
         visible: true,
         disabled: false
       },
@@ -174,6 +181,9 @@ class WidgetManager extends PureComponent {
           return false;
         }
         if (widgetItem.id === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
+          return false;
+        }
+        if (widgetItem.id === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
           return false;
         }
         if (widgetItem.id === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {

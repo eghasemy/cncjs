@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Sortable from 'react-sortablejs';
 import uuid from 'uuid';
-import { GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
+import { GRBL, GRBLHAL, FLUIDNC, MARLIN, SMOOTHIE, TINYG } from 'app/constants';
 import { Button } from 'app/components/Buttons';
 import Modal from 'app/components/Modal';
 import controller from 'app/lib/controller';
@@ -194,6 +194,9 @@ class PrimaryWidgets extends Component {
             return false;
           }
           if (name === 'grblhal' && !includes(controller.loadedControllers, GRBLHAL)) {
+            return false;
+          }
+          if (name === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
             return false;
           }
           if (name === 'marlin' && !includes(controller.loadedControllers, MARLIN)) {

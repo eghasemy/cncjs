@@ -692,6 +692,45 @@ machines.run = (id) => new Promise((resolve, reject) => {
     });
 });
 
+const fluidnc = {};
+
+fluidnc.list = () => new Promise((resolve, reject) => {
+  authrequest
+    .get('/api/fluidnc/files')
+    .end((err, res) => {
+      if (err) {
+        reject(res);
+      } else {
+        resolve(res);
+      }
+    });
+});
+
+fluidnc.upload = (options) => new Promise((resolve, reject) => {
+  authrequest
+    .post('/api/fluidnc/files')
+    .send(options)
+    .end((err, res) => {
+      if (err) {
+        reject(res);
+      } else {
+        resolve(res);
+      }
+    });
+});
+
+fluidnc.remove = (name) => new Promise((resolve, reject) => {
+  authrequest
+    .delete('/api/fluidnc/files/' + encodeURIComponent(name))
+    .end((err, res) => {
+      if (err) {
+        reject(res);
+      } else {
+        resolve(res);
+      }
+    });
+});
+
 export default {
   getLatestVersion,
 
@@ -725,4 +764,5 @@ export default {
   macros,
   mdi,
   users,
+  fluidnc,
 };

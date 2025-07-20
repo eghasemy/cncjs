@@ -2,6 +2,7 @@
 // Grbl
 export const GRBL = 'Grbl';
 export const GRBLHAL = 'grblHAL';
+export const FLUIDNC = 'FluidNC';
 
 // Active State
 export const GRBL_ACTIVE_STATE_IDLE = 'Idle';

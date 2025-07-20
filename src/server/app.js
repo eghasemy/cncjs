@@ -264,6 +264,11 @@ const appMain = () => {
     app.get(urljoin(settings.route, 'api/tool'), api.tool.get);
     app.post(urljoin(settings.route, 'api/tool'), api.tool.set);
 
+    // FluidNC files
+    app.get(urljoin(settings.route, 'api/fluidnc/files'), api.fluidnc.list);
+    app.post(urljoin(settings.route, 'api/fluidnc/files'), api.fluidnc.upload);
+    app.delete(urljoin(settings.route, 'api/fluidnc/files/:name'), api.fluidnc.remove);
+
     // G-code
     app.get(urljoin(settings.route, 'api/gcode'), api.gcode.fetch);
     app.post(urljoin(settings.route, 'api/gcode'), api.gcode.upload);

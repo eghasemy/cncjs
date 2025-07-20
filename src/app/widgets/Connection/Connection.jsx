@@ -13,6 +13,7 @@ import i18n from 'app/lib/i18n';
 import {
   GRBL,
   GRBLHAL,
+  FLUIDNC,
   MARLIN,
   SMOOTHIE,
   TINYG
@@ -117,6 +118,7 @@ class Connection extends PureComponent {
       const canSelectControllers = (controller.loadedControllers.length > 1);
       const hasGrblController = includes(controller.loadedControllers, GRBL);
       const hasGrblHALController = includes(controller.loadedControllers, GRBLHAL);
+      const hasFluidNCController = includes(controller.loadedControllers, FLUIDNC);
       const hasMarlinController = includes(controller.loadedControllers, MARLIN);
       const hasSmoothieController = includes(controller.loadedControllers, SMOOTHIE);
       const hasTinyGController = includes(controller.loadedControllers, TINYG);
@@ -175,6 +177,22 @@ class Connection extends PureComponent {
                       }}
                     >
                       {GRBLHAL}
+                    </button>
+                  )}
+                  {hasFluidNCController && (
+                    <button
+                      type="button"
+                      className={cx(
+                        'btn',
+                        'btn-default',
+                        { 'btn-select': controllerType === FLUIDNC }
+                      )}
+                      disabled={!canChangeController}
+                      onClick={() => {
+                        actions.changeController(FLUIDNC);
+                      }}
+                    >
+                      {FLUIDNC}
                     </button>
                   )}
                   {hasMarlinController && (
