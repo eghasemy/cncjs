@@ -1,7 +1,6 @@
-import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
-import { Button, Table, FormGroup, ControlLabel, FormControl, Checkbox } from 'react-bootstrap';
+import { Button, Table, Checkbox } from 'react-bootstrap';
 import i18n from 'app/lib/i18n';
 import controller from 'app/lib/controller';
 
@@ -25,51 +24,51 @@ class Calibrate extends PureComponent {
 
     loadEndstops = () => {
       this.setState({ loading: true });
-      
+
       // For now, simulate endstop loading from config
       // In a real implementation, this would parse the active YAML config
       setTimeout(() => {
         this.setState({
           endstops: [
-            { 
-              name: 'X Min', 
-              pin: 'gpio.2', 
-              status: 'Open', 
-              pullup: true, 
+            {
+              name: 'X Min',
+              pin: 'gpio.2',
+              status: 'Open',
+              pullup: true,
               invert: false,
-              enabled: true 
+              enabled: true
             },
-            { 
-              name: 'X Max', 
-              pin: 'gpio.3', 
-              status: 'Closed', 
-              pullup: true, 
+            {
+              name: 'X Max',
+              pin: 'gpio.3',
+              status: 'Closed',
+              pullup: true,
               invert: false,
-              enabled: true 
+              enabled: true
             },
-            { 
-              name: 'Y Min', 
-              pin: 'gpio.4', 
-              status: 'Open', 
-              pullup: true, 
+            {
+              name: 'Y Min',
+              pin: 'gpio.4',
+              status: 'Open',
+              pullup: true,
               invert: false,
-              enabled: true 
+              enabled: true
             },
-            { 
-              name: 'Y Max', 
-              pin: 'gpio.5', 
-              status: 'Closed', 
-              pullup: false, 
+            {
+              name: 'Y Max',
+              pin: 'gpio.5',
+              status: 'Closed',
+              pullup: false,
               invert: true,
-              enabled: false 
+              enabled: false
             },
-            { 
-              name: 'Z Min', 
-              pin: 'gpio.6', 
-              status: 'Open', 
-              pullup: true, 
+            {
+              name: 'Z Min',
+              pin: 'gpio.6',
+              status: 'Open',
+              pullup: true,
               invert: false,
-              enabled: true 
+              enabled: true
             }
           ],
           loading: false
@@ -87,14 +86,12 @@ class Calibrate extends PureComponent {
 
     handleSave = () => {
       const { editingPin, editPullup, editInvert } = this.state;
-      
+
       // Update the endstop configuration
       this.setState(prevState => ({
-        endstops: prevState.endstops.map(endstop => 
-          endstop.name === editingPin 
+        endstops: prevState.endstops.map(endstop => (endstop.name === editingPin
             ? { ...endstop, pullup: editPullup, invert: editInvert }
-            : endstop
-        ),
+            : endstop)),
         editingPin: null
       }));
 
@@ -142,7 +139,10 @@ class Calibrate extends PureComponent {
             </Button>
           </div>
 
-          <Table striped bordered condensed hover>
+          <Table
+            striped bordered condensed
+            hover
+          >
             <thead>
               <tr>
                 <th>{i18n._('Endstop')}</th>
@@ -160,7 +160,7 @@ class Calibrate extends PureComponent {
                   <td><strong>{endstop.name}</strong></td>
                   <td><code>{endstop.pin}</code></td>
                   <td>
-                    <span 
+                    <span
                       className={`label ${endstop.status === 'Closed' ? 'label-danger' : 'label-success'}`}
                     >
                       {endstop.status}

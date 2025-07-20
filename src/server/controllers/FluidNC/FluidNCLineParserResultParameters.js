@@ -41,7 +41,7 @@ class FluidNCLineParserResultParameters {
     }
 
     return {
-      type: GrblLineParserResultParameters,
+      type: FluidNCLineParserResultParameters,
       payload: payload
     };
   }

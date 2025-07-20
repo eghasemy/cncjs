@@ -11,7 +11,7 @@ class FluidNCLineParserResultAlarm {
     };
 
     return {
-      type: GrblLineParserResultAlarm,
+      type: FluidNCLineParserResultAlarm,
       payload: payload
     };
   }

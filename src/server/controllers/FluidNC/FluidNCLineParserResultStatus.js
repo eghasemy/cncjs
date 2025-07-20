@@ -164,7 +164,7 @@ class FluidNCLineParserResultStatus {
     }
 
     return {
-      type: GrblLineParserResultStatus,
+      type: FluidNCLineParserResultStatus,
       payload: payload
     };
   }

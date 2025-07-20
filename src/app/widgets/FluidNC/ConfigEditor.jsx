@@ -21,7 +21,6 @@ class ConfigEditor extends PureComponent {
     }
 
     loadConfig = () => {
-      const { filename } = this.props;
       this.setState({ loading: true });
 
       // For now, simulate loading a YAML config
@@ -113,23 +112,23 @@ class ConfigEditor extends PureComponent {
     setNestedValue = (obj, path, value) => {
       const keys = path.split('.');
       let current = obj;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         if (!(keys[i] in current)) {
           current[keys[i]] = {};
         }
         current = current[keys[i]];
       }
-      
+
       current[keys[keys.length - 1]] = value;
     };
 
     handleSave = () => {
       this.setState({ saving: true });
-      
+
       // In a real implementation, this would save the YAML config to FluidNC
       controller.writeln(`$Config/save=${this.props.filename}`);
-      
+
       setTimeout(() => {
         this.setState({ saving: false });
         this.props.onClose();
@@ -142,7 +141,7 @@ class ConfigEditor extends PureComponent {
           <h5 style={{ textTransform: 'uppercase', color: '#337ab7' }}>
             {axisName} {i18n._('Axis')}
           </h5>
-          
+
           <div className="row">
             <div className="col-md-6">
               <FormGroup>
@@ -208,7 +207,7 @@ class ConfigEditor extends PureComponent {
                     <FormControl
                       type="number"
                       value={axisConfig.homing.cycle || ''}
-                      onChange={(e) => this.handleConfigChange(`axes.${axisName}.homing.cycle`, parseInt(e.target.value))}
+                      onChange={(e) => this.handleConfigChange(`axes.${axisName}.homing.cycle`, parseInt(e.target.value, 10))}
                     />
                   </FormGroup>
                 </div>
@@ -307,7 +306,7 @@ class ConfigEditor extends PureComponent {
                           <FormControl
                             type="number"
                             value={config.stepping.idle_ms || ''}
-                            onChange={(e) => this.handleConfigChange('stepping.idle_ms', parseInt(e.target.value))}
+                            onChange={(e) => this.handleConfigChange('stepping.idle_ms', parseInt(e.target.value, 10))}
                           />
                         </FormGroup>
                       </div>
@@ -317,7 +316,7 @@ class ConfigEditor extends PureComponent {
                           <FormControl
                             type="number"
                             value={config.stepping.pulse_us || ''}
-                            onChange={(e) => this.handleConfigChange('stepping.pulse_us', parseInt(e.target.value))}
+                            onChange={(e) => this.handleConfigChange('stepping.pulse_us', parseInt(e.target.value, 10))}
                           />
                         </FormGroup>
                       </div>
@@ -328,9 +327,7 @@ class ConfigEditor extends PureComponent {
                 {config.axes ? (
                   <div>
                     <h4>{i18n._('Axis Configuration')}</h4>
-                    {Object.keys(config.axes).map(axisName => 
-                      this.renderAxisConfig(axisName, config.axes[axisName])
-                    )}
+                    {Object.keys(config.axes).map(axisName => this.renderAxisConfig(axisName, config.axes[axisName]))}
                   </div>
                 ) : null}
               </div>
@@ -340,8 +337,8 @@ class ConfigEditor extends PureComponent {
             <Button onClick={this.props.onClose}>
               {i18n._('Cancel')}
             </Button>
-            <Button 
-              bsStyle="primary" 
+            <Button
+              bsStyle="primary"
               onClick={this.handleSave}
               disabled={loading || saving}
             >

@@ -11,7 +11,7 @@ class FluidNCLineParserResultError {
     };
 
     return {
-      type: GrblLineParserResultError,
+      type: FluidNCLineParserResultError,
       payload: payload
     };
   }

@@ -12,7 +12,7 @@ class FluidNCLineParserResultEcho {
     };
 
     return {
-      type: GrblLineParserResultEcho,
+      type: FluidNCLineParserResultEcho,
       payload: payload
     };
   }

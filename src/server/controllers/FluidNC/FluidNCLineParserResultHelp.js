@@ -12,7 +12,7 @@ class FluidNCLineParserResultHelp {
     };
 
     return {
-      type: GrblLineParserResultHelp,
+      type: FluidNCLineParserResultHelp,
       payload: payload
     };
   }

@@ -26,7 +26,7 @@ class FluidNCLineParserResultStartup {
     };
 
     return {
-      type: GrblLineParserResultStartup,
+      type: FluidNCLineParserResultStartup,
       payload: payload
     };
   }

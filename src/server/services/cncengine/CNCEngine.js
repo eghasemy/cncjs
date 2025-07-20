@@ -11,14 +11,13 @@ import config from '../configstore';
 import taskRunner from '../taskrunner';
 import {
   GrblController,
-  // FluidNCController,
+  FluidNCController,
   MarlinController,
   SmoothieController,
   TinyGController
 } from '../../controllers';
 import { GRBL, GRBLHAL } from '../../controllers/Grbl/constants';
-// import { FLUIDNC } from '../../controllers/FluidNC/constants';
-const FLUIDNC = 'FluidNC'; // Temporary definition to prevent errors
+import { FLUIDNC } from '../../controllers/FluidNC/constants';
 import { MARLIN } from '../../controllers/Marlin/constants';
 import { SMOOTHIE } from '../../controllers/Smoothie/constants';
 import { G2CORE, TINYG } from '../../controllers/TinyG/constants';
@@ -44,7 +43,7 @@ const isValidController = (controller) => (
   caseInsensitiveEquals(GRBL, controller) ||
     caseInsensitiveEquals(GRBLHAL, controller) ||
     // FluidNC (based on Grbl)
-    // caseInsensitiveEquals(FLUIDNC, controller) ||
+    caseInsensitiveEquals(FLUIDNC, controller) ||
     // Marlin
     caseInsensitiveEquals(MARLIN, controller) ||
     // Smoothie
@@ -109,9 +108,9 @@ class CNCEngine {
         this.controllerClass[GRBL] = GrblController;
       }
       // FluidNC (based on Grbl)
-      // if (!controller || caseInsensitiveEquals(FLUIDNC, controller)) {
-      //   this.controllerClass[FLUIDNC] = FluidNCController;
-      // }
+      if (!controller || caseInsensitiveEquals(FLUIDNC, controller)) {
+        this.controllerClass[FLUIDNC] = FluidNCController;
+      }
       // Marlin
       if (!controller || caseInsensitiveEquals(MARLIN, controller)) {
         this.controllerClass[MARLIN] = MarlinController;

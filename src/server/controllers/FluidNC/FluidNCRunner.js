@@ -113,13 +113,13 @@ class FluidNCRunner extends events.EventEmitter {
         this.emit('ok', payload);
         return;
       }
-      if (type === GrblLineParserResultError) {
+      if (type === FluidNCLineParserResultError) {
         // https://nodejs.org/api/events.html#events_error_events
         // As a best practice, listeners should always be added for the 'error' events.
         this.emit('error', payload);
         return;
       }
-      if (type === GrblLineParserResultAlarm) {
+      if (type === FluidNCLineParserResultAlarm) {
         const alarmPayload = {
           activeState: GRBL_ACTIVE_STATE_ALARM
         };
@@ -136,7 +136,7 @@ class FluidNCRunner extends events.EventEmitter {
         this.emit('alarm', payload);
         return;
       }
-      if (type === GrblLineParserResultParserState) {
+      if (type === FluidNCLineParserResultParserState) {
         const { modal, tool, feedrate, spindle } = payload;
         const nextState = {
           ...this.state,
@@ -153,7 +153,7 @@ class FluidNCRunner extends events.EventEmitter {
         this.emit('parserstate', payload);
         return;
       }
-      if (type === GrblLineParserResultParameters) {
+      if (type === FluidNCLineParserResultParameters) {
         const { name, value } = payload;
         const nextSettings = {
           ...this.settings,
@@ -168,11 +168,11 @@ class FluidNCRunner extends events.EventEmitter {
         this.emit('parameters', payload);
         return;
       }
-      if (type === GrblLineParserResultFeedback) {
+      if (type === FluidNCLineParserResultFeedback) {
         this.emit('feedback', payload);
         return;
       }
-      if (type === GrblLineParserResultSettings) {
+      if (type === FluidNCLineParserResultSettings) {
         const { name, value } = payload;
         const nextSettings = {
           ...this.settings,
@@ -187,7 +187,7 @@ class FluidNCRunner extends events.EventEmitter {
         this.emit('settings', payload);
         return;
       }
-      if (type === GrblLineParserResultStartup) {
+      if (type === FluidNCLineParserResultStartup) {
         const { version } = payload;
         const nextSettings = { // enforce change
           ...this.settings,

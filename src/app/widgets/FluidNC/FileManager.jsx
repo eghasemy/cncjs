@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { Button, Table } from 'react-bootstrap';
@@ -25,7 +24,7 @@ class FileManager extends PureComponent {
 
     loadFiles = () => {
       this.setState({ loading: true });
-      
+
       // For now, simulate file loading
       // In a real implementation, this would make an API call to get files from FluidNC filesystem
       setTimeout(() => {
@@ -79,14 +78,16 @@ class FileManager extends PureComponent {
 
     handleDelete = (file) => {
       if (file.isActive) {
+        // eslint-disable-next-line no-alert
         alert(i18n._('Cannot delete the active configuration file'));
         return;
       }
 
+      // eslint-disable-next-line no-alert, no-restricted-globals
       if (confirm(i18n._('Are you sure you want to delete {{filename}}?', { filename: file.name }))) {
         // Send command to delete file from FluidNC
         controller.writeln(`$F/delete=${file.name}`);
-        
+
         // Remove from local state
         this.setState(prevState => ({
           files: prevState.files.filter(f => f.name !== file.name)
@@ -105,7 +106,7 @@ class FileManager extends PureComponent {
     };
 
     render() {
-      const { files, activeConfig, loading, editingFile } = this.state;
+      const { files, loading, editingFile } = this.state;
 
       if (editingFile) {
         return (
@@ -145,7 +146,10 @@ class FileManager extends PureComponent {
             </Button>
           </div>
 
-          <Table striped bordered condensed hover>
+          <Table
+            striped bordered condensed
+            hover
+          >
             <thead>
               <tr>
                 <th>{i18n._('File Name')}</th>
@@ -160,14 +164,14 @@ class FileManager extends PureComponent {
                 <tr key={index}>
                   <td>
                     {file.name}
-                    {file.isActive && (
+                    {file.isActive ? (
                       <span
                         className="label label-success"
                         style={{ marginLeft: '10px' }}
                       >
                         {i18n._('Active')}
                       </span>
-                    )}
+) : null}
                   </td>
                   <td>{(file.size / 1024).toFixed(1)} KB</td>
                   <td>{file.type.toUpperCase()}</td>

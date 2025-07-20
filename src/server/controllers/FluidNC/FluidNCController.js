@@ -153,7 +153,7 @@ class FluidNCController {
         throw new Error('engine must be specified');
       }
       this.engine = engine;
-      this.type = options.type || GRBL;
+      this.type = options.type || FLUIDNC;
 
       const { port, baudrate, rtscts, pin } = { ...options };
       this.options = {

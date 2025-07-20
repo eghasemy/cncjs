@@ -99,7 +99,7 @@ class FluidNCLineParserResultParserState {
     }
 
     return {
-      type: GrblLineParserResultParserState,
+      type: FluidNCLineParserResultParserState,
       payload: payload
     };
   }

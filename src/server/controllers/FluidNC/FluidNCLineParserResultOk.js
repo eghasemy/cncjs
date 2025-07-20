@@ -8,7 +8,7 @@ class FluidNCLineParserResultOk {
     const payload = {};
 
     return {
-      type: GrblLineParserResultOk,
+      type: FluidNCLineParserResultOk,
       payload: payload
     };
   }
