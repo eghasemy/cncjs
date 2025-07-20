@@ -5,9 +5,6 @@ import {
 } from 'ensure-type';
 import * as gcodeParser from 'gcode-parser';
 import _ from 'lodash';
-import http from 'http';
-import https from 'https';
-import url from 'url';
 import SerialConnection from '../../lib/SerialConnection';
 import EventTrigger from '../../lib/EventTrigger';
 import Feeder from '../../lib/Feeder';
@@ -1698,29 +1695,13 @@ class FluidNCController {
           // Send LocalFS list command
           this.writeln('$LocalFS/List');
         },
-        'fluidnc:deleteFile': async () => {
+        'fluidnc:deleteFile': () => {
           const [filename, callback = noop] = args;
           if (!filename) {
             callback(new Error('Filename is required'));
             return;
           }
-          
-          try {
-            // Try HTTP delete first, fallback to serial command
-            const deviceInfo = this.runner.getDeviceInfo();
-            if (deviceInfo.ip) {
-              await this.deleteFileFromDevice(filename);
-            } else {
-              // Fallback to serial command
-              this.writeln(`$LocalFS/Delete=${filename}`);
-            }
-            
-            // Refresh file list after delete
-            this.command('fluidnc:listFiles');
-            callback(null);
-          } catch (error) {
-            callback(error);
-          }
+          this.writeln(`$LocalFS/Delete=${filename}`);
         },
         'fluidnc:runFile': () => {
           const [filename, callback = noop] = args;
@@ -1730,26 +1711,6 @@ class FluidNCController {
           }
           this.writeln(`$LocalFS/Run=${filename}`);
         },
-        'fluidnc:uploadFile': async () => {
-          const [fileData, filename, callback = noop] = args;
-          try {
-            await this.uploadFileToDevice(fileData, filename);
-            // Refresh file list after upload
-            this.command('fluidnc:listFiles');
-            callback(null);
-          } catch (error) {
-            callback(error);
-          }
-        },
-        'fluidnc:downloadFile': async () => {
-          const [filename, callback = noop] = args;
-          try {
-            const fileData = await this.downloadFileFromDevice(filename);
-            callback(null, fileData);
-          } catch (error) {
-            callback(error);
-          }
-        },
       }[cmd];
 
       if (!handler) {
@@ -1758,189 +1719,6 @@ class FluidNCController {
       }
 
       handler();
-    }
-
-    // FluidNC HTTP file operations
-    async uploadFileToDevice(fileData, filename) {
-      const deviceInfo = this.runner.getDeviceInfo();
-      if (!deviceInfo.ip) {
-        throw new Error('Device IP not available. Send $I command first.');
-      }
-
-      // Try different possible upload endpoints
-      const possiblePaths = ['/upload', '/files', '/localfs'];
-      
-      for (const uploadPath of possiblePaths) {
-        try {
-          const boundary = '----formdata-cncjs-' + Math.random().toString(16);
-          const postData = this.createMultipartFormData(fileData, filename, boundary);
-          
-          const result = await this.makeHttpUploadRequest(deviceInfo.ip, uploadPath, postData, boundary);
-          log.debug(`File uploaded to FluidNC: ${filename}`);
-          return result;
-        } catch (error) {
-          log.debug(`Failed to upload to ${uploadPath}: ${error.message}`);
-          // Continue to next endpoint
-        }
-      }
-      
-      throw new Error(`Could not upload file ${filename} to any known endpoint`);
-    }
-
-    async makeHttpUploadRequest(hostname, path, postData, boundary) {
-      return new Promise((resolve, reject) => {
-        const options = {
-          hostname,
-          port: 80,
-          path,
-          method: 'POST',
-          headers: {
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-            'Content-Length': Buffer.byteLength(postData)
-          },
-          timeout: 30000
-        };
-
-        const req = http.request(options, (res) => {
-          let data = '';
-          res.on('data', (chunk) => {
-            data += chunk;
-          });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              resolve(data);
-            } else {
-              reject(new Error(`Upload failed with status ${res.statusCode}: ${data}`));
-            }
-          });
-        });
-
-        req.on('error', (error) => {
-          reject(new Error(`Upload failed: ${error.message}`));
-        });
-
-        req.on('timeout', () => {
-          req.destroy();
-          reject(new Error('Upload request timed out'));
-        });
-
-        req.write(postData);
-        req.end();
-      });
-    }
-
-    createMultipartFormData(fileData, filename, boundary) {
-      const chunks = [];
-      
-      // Add file field
-      chunks.push(`--${boundary}\r\n`);
-      chunks.push(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`);
-      chunks.push('Content-Type: application/octet-stream\r\n\r\n');
-      
-      const formDataPrefix = Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
-      const formDataSuffix = Buffer.from(`\r\n--${boundary}--\r\n`);
-      
-      return Buffer.concat([formDataPrefix, Buffer.from(fileData), formDataSuffix]);
-    }
-
-    async downloadFileFromDevice(filename) {
-      const deviceInfo = this.runner.getDeviceInfo();
-      if (!deviceInfo.ip) {
-        throw new Error('Device IP not available. Send $I command first.');
-      }
-
-      // Try different possible download endpoints
-      const possiblePaths = [
-        `/download?file=${encodeURIComponent(filename)}`,
-        `/files/${encodeURIComponent(filename)}`,
-        `/localfs/${encodeURIComponent(filename)}`
-      ];
-
-      for (const downloadPath of possiblePaths) {
-        try {
-          return await this.makeHttpRequest(deviceInfo.ip, downloadPath, 'GET', null, true);
-        } catch (error) {
-          log.debug(`Failed to download from ${downloadPath}: ${error.message}`);
-          // Continue to next endpoint
-        }
-      }
-      
-      throw new Error(`Could not download file ${filename} from any known endpoint`);
-    }
-
-    async deleteFileFromDevice(filename) {
-      const deviceInfo = this.runner.getDeviceInfo();
-      if (!deviceInfo.ip) {
-        throw new Error('Device IP not available. Send $I command first.');
-      }
-
-      // Try different possible delete endpoints
-      const possiblePaths = [
-        `/files/${encodeURIComponent(filename)}`,
-        `/localfs/${encodeURIComponent(filename)}`,
-        `/delete?file=${encodeURIComponent(filename)}`
-      ];
-
-      for (const deletePath of possiblePaths) {
-        try {
-          return await this.makeHttpRequest(deviceInfo.ip, deletePath, 'DELETE');
-        } catch (error) {
-          log.debug(`Failed to delete from ${deletePath}: ${error.message}`);
-          // Continue to next endpoint
-        }
-      }
-      
-      throw new Error(`Could not delete file ${filename} from any known endpoint`);
-    }
-
-    async makeHttpRequest(hostname, path, method = 'GET', postData = null, binary = false) {
-      return new Promise((resolve, reject) => {
-        const options = {
-          hostname,
-          port: 80,
-          path,
-          method,
-          timeout: method === 'GET' ? 30000 : 10000
-        };
-
-        if (postData) {
-          options.headers = options.headers || {};
-          if (Buffer.isBuffer(postData)) {
-            options.headers['Content-Length'] = postData.length;
-          } else {
-            options.headers['Content-Length'] = Buffer.byteLength(postData);
-          }
-        }
-
-        const req = http.request(options, (res) => {
-          const chunks = [];
-          res.on('data', (chunk) => {
-            chunks.push(chunk);
-          });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              const result = binary ? Buffer.concat(chunks) : Buffer.concat(chunks).toString();
-              resolve(result);
-            } else {
-              reject(new Error(`HTTP ${method} failed with status ${res.statusCode}`));
-            }
-          });
-        });
-
-        req.on('error', (error) => {
-          reject(new Error(`HTTP request failed: ${error.message}`));
-        });
-
-        req.on('timeout', () => {
-          req.destroy();
-          reject(new Error('HTTP request timed out'));
-        });
-
-        if (postData) {
-          req.write(postData);
-        }
-        req.end();
-      });
     }
 
     write(data, context) {
