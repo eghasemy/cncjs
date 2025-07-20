@@ -18,11 +18,14 @@ class Settings extends PureComponent {
     files: [],
     activeConfig: '',
     configText: '',
-    endstops: {}
+    gpioStatus: []
   };
 
   filesBuffer = [];
   pending = null;
+  gpioBuffer = [];
+
+  fileInput = React.createRef();
 
   componentDidMount() {
     controller.addListener('serialport:read', this.handleSerialRead);
@@ -45,9 +48,10 @@ class Settings extends PureComponent {
     controller.writeln('$LocalFS/List');
   };
 
-  fetchConfig = async () => {
+  fetchConfig = async (name) => {
+    const file = name || this.state.activeConfig || 'config.yaml';
     try {
-      const res = await fetch('/edit/config.yaml');
+      const res = await fetch(`/edit/${encodeURIComponent(file)}`);
       const text = await res.text();
       this.setState({ configText: text });
     } catch (err) {
@@ -55,14 +59,10 @@ class Settings extends PureComponent {
     }
   };
 
-  fetchEndstops = async () => {
-    try {
-      const res = await fetch('/input');
-      const data = await res.json();
-      this.setState({ endstops: data || {} });
-    } catch (err) {
-      // ignore
-    }
+  fetchEndstops = () => {
+    this.gpioBuffer = [];
+    this.pending = 'gpio';
+    controller.writeln('$GPIO/Dump');
   };
 
   handleSerialRead = (data) => {
@@ -79,8 +79,19 @@ class Settings extends PureComponent {
       }
     } else if (this.pending === 'configfile') {
       if (line.startsWith('$Config/Filename=')) {
-        this.setState({ activeConfig: line.substring(17) });
+        const name = line.substring(17);
+        this.setState({ activeConfig: name });
+        this.fetchConfig(name);
       } else if (line === 'ok' || line.startsWith('error')) {
+        this.pending = null;
+      }
+    } else if (this.pending === 'gpio') {
+      const m = line.match(/^(\d+)\s+(GPIO\d+)\s+[IO]([01])/);
+      if (m) {
+        this.gpioBuffer.push({ pin: m[2], state: Number(m[3]) });
+      } else if (line === 'ok' || line.startsWith('error')) {
+        this.setState({ gpioStatus: this.gpioBuffer });
+        this.gpioBuffer = [];
         this.pending = null;
       }
     }
@@ -114,46 +125,38 @@ class Settings extends PureComponent {
   handleSetActive = (name) => {
     controller.writeln(`$Config/Filename=${name}`);
     this.fetchFiles();
+    this.fetchConfig(name);
   };
 
   handleSaveConfig = async () => {
     const blob = new Blob([this.state.configText], { type: 'text/plain' });
     const form = new FormData();
-    form.append('data', blob, 'config.yaml');
+    const name = this.state.activeConfig || 'config.yaml';
+    form.append('data', blob, name);
     try {
-      await fetch('/edit/config.yaml', { method: 'POST', body: form });
+      await fetch(`/edit/${encodeURIComponent(name)}`, { method: 'POST', body: form });
     } catch (err) {
       // ignore
     }
   };
 
-  handleReboot = async () => {
-    try {
-      await fetch('/command', { method: 'POST', body: '$RST=*' });
-    } catch (err) {
-      // ignore
-    }
-  };
-
-  handleEndstopChange = (name, value) => {
-    this.setState(state => ({
-      endstops: { ...state.endstops, [name]: value }
-    }));
-  };
-
-  handleSaveEndstops = async () => {
-    try {
-      await fetch('/endstops', { method: 'POST', body: JSON.stringify(this.state.endstops) });
-    } catch (err) {
-      // ignore
-    }
+  handleReboot = () => {
+    controller.writeln('$RST=*');
   };
 
   renderFiles() {
     const { files, activeConfig } = this.state;
     return (
       <div>
-        <input type="file" onChange={this.handleUpload} />
+        <input
+          type="file"
+          ref={this.fileInput}
+          style={{ display: 'none' }}
+          onChange={this.handleUpload}
+        />
+        <Button btnStyle="primary" btnSize="sm" onClick={() => this.fileInput.current.click()} style={{ marginBottom: 5 }}>
+          {i18n._('Upload')}
+        </Button>
         <table className={styles.filesTable}>
           <tbody>
             {files.map(file => (
@@ -163,9 +166,11 @@ class Settings extends PureComponent {
                   {file.name === activeConfig && <strong> *</strong>}
                 </td>
                 <td>
-                  <Button btnSize="xs" onClick={() => this.handleSetActive(file.name)}>
-                    {i18n._('Set Active')}
-                  </Button>
+                  {(file.name.endsWith('.yaml') || file.name.endsWith('.yml')) && (
+                    <Button btnSize="xs" onClick={() => this.handleSetActive(file.name)}>
+                      {i18n._('Set Active')}
+                    </Button>
+                  )}
                   <Button btnSize="xs" onClick={() => this.handleDelete(file.name)}>
                     {i18n._('Delete')}
                   </Button>
@@ -196,22 +201,32 @@ class Settings extends PureComponent {
   }
 
   renderEndstops() {
-    const { endstops } = this.state;
+    const { gpioStatus } = this.state;
     return (
       <div>
-        {Object.keys(endstops).map(key => (
-          <div key={key} className={styles.endstopRow}>
-            <label>
-              <input
-                type="checkbox"
-                checked={!!endstops[key]}
-                onChange={e => this.handleEndstopChange(key, e.target.checked)}
-              />
-              <span style={{ marginLeft: 5 }}>{key}</span>
-            </label>
-          </div>
-        ))}
-        <Button onClick={this.handleSaveEndstops}>{i18n._('Save')}</Button>
+        <table className={styles.filesTable}>
+          <thead>
+            <tr>
+              <th>{i18n._('Pin')}</th>
+              <th>{i18n._('State')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gpioStatus.map(item => (
+              <tr key={item.pin}>
+                <td>{item.pin}</td>
+                <td>
+                  <span style={{ color: item.state ? 'red' : 'green' }}>
+                    {item.state ? i18n._('TRIGGERED') : i18n._('INACTIVE')}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Button onClick={this.fetchEndstops} style={{ marginTop: 10 }}>
+          {i18n._('Refresh')}
+        </Button>
       </div>
     );
   }
