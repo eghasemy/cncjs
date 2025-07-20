@@ -120,6 +120,8 @@
   "This widget lets you read and write data to the CNC controller connected to a serial port.": "This widget lets you read and write data to the CNC controller connected to a serial port.",
   "Grbl Widget": "Grbl Widget",
   "This widget shows the Grbl state and provides Grbl specific features.": "This widget shows the Grbl state and provides Grbl specific features.",
+  "FluidNC Widget": "FluidNC Widget",
+  "This widget shows the FluidNC state and provides FluidNC specific features.": "This widget shows the FluidNC state and provides FluidNC specific features.",
   "Marlin Widget": "Marlin Widget",
   "This widget shows the Marlin state and provides Marlin specific features.": "This widget shows the Marlin state and provides Marlin specific features.",
   "Smoothie Widget": "Smoothie Widget",
