@@ -27,6 +27,7 @@ class Settings extends PureComponent {
   filesBuffer = [];
   pending = null;
   gpioBuffer = [];
+  configBuffer = [];
   networkInfo = { ip: '', httpPort: 80, telnetPort: 23 };
 
   // React 15 does not support createRef(), use a callback ref instead
@@ -59,13 +60,22 @@ class Settings extends PureComponent {
     const path = encodeURIComponent(`/localfs/${file}`);
     try {
       const { ip, httpPort } = this.state;
-      const base = ip ? `http://${ip}:${httpPort}` : '';
-      const res = await fetch(`${base}/edit?download=${path}`);
-      const text = await res.text();
-      this.setState({ configText: text });
+      if (ip) {
+        const base = `http://${ip}:${httpPort}`;
+        const res = await fetch(`${base}/edit?download=${path}`);
+        const text = await res.text();
+        if (text.trim().length > 0 && !text.startsWith('<')) {
+          this.setState({ configText: text });
+          return;
+        }
+      }
     } catch (err) {
-      // ignore
+      // ignore network errors and fall back to serial dump
     }
+
+    this.configBuffer = [];
+    this.pending = 'configdump';
+    controller.writeln('$Config/Dump');
   };
 
   fetchEndstops = () => {
@@ -81,24 +91,37 @@ class Settings extends PureComponent {
   };
 
   handleSerialRead = (data) => {
-    const line = String(data).trim();
-    if (this.pending === 'list') {
-      const m = line.match(/\[FILE:\s*(.*?)\|SIZE:(\d+)\]/);
+    const lines = String(data).trim().split(/\r?\n/);
+    lines.forEach(line => {
+      line = line.trim();
+      if (!line) { return; }
+      if (this.pending === 'list') {
+      const m = line.match(/\[FILE:\s*(.*?)\|SIZE:(\d+)/i);
       if (m) {
-        this.filesBuffer.push({ name: m[1], size: Number(m[2]) });
+        this.filesBuffer.push({ name: m[1].trim(), size: Number(m[2]) });
+      } else if (line.startsWith('[ /') && line.includes('Free:')) {
+        // summary line
       } else if (line === 'ok' || line.startsWith('error')) {
         this.setState({ files: this.filesBuffer });
         this.filesBuffer = [];
         this.pending = 'configfile';
         controller.writeln('$Config/Filename');
       }
-    } else if (this.pending === 'configfile') {
-      if (line.startsWith('$Config/Filename=')) {
-        const name = line.substring(17);
-        this.setState({ activeConfig: name });
-        this.fetchConfig(name);
-      } else if (line === 'ok' || line.startsWith('error')) {
+      } else if (this.pending === 'configfile') {
+        if (line.startsWith('$Config/Filename=')) {
+          const name = line.substring(17);
+          this.setState({ activeConfig: name });
+          this.fetchConfig(name);
+        } else if (line === 'ok' || line.startsWith('error')) {
+          this.pending = null;
+        }
+    } else if (this.pending === 'configdump') {
+      if (line === 'ok' || line.startsWith('error')) {
+        this.setState({ configText: this.configBuffer.join('\n') });
+        this.configBuffer = [];
         this.pending = null;
+      } else {
+        this.configBuffer.push(line);
       }
     } else if (this.pending === 'gpio') {
       const m = line.match(/^(\d+)\s+(GPIO\d+)\s+[IO]([01])/);
@@ -127,6 +150,7 @@ class Settings extends PureComponent {
         });
       }
     }
+    });
   };
 
   handleUpload = async (event) => {
