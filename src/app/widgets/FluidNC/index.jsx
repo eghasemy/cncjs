@@ -268,7 +268,7 @@ class FluidNCWidget extends PureComponent {
                 >
                   <i className="fa fa-info" />
                 </Widget.Button>
-) : null}
+              ) : null}
               {isReady ? (
                 <Widget.Button
                   onClick={(event) => {
@@ -277,7 +277,7 @@ class FluidNCWidget extends PureComponent {
                 >
                   <i className="fa fa-cog" />
                 </Widget.Button>
-) : null}
+              ) : null}
               {isReady ? (
                 <Widget.DropdownButton
                   toggle={<i className="fa fa-th-large" />}
@@ -350,7 +350,7 @@ class FluidNCWidget extends PureComponent {
                     {i18n._('View Startup Blocks ($N)')}
                   </Widget.DropdownMenuItem>
                 </Widget.DropdownButton>
-) : null}
+              ) : null}
               {isReady ? (
                 <Widget.Button
                   disabled={isFullscreen}
@@ -365,7 +365,7 @@ class FluidNCWidget extends PureComponent {
                     )}
                   />
                 </Widget.Button>
-) : null}
+              ) : null}
               <Widget.DropdownButton
                 title={i18n._('More')}
                 toggle={<i className="fa fa-ellipsis-v" />}
@@ -422,7 +422,7 @@ class FluidNCWidget extends PureComponent {
                 actions={actions}
               />
             </Widget.Content>
-) : null}
+          ) : null}
         </Widget>
       );
     }
