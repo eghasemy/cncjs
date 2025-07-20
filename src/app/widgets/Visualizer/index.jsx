@@ -35,6 +35,7 @@ import {
   // Grbl
   GRBL,
   GRBLHAL,
+  FLUIDNC,
   GRBL_ACTIVE_STATE_RUN,
   // Marlin
   MARLIN,
@@ -985,7 +986,7 @@ class VisualizerWidget extends PureComponent {
       if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const activeState = get(controllerState, 'status.activeState');
         if (activeState !== GRBL_ACTIVE_STATE_RUN) {
           return false;

@@ -29,6 +29,7 @@ import {
   // Grbl
   GRBL,
   GRBLHAL,
+  FLUIDNC,
   GRBL_ACTIVE_STATE_IDLE,
   GRBL_ACTIVE_STATE_RUN,
   // Marlin
@@ -145,7 +146,7 @@ class AxesWidget extends PureComponent {
         const controllerState = this.state.controller.state;
         const defaultWCS = 'G54';
 
-        if (controllerType === GRBL) {
+        if (controllerType === GRBL || controllerType === FLUIDNC) {
           return get(controllerState, 'parserstate.modal.wcs') || defaultWCS;
         }
 
@@ -457,8 +458,8 @@ class AxesWidget extends PureComponent {
         }));
       },
       'controller:state': (type, controllerState) => {
-        // Grbl
-        if (type === GRBL) {
+        // Grbl / FluidNC
+        if (type === GRBL || type === FLUIDNC) {
           const { status, parserstate } = { ...controllerState };
           const { mpos, wpos } = status;
           const { modal = {} } = { ...parserstate };
@@ -746,10 +747,10 @@ class AxesWidget extends PureComponent {
       if (workflow.state === WORKFLOW_STATE_RUNNING) {
         return false;
       }
-      if (!includes([GRBL, GRBLHAL, MARLIN, SMOOTHIE, TINYG], controllerType)) {
+      if (!includes([GRBL, GRBLHAL, FLUIDNC, MARLIN, SMOOTHIE, TINYG], controllerType)) {
         return false;
       }
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const activeState = get(controllerState, 'status.activeState');
         const states = [
           GRBL_ACTIVE_STATE_IDLE,

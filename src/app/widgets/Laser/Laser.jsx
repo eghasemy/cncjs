@@ -10,6 +10,7 @@ import i18n from 'app/lib/i18n';
 import {
   // Grbl
   GRBL,
+  FLUIDNC,
   // Marlin
   MARLIN,
   // Smoothie
@@ -32,7 +33,7 @@ class Laser extends PureComponent {
       const controllerSettings = state.controller.settings || {};
       let scale = 0;
 
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const ovS = _.get(controllerState, 'status.ov[2]', []);
         scale = Number(ovS) || 0;
       }
