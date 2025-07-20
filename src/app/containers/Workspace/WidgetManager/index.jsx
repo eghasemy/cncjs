@@ -33,8 +33,9 @@ export const getActiveWidgets = () => {
       if (widget === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
         return false;
       }
-      if (widget === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
-        return false;
+      if (widget === 'fluidnc') {
+        // Temporarily always allow FluidNC widget for debugging (getActiveWidgets)
+        return true;
       }
       return true;
     });
@@ -67,8 +68,9 @@ export const getInactiveWidgets = () => {
       if (widget === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
         return false;
       }
-      if (widget === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
-        return false;
+      if (widget === 'fluidnc') {
+        // Temporarily always allow FluidNC widget for debugging (getInactiveWidgets)
+        return true;
       }
       return true;
     });

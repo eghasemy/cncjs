@@ -205,8 +205,9 @@ class PrimaryWidgets extends Component {
           if (name === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
             return false;
           }
-          if (name === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
-            return false;
+          if (name === 'fluidnc') {
+            // Temporarily always allow FluidNC widget for debugging
+            return true;
           }
           return true;
         })

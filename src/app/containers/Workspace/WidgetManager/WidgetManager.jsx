@@ -192,8 +192,9 @@ class WidgetManager extends PureComponent {
         if (widgetItem.id === 'tinyg' && !includes(controller.loadedControllers, TINYG)) {
           return false;
         }
-        if (widgetItem.id === 'fluidnc' && !includes(controller.loadedControllers, FLUIDNC)) {
-          return false;
+        if (widgetItem.id === 'fluidnc') {
+          // Temporarily always allow FluidNC widget for debugging
+          return true;
         }
         return true;
       });
