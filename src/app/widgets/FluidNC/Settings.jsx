@@ -4,6 +4,7 @@ import { Button } from 'app/components/Buttons';
 import Modal from 'app/components/Modal';
 import { Nav, NavItem } from 'app/components/Navs';
 import i18n from 'app/lib/i18n';
+import controller from 'app/lib/controller';
 import styles from './index.styl';
 
 class Settings extends PureComponent {
@@ -15,12 +16,21 @@ class Settings extends PureComponent {
   state = {
     activeTab: 'files',
     files: [],
+    activeConfig: '',
     configText: '',
     endstops: {}
   };
 
+  filesBuffer = [];
+  pending = null;
+
   componentDidMount() {
+    controller.addListener('serialport:read', this.handleSerialRead);
     this.refresh();
+  }
+
+  componentWillUnmount() {
+    controller.removeListener('serialport:read', this.handleSerialRead);
   }
 
   refresh = () => {
@@ -29,14 +39,10 @@ class Settings extends PureComponent {
     this.fetchEndstops();
   };
 
-  fetchFiles = async () => {
-    try {
-      const res = await fetch('/edit?dir=/');
-      const data = await res.json();
-      this.setState({ files: Array.isArray(data) ? data : [] });
-    } catch (err) {
-      // ignore errors
-    }
+  fetchFiles = () => {
+    this.filesBuffer = [];
+    this.pending = 'list';
+    controller.writeln('$LocalFS/List');
   };
 
   fetchConfig = async () => {
@@ -59,6 +65,27 @@ class Settings extends PureComponent {
     }
   };
 
+  handleSerialRead = (data) => {
+    const line = String(data).trim();
+    if (this.pending === 'list') {
+      const m = line.match(/\[FILE:\s*(.*?)\|SIZE:(\d+)\]/);
+      if (m) {
+        this.filesBuffer.push({ name: m[1], size: Number(m[2]) });
+      } else if (line === 'ok' || line.startsWith('error')) {
+        this.setState({ files: this.filesBuffer });
+        this.filesBuffer = [];
+        this.pending = 'configfile';
+        controller.writeln('$Config/Filename');
+      }
+    } else if (this.pending === 'configfile') {
+      if (line.startsWith('$Config/Filename=')) {
+        this.setState({ activeConfig: line.substring(17) });
+      } else if (line === 'ok' || line.startsWith('error')) {
+        this.pending = null;
+      }
+    }
+  };
+
   handleUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) {
@@ -75,26 +102,18 @@ class Settings extends PureComponent {
     event.target.value = '';
   };
 
-  handleDelete = async (name) => {
+  handleDelete = (name) => {
     // eslint-disable-next-line no-alert
     if (!window.confirm(i18n._('Delete file?'))) {
       return;
     }
-    try {
-      await fetch(`/edit/${encodeURIComponent(name)}`, { method: 'DELETE' });
-      this.fetchFiles();
-    } catch (err) {
-      // ignore
-    }
+    controller.writeln(`$LocalFS/Delete=/localfs/${name}`);
+    this.fetchFiles();
   };
 
-  handleSetActive = async (name) => {
-    try {
-      await fetch(`/edit/config.yaml?active=${encodeURIComponent(name)}`, { method: 'PUT' });
-      this.fetchConfig();
-    } catch (err) {
-      // ignore
-    }
+  handleSetActive = (name) => {
+    controller.writeln(`$Config/Filename=${name}`);
+    this.fetchFiles();
   };
 
   handleSaveConfig = async () => {
@@ -131,7 +150,7 @@ class Settings extends PureComponent {
   };
 
   renderFiles() {
-    const { files } = this.state;
+    const { files, activeConfig } = this.state;
     return (
       <div>
         <input type="file" onChange={this.handleUpload} />
@@ -139,7 +158,10 @@ class Settings extends PureComponent {
           <tbody>
             {files.map(file => (
               <tr key={file.name}>
-                <td>{file.name}</td>
+                <td>
+                  {file.name}
+                  {file.name === activeConfig && <strong> *</strong>}
+                </td>
                 <td>
                   <Button btnSize="xs" onClick={() => this.handleSetActive(file.name)}>
                     {i18n._('Set Active')}
