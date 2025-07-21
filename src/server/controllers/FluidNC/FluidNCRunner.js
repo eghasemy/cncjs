@@ -83,6 +83,12 @@ class FluidNCRunner extends events.EventEmitter {
     }
 
     console.log(`FluidNC Runner: Parsing data: "${data}"`);
+    
+    // Enhanced debugging for file-related responses
+    if (data.includes('LocalFS') || data.includes('FILE:') || data.includes('.yaml') || data.includes('.gcode') || data.includes('.nc') || data.includes('.txt')) {
+      console.log(`FluidNC Runner: POTENTIAL FILE DATA detected: "${data}"`);
+    }
+    
     this.emit('raw', { raw: data });
 
     const result = this.parser.parse(data) || {};
@@ -295,6 +301,10 @@ class FluidNCRunner extends events.EventEmitter {
         }
         console.log(`FluidNC Runner: File added to list: ${file.name} (${file.size} bytes, ${file.type})`);
         console.log(`FluidNC Runner: Total files in list: ${this.fluidnc.files.length}`);
+        
+        // Emit file list immediately when files are detected
+        console.log(`FluidNC Runner: Emitting updated file list immediately (${this.fluidnc.files.length} files)`);
+        this.emit('fluidnc:fileList', [...this.fluidnc.files]);
       } else {
         console.log(`FluidNC Runner: LocalFS response - command: ${command}, response: ${response}`);
       }
