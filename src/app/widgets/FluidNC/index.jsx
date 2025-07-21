@@ -161,6 +161,14 @@ class FluidNCWidget extends PureComponent {
           deviceInfo: deviceInfo
         }
       }));
+    },
+    'fluidnc:fileList': (fileList) => {
+      this.setState(state => ({
+        fluidnc: {
+          ...state.fluidnc,
+          fileList: fileList
+        }
+      }));
     }
   };
 
@@ -204,7 +212,8 @@ class FluidNCWidget extends PureComponent {
           ssid: '',
           status: '',
           mac: ''
-        }
+        },
+        fileList: []
       },
       modal: {
         name: MODAL_NONE,
