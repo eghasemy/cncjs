@@ -364,6 +364,12 @@ class FluidNCRunner extends events.EventEmitter {
   clearFileList() {
     this.fluidnc.files = [];
   }
+
+  addFile(file) {
+    if (!this.fluidnc.files.find(f => f.name === file.name)) {
+      this.fluidnc.files.push(file);
+    }
+  }
 }
 
 export default FluidNCRunner;

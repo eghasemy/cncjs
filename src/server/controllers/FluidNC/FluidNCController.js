@@ -702,6 +702,19 @@ class FluidNCController {
     });
 
     this.runner.on('feedback', (res) => {
+      // Parse file information from feedback messages
+      const fileMatch = res.message.match(/^FILE:\s*(.+)\|SIZE:(\d+)$/);
+      if (fileMatch) {
+        const [, filename, size] = fileMatch;
+        const file = {
+          name: filename,
+          size: parseInt(size, 10),
+          type: filename.endsWith('.yaml') || filename.endsWith('.yml') ? 'config' : 'file'
+        };
+        console.log(`FluidNC Controller: Adding file to list: ${filename} (${size} bytes)`);
+        this.runner.addFile(file);
+      }
+      
       this.emit('serialport:read', res.raw);
     });
 
