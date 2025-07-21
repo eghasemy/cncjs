@@ -14,7 +14,7 @@ class FluidNCLineParserResultMessage {
     if (message.includes(':')) {
       const parts = message.split(':');
       const data = {};
-      
+
       parts.forEach(part => {
         if (part.includes('=')) {
           const [key, value] = part.split('=');

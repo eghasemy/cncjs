@@ -7,68 +7,68 @@ import FileManager from './FileManager';
 import Calibrate from './Calibrate';
 
 class Settings extends PureComponent {
-    static propTypes = {
-      state: PropTypes.object,
-      actions: PropTypes.object
-    };
+  static propTypes = {
+    state: PropTypes.object,
+    actions: PropTypes.object
+  };
 
-    state = {
-      activeTab: 'filemanager'
-    };
+  state = {
+    activeTab: 'filemanager'
+  };
 
-    render() {
-      const { state, actions } = this.props;
-      const { activeTab } = this.state;
+  render() {
+    const { state, actions } = this.props;
+    const { activeTab } = this.state;
 
-      return (
-        <Modal
-          backdrop="static"
-          size="lg"
-          show={true}
-          onHide={actions.closeModal}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>
-              {i18n._('FluidNC Settings')}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ padding: 0 }}>
-            <Nav
-              navStyle="tabs"
-              activeKey={activeTab}
-              onSelect={(eventKey) => {
-                this.setState({ activeTab: eventKey });
-              }}
-              style={{
-                marginBottom: 0,
-                borderBottom: '1px solid #ddd'
-              }}
-            >
-              <NavItem eventKey="filemanager">
-                {i18n._('File Manager')}
-              </NavItem>
-              <NavItem eventKey="calibrate">
-                {i18n._('Calibrate')}
-              </NavItem>
-            </Nav>
-            <div style={{ padding: '20px' }}>
-              {activeTab === 'filemanager' ? (
-                <FileManager
-                  state={state}
-                  actions={actions}
-                />
-              ) : null}
-              {activeTab === 'calibrate' ? (
-                <Calibrate
-                  state={state}
-                  actions={actions}
-                />
-              ) : null}
-            </div>
-          </Modal.Body>
-        </Modal>
-      );
-    }
+    return (
+      <Modal
+        backdrop="static"
+        size="lg"
+        show={true}
+        onHide={actions.closeModal}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {i18n._('FluidNC Settings')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ padding: 0 }}>
+          <Nav
+            navStyle="tabs"
+            activeKey={activeTab}
+            onSelect={(eventKey) => {
+              this.setState({ activeTab: eventKey });
+            }}
+            style={{
+              marginBottom: 0,
+              borderBottom: '1px solid #ddd'
+            }}
+          >
+            <NavItem eventKey="filemanager">
+              {i18n._('File Manager')}
+            </NavItem>
+            <NavItem eventKey="calibrate">
+              {i18n._('Calibrate')}
+            </NavItem>
+          </Nav>
+          <div style={{ padding: '20px' }}>
+            {activeTab === 'filemanager' ? (
+              <FileManager
+                state={state}
+                actions={actions}
+              />
+            ) : null}
+            {activeTab === 'calibrate' ? (
+              <Calibrate
+                state={state}
+                actions={actions}
+              />
+            ) : null}
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
+  }
 }
 
 export default Settings;

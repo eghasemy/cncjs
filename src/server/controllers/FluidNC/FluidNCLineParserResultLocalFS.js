@@ -5,7 +5,7 @@ class FluidNCLineParserResultLocalFS {
     // $LocalFS/List response: filename:size:type
     // config.yaml:2048:file
     // Directory listing format may vary
-    
+
     // Check if this is a LocalFS list response (simple filename with size)
     const fileListMatch = line.match(/^(.+):(\d+):(file|dir)$/);
     if (fileListMatch) {
