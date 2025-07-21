@@ -82,10 +82,12 @@ class FluidNCRunner extends events.EventEmitter {
       return;
     }
 
+    console.log(`FluidNC Runner: Parsing data: "${data}"`);
     this.emit('raw', { raw: data });
 
     const result = this.parser.parse(data) || {};
     const { type, payload } = result;
+    console.log(`FluidNC Runner: Parse result - type: ${type ? type.name : 'null'}, payload:`, payload);
 
     if (type === FluidNCLineParserResultStatus) {
       // Grbl v1.1
@@ -224,7 +226,10 @@ class FluidNCRunner extends events.EventEmitter {
     if (type === FluidNCLineParserResultMessage) {
       // Handle FluidNC [MSG:...] messages
       const { message, data, invalidIP } = payload;
-      console.log(`FluidNC Runner: Processing message: "${message}"`);
+      console.log(`FluidNC Runner: Processing FluidNCLineParserResultMessage`);
+      console.log(`FluidNC Runner: Message content: "${message}"`);
+      console.log(`FluidNC Runner: Parsed data:`, data);
+      console.log(`FluidNC Runner: Invalid IP flag:`, invalidIP);
 
       // Parse device info from status messages
       if (data && data.IP) {
@@ -233,7 +238,7 @@ class FluidNCRunner extends events.EventEmitter {
           console.warn(`FluidNC Runner: Invalid IP address format detected: ${data.IP}`);
         } else {
           // Valid IP address found - update device info
-          console.log(`FluidNC Runner: Updating device info with IP: ${data.IP}`);
+          console.log(`FluidNC Runner: Valid IP found, updating device info with IP: ${data.IP}`);
           const oldIP = this.fluidnc.deviceInfo.ip;
           this.fluidnc.deviceInfo = {
             ...this.fluidnc.deviceInfo,

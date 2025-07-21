@@ -1,11 +1,40 @@
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
-import { Table } from 'react-bootstrap';
+import { Table, FormGroup, InputGroup, FormControl, Button } from 'react-bootstrap';
+import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 
 class Info extends PureComponent {
   static propTypes = {
     state: PropTypes.object
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      manualIP: ''
+    };
+  }
+
+  handleManualIPChange = (event) => {
+    this.setState({
+      manualIP: event.target.value
+    });
+  };
+
+  handleSaveManualIP = () => {
+    const { manualIP } = this.state;
+    if (manualIP.trim()) {
+      // Validate IP format
+      const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+      if (ipPattern.test(manualIP.trim())) {
+        console.log(`FluidNC Info: Setting manual IP address: ${manualIP.trim()}`);
+        // Emit the manual IP to the controller
+        controller.command('fluidnc:setManualIP', manualIP.trim());
+      } else {
+        alert(i18n._('Invalid IP address format. Please enter a valid IP address (e.g., 192.168.1.100)'));
+      }
+    }
   };
 
   render() {
@@ -62,6 +91,27 @@ class Info extends PureComponent {
             <small style={{ color: '#777' }}>
               {i18n._('To detect device information, send the $I command from the console.')}
             </small>
+            <div style={{ marginTop: '10px' }}>
+              <strong>{i18n._('Manual IP Entry:')}</strong>
+              <FormGroup style={{ marginTop: '5px' }}>
+                <InputGroup>
+                  <FormControl
+                    type="text"
+                    placeholder={i18n._('Enter IP address (e.g., 192.168.1.100)')}
+                    value={this.state.manualIP}
+                    onChange={this.handleManualIPChange}
+                  />
+                  <InputGroup.Button>
+                    <Button
+                      onClick={this.handleSaveManualIP}
+                      disabled={!this.state.manualIP.trim()}
+                    >
+                      {i18n._('Save')}
+                    </Button>
+                  </InputGroup.Button>
+                </InputGroup>
+              </FormGroup>
+            </div>
           </div>
         ) : null}
       </div>

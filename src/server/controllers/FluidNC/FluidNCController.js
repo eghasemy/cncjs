@@ -76,6 +76,7 @@ class FluidNCController {
 
   connectionEventListener = {
     data: (data) => {
+      console.log(`FluidNC Controller: Received data: "${data}"`);
       log.silly(`< ${data}`);
       this.runner.parse('' + data);
     },
@@ -735,6 +736,7 @@ class FluidNCController {
     });
 
     this.runner.on('fluidnc:message', (res) => {
+      console.log('FluidNC Controller: Message event received:', res);
       // Emit device info when it changes
       const deviceInfo = this.runner.getDeviceInfo();
       console.log('FluidNC Controller: Device info updated, emitting to clients:', deviceInfo);
@@ -1701,6 +1703,16 @@ class FluidNCController {
         // Send $N command to get active config
         this.writeln('$N');
       },
+      'fluidnc:setManualIP': () => {
+        const [ip] = args;
+        console.log(`FluidNC Controller: Setting manual IP address: ${ip}`);
+        
+        // Update the device info with manual IP
+        this.runner.fluidnc.deviceInfo.ip = ip;
+        const deviceInfo = this.runner.getDeviceInfo();
+        console.log('FluidNC Controller: Manual IP set, emitting to clients:', deviceInfo);
+        this.emit('fluidnc:deviceInfo', deviceInfo);
+      },
       'fluidnc:listFiles': () => {
         // Clear existing file list
         this.runner.clearFileList();
@@ -1911,6 +1923,7 @@ class FluidNCController {
   }
 
   writeln(data, context) {
+    console.log(`FluidNC Controller: Writing command: "${data}"`);
     // https://github.com/gnea/grbl/blob/master/doc/markdown/commands.md#grbl-v11-realtime-commands
     const isASCIIRealtimeCommand = _.includes(GRBL_REALTIME_COMMANDS, data);
     const isExtendedASCIIRealtimeCommand = String(data).match(/[\x80-\xff]/);
