@@ -445,9 +445,9 @@ class FileManager extends PureComponent {
             </div>
             {webInterfaceUrl && (
               <div>
-                <a 
-                  href={webInterfaceUrl} 
-                  target="_blank" 
+                <a
+                  href={webInterfaceUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: '#337ab7', textDecoration: 'none' }}
                 >
