@@ -47,7 +47,6 @@ class FileManager extends PureComponent {
           const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
           if (ipPattern.test(deviceInfo.ip)) {
             console.log(`FileManager: Valid IP address detected: ${deviceInfo.ip}`);
-            
             // If IP changed from empty/invalid to valid, automatically reload files
             if (!prevDeviceInfo.ip || !ipPattern.test(prevDeviceInfo.ip)) {
               console.log('FileManager: IP address newly available, reloading files...');
