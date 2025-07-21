@@ -76,7 +76,7 @@ class FileManager extends PureComponent {
           alert(i18n._('Failed to download file: {{error}}', { error: error.message }));
           return;
         }
-        
+
         // Create blob and download link
         const blob = new Blob([fileData]);
         const url = window.URL.createObjectURL(blob);
@@ -107,12 +107,12 @@ class FileManager extends PureComponent {
     uploadFile = (file) => {
       // Show uploading state
       this.setState({ loading: true, loadingMessage: `Uploading ${file.name}...` });
-      
+
       // Create a FileReader to read the file data
       const reader = new FileReader();
       reader.onload = (e) => {
         const fileData = e.target.result;
-        
+
         // Send file data to server for upload
         controller.command('fluidnc:uploadFile', fileData, file.name, (error) => {
           this.setState({ loading: false });
@@ -125,13 +125,13 @@ class FileManager extends PureComponent {
           }
         });
       };
-      
+
       reader.onerror = () => {
         this.setState({ loading: false });
         // eslint-disable-next-line no-alert
         alert(i18n._('Failed to read file'));
       };
-      
+
       reader.readAsArrayBuffer(file);
     };
 
