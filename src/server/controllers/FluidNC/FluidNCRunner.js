@@ -224,14 +224,17 @@ class FluidNCRunner extends events.EventEmitter {
     if (type === FluidNCLineParserResultMessage) {
       // Handle FluidNC [MSG:...] messages
       const { message, data, invalidIP } = payload;
+      console.log(`FluidNC Runner: Processing message: "${message}"`);
 
       // Parse device info from status messages
       if (data && data.IP) {
         if (invalidIP) {
           // Log warning about invalid IP but still process the message
-          console.warn(`FluidNC: Invalid IP address format detected: ${data.IP}`);
+          console.warn(`FluidNC Runner: Invalid IP address format detected: ${data.IP}`);
         } else {
           // Valid IP address found - update device info
+          console.log(`FluidNC Runner: Updating device info with IP: ${data.IP}`);
+          const oldIP = this.fluidnc.deviceInfo.ip;
           this.fluidnc.deviceInfo = {
             ...this.fluidnc.deviceInfo,
             ip: data.IP,
@@ -240,15 +243,19 @@ class FluidNCRunner extends events.EventEmitter {
             status: data.Status || this.fluidnc.deviceInfo.status,
             mac: data.MAC || this.fluidnc.deviceInfo.mac
           };
-          console.log(`FluidNC: Device IP successfully parsed: ${data.IP}`);
+          console.log(`FluidNC Runner: Device IP changed from "${oldIP}" to "${data.IP}"`);
+          console.log('FluidNC Runner: Current device info:', this.fluidnc.deviceInfo);
         }
       }
 
       // Extract machine name from messages like "Machine: Leroy"
       if (message.startsWith('Machine: ')) {
-        this.fluidnc.deviceInfo.machine = message.substring(9);
+        const machineName = message.substring(9);
+        console.log(`FluidNC Runner: Setting machine name to: ${machineName}`);
+        this.fluidnc.deviceInfo.machine = machineName;
       }
 
+      console.log(`FluidNC Runner: Emitting fluidnc:message event`);
       this.emit('fluidnc:message', payload);
       return;
     }

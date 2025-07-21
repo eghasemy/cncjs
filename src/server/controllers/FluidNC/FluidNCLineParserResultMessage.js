@@ -10,21 +10,37 @@ class FluidNCLineParserResultMessage {
     const message = r[1];
     const payload = { message };
 
-    // Try to parse structured message data
-    if (message.includes(':')) {
-      const parts = message.split(':');
+    console.log(`FluidNC Message Parser: Processing message: "${message}"`);
+
+    // Handle simple machine name messages like "Machine: Leroy"
+    if (message.startsWith('Machine: ')) {
+      console.log(`FluidNC Message Parser: Found machine name: ${message.substring(9)}`);
+      return {
+        type: FluidNCLineParserResultMessage,
+        payload: payload
+      };
+    }
+
+    // Try to parse structured message data using regex to properly handle key=value pairs
+    // This handles cases like Mode=STA:SSID=G&E:Status=Connected:IP=10.0.0.80:MAC=F0-24-F9-F8-72-5C
+    if (message.includes('=')) {
       const data = {};
 
-      parts.forEach(part => {
-        if (part.includes('=')) {
-          const [key, value] = part.split('=');
-          data[key] = value;
-        }
-      });
+      // Use regex to find key=value patterns, where value continues until : or end of string
+      const keyValuePattern = /(\w+)=([^:]+)(?=:\w+=|$)/g;
+      let match;
+
+      while ((match = keyValuePattern.exec(message)) !== null) {
+        const key = match[1];
+        const value = match[2];
+        data[key] = value;
+        console.log(`FluidNC Message Parser: Found ${key}=${value}`);
+      }
 
       // If we found structured data, include it
       if (Object.keys(data).length > 0) {
         payload.data = data;
+        console.log(`FluidNC Message Parser: Parsed structured data:`, data);
 
         // Validate IP address format if present
         if (data.IP) {
@@ -32,6 +48,9 @@ class FluidNCLineParserResultMessage {
           if (!ipPattern.test(data.IP)) {
             // Mark as invalid IP but still include it
             payload.invalidIP = true;
+            console.warn(`FluidNC Message Parser: Invalid IP address format: ${data.IP}`);
+          } else {
+            console.log(`FluidNC Message Parser: Valid IP address found: ${data.IP}`);
           }
         }
       }

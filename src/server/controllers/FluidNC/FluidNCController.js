@@ -736,7 +736,9 @@ class FluidNCController {
 
     this.runner.on('fluidnc:message', (res) => {
       // Emit device info when it changes
-      this.emit('fluidnc:deviceInfo', this.runner.getDeviceInfo());
+      const deviceInfo = this.runner.getDeviceInfo();
+      console.log('FluidNC Controller: Device info updated, emitting to clients:', deviceInfo);
+      this.emit('fluidnc:deviceInfo', deviceInfo);
       this.emit('fluidnc:message', res);
     });
 
@@ -908,6 +910,12 @@ class FluidNCController {
     // $13=0 (report in mm)
     // $13=1 (report in inches)
     this.writeln('$$');
+
+    await delay(50);
+
+    // Send $I command to get FluidNC device info including IP address
+    console.log('FluidNC Controller: Sending initial $I command during initialization');
+    this.writeln('$I');
 
     await delay(50);
     this.event.trigger('controller:ready');
@@ -1686,6 +1694,7 @@ class FluidNCController {
       // FluidNC-specific commands
       'fluidnc:getInfo': () => {
         // Send $I command to get device info including IP address
+        console.log('FluidNC Controller: Sending $I command to get device info');
         this.writeln('$I');
       },
       'fluidnc:getActiveConfig': () => {
