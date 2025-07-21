@@ -85,14 +85,27 @@ class FluidNCController {
 
       // Enhanced debugging for LocalFS responses
       if (dataStr.includes('LocalFS') || dataStr.includes('FILE:') || dataStr.includes('.yaml') || dataStr.includes('.gcode') || dataStr.includes('.nc') || dataStr.includes('.txt')) {
+        console.log(`\n======= FluidNC LocalFS DATA ANALYSIS =======`);
         console.log(`FluidNC Controller: POTENTIAL LocalFS/FILE data detected: "${dataStr}"`);
         console.log(`FluidNC Controller: Data length: ${dataStr.length}, Contains newlines: ${dataStr.includes('\n')}`);
+        console.log(`FluidNC Controller: Raw bytes:`, Array.from(dataStr).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
         if (dataStr.includes('\n')) {
-          console.log(`FluidNC Controller: Splitting multiline response for analysis:`);
+          console.log(`FluidNC Controller: Splitting multiline response for detailed analysis:`);
           dataStr.split('\n').forEach((line, index) => {
-            console.log(`FluidNC Controller: Line ${index}: "${line}"`);
+            const trimmed = line.trim();
+            if (trimmed) {
+              console.log(`FluidNC Controller: Line ${index}: "${trimmed}" (length: ${trimmed.length})`);
+              console.log(`FluidNC Controller: Line ${index} chars:`, Array.from(trimmed).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
+              // Try to identify file patterns in this line
+              if (trimmed.includes('.')) {
+                console.log(`FluidNC Controller: Line ${index} contains dot - potential file: "${trimmed}"`);
+              }
+            }
           });
+        } else {
+          console.log(`FluidNC Controller: Single line LocalFS response: "${dataStr.trim()}"`);
         }
+        console.log(`======= END LocalFS DATA ANALYSIS =======\n`);
       }
 
       this.runner.parse(dataStr);

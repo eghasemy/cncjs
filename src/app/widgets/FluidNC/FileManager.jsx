@@ -67,16 +67,34 @@ class FileManager extends PureComponent {
         this.setState({ activeConfig });
       }),
       controller.addListener('fluidnc:fileList', (files) => {
-        console.log('FileManager: File list received - count:', files ? files.length : 0, 'files:', files);
+        console.log('FileManager: *** FILE LIST EVENT RECEIVED ***');
+        console.log('FileManager: File list received - count:', files ? files.length : 0);
+        console.log('FileManager: File list contents:', files);
+
+        if (files && files.length > 0) {
+          console.log('FileManager: Files detected! Setting state with files...');
+          files.forEach((file, index) => {
+            console.log(`FileManager: File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
+          });
+        } else {
+          console.log('FileManager: No files in the received list');
+        }
         // Clear timeout if we receive a response
         if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = null;
         }
         this.setState({ files, loading: false });
+        console.log('FileManager: State updated with file list');
       }),
       controller.addListener('fluidnc:localfs', (data) => {
         console.log('FileManager: LocalFS event received:', data);
+      }),
+      // Add debug listener for all controller events
+      controller.addListener('*', (eventName, ...args) => {
+        if (eventName && eventName.startsWith('fluidnc:')) {
+          console.log(`FileManager: FluidNC event received: ${eventName}`, args);
+        }
       })
     ];
     this.subscriptionTokens = tokens;
@@ -249,6 +267,34 @@ class FileManager extends PureComponent {
           >
             <i className="fa fa-refresh" />
             <span style={{ marginLeft: '5px' }}>{i18n._('Refresh')}</span>
+          </Button>
+          <Button
+            bsStyle="warning"
+            onClick={() => {
+              console.log('FileManager: DEBUG TEST - Sending $LocalFS/List command directly');
+              controller.writeln('$LocalFS/List');
+            }}
+            style={{ marginLeft: '10px' }}
+          >
+            <i className="fa fa-bug" />
+            <span style={{ marginLeft: '5px' }}>Debug List</span>
+          </Button>
+          <Button
+            bsStyle="info"
+            onClick={() => {
+              console.log('FileManager: DEBUG TEST - Adding mock file to test UI');
+              this.setState({
+                files: [...this.state.files, {
+                  name: 'test-mock.yaml',
+                  size: 1234,
+                  type: 'file'
+                }]
+              });
+            }}
+            style={{ marginLeft: '10px' }}
+          >
+            <i className="fa fa-plus" />
+            <span style={{ marginLeft: '5px' }}>Add Mock</span>
           </Button>
         </div>
 
