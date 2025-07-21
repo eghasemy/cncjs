@@ -1923,87 +1923,142 @@ class FluidNCController {
         this.runner.clearFileList();
         console.log('\n======= FluidNC Controller: Starting File List Operation =======');
         console.log('FluidNC Controller: Clearing existing file list');
-        console.log('FluidNC Controller: Sending $LocalFS/List command');
 
         // Set flag to track LocalFS response
         this.expectingLocalFSResponse = true;
         this.localFSResponseStartTime = Date.now();
         this.localFSResponseLines = []; // Track all responses
 
-        // Send LocalFS list command
-        this.writeln('$LocalFS/List');
-        console.log('FluidNC Controller: $LocalFS/List command sent, waiting for response...');
+        console.log('FluidNC Controller: Sending $LocalFS/List command');
+        
+        // Send LocalFS list command and log the exact bytes sent
+        const command = '$LocalFS/List';
+        this.writeln(command);
+        console.log(`FluidNC Controller: Sent exact command: "${command}"`);
+        console.log(`FluidNC Controller: Command bytes: [${Array.from(command).map(c => c.charCodeAt(0)).join(', ')}]`);
+        console.log('FluidNC Controller: Command sent, waiting for response...');
 
-        // Set a timer to emit the file list after a short delay to allow all files to be parsed
+        // Try alternative commands if the primary one doesn't work
+        setTimeout(() => {
+          console.log('FluidNC Controller: Trying alternative LocalFS commands...');
+          this.writeln('$LocalFS/Dir');  // Alternative command
+          this.writeln('$LS');           // Short version
+          this.writeln('$Dir');          // Directory command
+        }, 500);
+
+        // Set a timer to analyze results
         setTimeout(() => {
           const fileList = this.runner.getFileList();
-          console.log(`\n======= FluidNC Controller: File List Timer Expired =======`);
-          console.log(`FluidNC Controller: Timer callback - found ${fileList.length} files`);
-          console.log('FluidNC Controller: All LocalFS response lines captured:');
+          console.log(`\n======= FluidNC Controller: File List Analysis =======`);
+          console.log(`FluidNC Controller: Timer callback - found ${fileList.length} files in runner`);
+          console.log(`FluidNC Controller: Total response lines captured: ${this.localFSResponseLines.length}`);
+          console.log('FluidNC Controller: All captured response lines:');
+          
+          if (this.localFSResponseLines.length === 0) {
+            console.log('  ⚠️  NO RESPONSES CAPTURED AT ALL!');
+            console.log('  This suggests:');
+            console.log('    1. FluidNC device may not support $LocalFS/List command');
+            console.log('    2. Command may have different syntax');
+            console.log('    3. Device may not be responding to commands');
+            console.log('    4. Responses may be filtered out by other parsing logic');
+          } else {
+            this.localFSResponseLines.forEach((line, index) => {
+              console.log(`  Response ${index}: "${line}" (${line.length} chars)`);
+              console.log(`    Hex: ${Array.from(line).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ')}`);
+            });
+          }
+
+          // Emergency parsing attempt on ALL captured lines
+          console.log('\nFluidNC Controller: Starting comprehensive emergency parsing...');
+          let emergencyFilesFound = 0;
+          
           this.localFSResponseLines.forEach((line, index) => {
-            console.log(`  Response ${index}: "${line}"`);
+            console.log(`\n--- Emergency parsing line ${index}: "${line}" ---`);
+            
+            // Ultra-permissive patterns - try to find ANY file-like content
+            const emergencyPatterns = [
+              // Any text with file extensions
+              /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex|exe|bat|sh))/gi,
+              // Text followed by numbers (possible size)
+              /([a-zA-Z0-9_.-]+\.[a-zA-Z]+)\s*[:\t\s]+(\d+)/gi,
+              // Numbers followed by text (possible size then filename)
+              /(\d+)\s*[:\t\s]+([a-zA-Z0-9_.-]+\.[a-zA-Z]+)/gi,
+              // Look for any structured data that might contain filenames
+              /["']([^"']+\.[a-zA-Z]+)["']/gi,
+              // Look for directory-style listings
+              /^[\s]*([a-zA-Z0-9_.-]+\.[a-zA-Z]+)[\s]*$/gm
+            ];
+
+            let lineHadMatches = false;
+            emergencyPatterns.forEach((pattern, patternIndex) => {
+              const matches = [...line.matchAll(pattern)];
+              if (matches.length > 0) {
+                lineHadMatches = true;
+                console.log(`  Emergency pattern ${patternIndex} found ${matches.length} matches:`);
+                matches.forEach((match, matchIndex) => {
+                  let filename, size;
+                  
+                  if (patternIndex === 0 || patternIndex === 4) {
+                    filename = match[1];
+                    size = 0;
+                  } else if (patternIndex === 1) {
+                    filename = match[1];
+                    size = parseInt(match[2], 10) || 0;
+                  } else if (patternIndex === 2) {
+                    filename = match[2];
+                    size = parseInt(match[1], 10) || 0;
+                  } else if (patternIndex === 3) {
+                    filename = match[1];
+                    size = 0;
+                  }
+                  
+                  if (filename && filename.includes('.')) {
+                    console.log(`    Emergency match ${matchIndex}: filename="${filename}", size=${size}`);
+                    
+                    const emergencyFile = {
+                      name: filename,
+                      size: size,
+                      type: 'file'
+                    };
+                    this.runner.addFile(emergencyFile);
+                    emergencyFilesFound++;
+                    console.log(`    ✓ Emergency: Added file "${filename}" to list`);
+                  }
+                });
+              }
+            });
+            
+            if (!lineHadMatches) {
+              console.log(`  No emergency patterns matched this line`);
+            }
           });
 
-          if (fileList.length > 0) {
-            console.log('FluidNC Controller: Files found:');
-            fileList.forEach((file, index) => {
+          const finalFileList = this.runner.getFileList();
+          console.log(`\nFluidNC Controller: Final results:`);
+          console.log(`  Files from normal parsing: ${fileList.length}`);
+          console.log(`  Files from emergency parsing: ${emergencyFilesFound}`);
+          console.log(`  Total files in final list: ${finalFileList.length}`);
+          
+          if (finalFileList.length > 0) {
+            console.log('FluidNC Controller: Final file list:');
+            finalFileList.forEach((file, index) => {
               console.log(`  File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
             });
           } else {
-            console.log('FluidNC Controller: No files found in list!');
-            console.log('FluidNC Controller: This suggests parsing failed or device returned no files');
-            console.log('FluidNC Controller: Attempting emergency re-parse of all captured lines...');
-
-            // Emergency re-parsing attempt
-            this.localFSResponseLines.forEach((line, index) => {
-              console.log(`\nEmergency parsing attempt ${index} for: "${line}"`);
-
-              // Try to manually extract file information
-              const patterns = [
-                // Basic filename detection
-                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))/gi,
-                // With size
-                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\s+(\d+)/gi,
-                // Tab separated
-                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\t+(\d*)/gi,
-                // Colon separated
-                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex)):(\d+)/gi
-              ];
-
-              patterns.forEach((pattern, patternIndex) => {
-                const matches = [...line.matchAll(pattern)];
-                if (matches.length > 0) {
-                  console.log(`  Pattern ${patternIndex} found ${matches.length} matches:`);
-                  matches.forEach((match, matchIndex) => {
-                    const filename = match[1];
-                    const size = match[3] || match[2] || '0';
-                    console.log(`    Match ${matchIndex}: filename="${filename}", size="${size}"`);
-
-                    // Manually add to file list
-                    const mockFile = {
-                      name: filename,
-                      size: parseInt(size, 10) || 0,
-                      type: 'file'
-                    };
-                    this.runner.addFile(mockFile);
-                    console.log(`    Emergency: Added file "${filename}" to list`);
-                  });
-                }
-              });
-            });
-
-            // Check if emergency parsing found anything
-            const newFileList = this.runner.getFileList();
-            if (newFileList.length > 0) {
-              console.log(`Emergency parsing found ${newFileList.length} files!`);
-            }
+            console.log('⚠️  STILL NO FILES FOUND AFTER ALL ATTEMPTS!');
+            console.log('This indicates one of:');
+            console.log('  1. FluidNC device has no files in its filesystem');
+            console.log('  2. $LocalFS/List command is not supported');
+            console.log('  3. Different command syntax is required');
+            console.log('  4. Files are returned in a completely different format');
           }
-          console.log(`FluidNC Controller: Emitting file list with ${this.runner.getFileList().length} files`);
-          this.emit('fluidnc:fileList', this.runner.getFileList());
+          
+          console.log(`FluidNC Controller: Emitting file list with ${finalFileList.length} files`);
+          this.emit('fluidnc:fileList', [...finalFileList]);
           this.expectingLocalFSResponse = false;
           this.localFSResponseLines = [];
           console.log('======= End File List Operation =======\n');
-        }, 2000); // Increased to 2 seconds to allow more time for responses
+        }, 3000); // Increased to 3 seconds for more comprehensive analysis
       },
       'fluidnc:deleteFile': async () => {
         const [filename, callback = noop] = args;
