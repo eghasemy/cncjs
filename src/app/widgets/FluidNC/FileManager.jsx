@@ -134,6 +134,32 @@ class FileManager extends PureComponent {
     }, 5000); // 5 second timeout
   };
 
+  // Debug methods for testing
+  handleDebugLocalFS = () => {
+    console.log('FileManager: Manual debug $LocalFS/List command');
+    controller.writeln('$LocalFS/List');
+  };
+
+  handleDebugParser = () => {
+    console.log('FileManager: Testing emergency file parsing patterns');
+    // Test some common file listing formats
+    const testLines = [
+      'config.yaml\t1024\tfile',
+      'config.yaml 1024 file',
+      'config.yaml:1024:file',
+      '[FILE: config.yaml|SIZE:1024]',
+      'config.yaml',
+      'test.gcode',
+      '  config.yaml  1024  ',
+      'config.yaml\t\t1024'
+    ];
+
+    testLines.forEach((line, index) => {
+      console.log(`\n=== Testing line ${index}: "${line}" ===`);
+      controller.runner.runner.parse(line); // Access the FluidNC runner's parse method
+    });
+  };
+
   handleDownload = (file) => {
     // Request file download from FluidNC device
     controller.command('fluidnc:downloadFile', file.name, (error, fileData) => {

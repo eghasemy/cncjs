@@ -86,14 +86,25 @@ class FluidNCController {
         console.log(`Trimmed: "${dataStr.trim()}"`);
         console.log(`Contains known keywords: LocalFS=${dataStr.includes('LocalFS')}, FILE=${dataStr.includes('FILE')}, yaml=${dataStr.includes('.yaml')}, gcode=${dataStr.includes('.gcode')}`);
         console.log(`Raw bytes:`, Array.from(dataStr).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
+        
+        // Store each line of response for later analysis
         if (dataStr.includes('\n')) {
           dataStr.split('\n').forEach((line, index) => {
-            if (line.trim()) {
-              console.log(`Line ${index}: "${line.trim()}" (${line.trim().length} chars)`);
+            const trimmed = line.trim();
+            if (trimmed) {
+              console.log(`Line ${index}: "${trimmed}" (${trimmed.length} chars)`);
+              this.localFSResponseLines = this.localFSResponseLines || [];
+              this.localFSResponseLines.push(trimmed);
             }
           });
+        } else {
+          const trimmed = dataStr.trim();
+          if (trimmed) {
+            this.localFSResponseLines = this.localFSResponseLines || [];
+            this.localFSResponseLines.push(trimmed);
+          }
         }
-        console.log(`!!! END DATA CAPTURE !!!\n`);
+        console.log(`!!! END DATA CAPTURE (total lines captured: ${this.localFSResponseLines?.length || 0}) !!!\n`);
       }
 
       // Enhanced debugging for $I responses
@@ -580,6 +591,11 @@ class FluidNCController {
 
     // Grbl
     this.runner = new FluidNCRunner();
+
+    // Initialize LocalFS response tracking
+    this.expectingLocalFSResponse = false;
+    this.localFSResponseStartTime = 0;
+    this.localFSResponseLines = [];
 
     this.runner.on('raw', noop);
 
@@ -1802,6 +1818,7 @@ class FluidNCController {
         // Set flag to track LocalFS response
         this.expectingLocalFSResponse = true;
         this.localFSResponseStartTime = Date.now();
+        this.localFSResponseLines = []; // Track all responses
 
         // Send LocalFS list command
         this.writeln('$LocalFS/List');
@@ -1812,6 +1829,11 @@ class FluidNCController {
           const fileList = this.runner.getFileList();
           console.log(`\n======= FluidNC Controller: File List Timer Expired =======`);
           console.log(`FluidNC Controller: Timer callback - found ${fileList.length} files`);
+          console.log('FluidNC Controller: All LocalFS response lines captured:');
+          this.localFSResponseLines.forEach((line, index) => {
+            console.log(`  Response ${index}: "${line}"`);
+          });
+          
           if (fileList.length > 0) {
             console.log('FluidNC Controller: Files found:');
             fileList.forEach((file, index) => {
@@ -1820,12 +1842,58 @@ class FluidNCController {
           } else {
             console.log('FluidNC Controller: No files found in list!');
             console.log('FluidNC Controller: This suggests parsing failed or device returned no files');
+            console.log('FluidNC Controller: Attempting emergency re-parse of all captured lines...');
+            
+            // Emergency re-parsing attempt
+            this.localFSResponseLines.forEach((line, index) => {
+              console.log(`\nEmergency parsing attempt ${index} for: "${line}"`);
+              
+              // Try to manually extract file information
+              const patterns = [
+                // Basic filename detection
+                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))/gi,
+                // With size
+                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\s+(\d+)/gi,
+                // Tab separated
+                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\t+(\d*)/gi,
+                // Colon separated
+                /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex)):(\d+)/gi
+              ];
+              
+              patterns.forEach((pattern, patternIndex) => {
+                const matches = [...line.matchAll(pattern)];
+                if (matches.length > 0) {
+                  console.log(`  Pattern ${patternIndex} found ${matches.length} matches:`);
+                  matches.forEach((match, matchIndex) => {
+                    const filename = match[1];
+                    const size = match[3] || match[2] || '0';
+                    console.log(`    Match ${matchIndex}: filename="${filename}", size="${size}"`);
+                    
+                    // Manually add to file list
+                    const mockFile = {
+                      name: filename,
+                      size: parseInt(size, 10) || 0,
+                      type: 'file'
+                    };
+                    this.runner.addFile(mockFile);
+                    console.log(`    Emergency: Added file "${filename}" to list`);
+                  });
+                }
+              });
+            });
+            
+            // Check if emergency parsing found anything
+            const newFileList = this.runner.getFileList();
+            if (newFileList.length > 0) {
+              console.log(`Emergency parsing found ${newFileList.length} files!`);
+            }
           }
-          console.log(`FluidNC Controller: Emitting file list with ${fileList.length} files`);
-          this.emit('fluidnc:fileList', fileList);
+          console.log(`FluidNC Controller: Emitting file list with ${this.runner.getFileList().length} files`);
+          this.emit('fluidnc:fileList', this.runner.getFileList());
           this.expectingLocalFSResponse = false;
+          this.localFSResponseLines = [];
           console.log('======= End File List Operation =======\n');
-        }, 1000); // 1 second delay to allow all file entries to be parsed
+        }, 2000); // Increased to 2 seconds to allow more time for responses
       },
       'fluidnc:deleteFile': async () => {
         const [filename, callback = noop] = args;
