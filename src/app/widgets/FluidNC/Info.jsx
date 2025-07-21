@@ -57,7 +57,6 @@ class Info extends PureComponent {
             </tr>
           </tbody>
         </Table>
-        
         {!deviceInfo.ip ? (
           <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
             <small style={{ color: '#777' }}>
