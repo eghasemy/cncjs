@@ -56,7 +56,9 @@ class GamepadWidget extends PureComponent {
         activeAxes: new Set(), // Set of active axis keys (e.g., 'X+', 'Y-')
         lastCommandTime: {},
         jogCancelTimeout: null,
-        pendingStarts: {} // Track pending setTimeout calls for axis starts
+        pendingStarts: {}, // Track pending setTimeout calls for axis starts
+        lastMagnitudes: {}, // Track previous magnitude for each axis direction
+        lastUpdateTime: {} // Track when each axis was last updated
     };
 
     actions = {
@@ -255,7 +257,7 @@ class GamepadWidget extends PureComponent {
         return baseRates.X; // Default
     };
 
-    // Enhanced continuous jogging implementation inspired by OpenBuilds CONTROL
+    // Enhanced continuous jogging implementation with reduced frequency updates
     handleContinuousJog = (axis, direction, magnitude) => {
         const { continuousJog } = this.state;
         if (!continuousJog) {
@@ -263,12 +265,28 @@ class GamepadWidget extends PureComponent {
         }
 
         const axisKey = `${axis}${direction}`;
-        const isActive = magnitude > 0.2; // Lowered threshold from 0.5 to 0.2 for better responsiveness
+        const isActive = magnitude > 0.2; // Threshold for active jogging
         const wasActive = this.continuousJogState.activeAxes.has(axisKey);
+        const now = Date.now();
+        
+        // Get previous magnitude and update time for this axis
+        const lastMagnitude = this.continuousJogState.lastMagnitudes[axisKey] || 0;
+        const lastUpdateTime = this.continuousJogState.lastUpdateTime[axisKey] || 0;
+        
+        // Constants for reduced frequency updates
+        const MAGNITUDE_THRESHOLD = 0.1; // Minimum change in magnitude to trigger update
+        const MIN_UPDATE_INTERVAL = 250; // Minimum time between updates (250ms)
+        
+        // Calculate if magnitude has changed significantly
+        const magnitudeChanged = Math.abs(magnitude - lastMagnitude) > MAGNITUDE_THRESHOLD;
+        const timeElapsed = now - lastUpdateTime;
+        const intervalPassed = timeElapsed > MIN_UPDATE_INTERVAL;
 
-        // Debug logging
-        if (magnitude > 0.1 || wasActive) {
-            console.log(`[Gamepad] handleContinuousJog: ${axisKey}, magnitude=${magnitude.toFixed(3)}, isActive=${isActive}, wasActive=${wasActive}, activeAxes=[${Array.from(this.continuousJogState.activeAxes).join(',')}]`);
+        // Debug logging for significant events
+        if (magnitude > 0.1 || wasActive || magnitudeChanged) {
+            console.log(`[Gamepad] handleContinuousJog: ${axisKey}, magnitude=${magnitude.toFixed(3)}, ` +
+                       `lastMag=${lastMagnitude.toFixed(3)}, magnitudeChanged=${magnitudeChanged}, ` +
+                       `intervalPassed=${intervalPassed}, timeElapsed=${timeElapsed}ms`);
         }
 
         if (isActive && !wasActive) {
@@ -276,14 +294,24 @@ class GamepadWidget extends PureComponent {
             console.log(`[Gamepad] Starting continuous jog: ${axisKey}`);
             this.startContinuousJog(axis, direction, magnitude);
             this.continuousJogState.activeAxes.add(axisKey);
+            this.continuousJogState.lastMagnitudes[axisKey] = magnitude;
+            this.continuousJogState.lastUpdateTime[axisKey] = now;
         } else if (!isActive && wasActive) {
             // Stop continuous jog
             console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
             this.stopContinuousJog(axisKey);
             this.continuousJogState.activeAxes.delete(axisKey);
+            // Clear tracking data for this axis
+            delete this.continuousJogState.lastMagnitudes[axisKey];
+            delete this.continuousJogState.lastUpdateTime[axisKey];
         } else if (isActive && wasActive) {
-            // Update jog rate based on magnitude change
-            this.updateContinuousJog(axis, direction, magnitude);
+            // Only update if magnitude changed significantly OR minimum interval has passed
+            if (magnitudeChanged || intervalPassed) {
+                console.log(`[Gamepad] Updating continuous jog: ${axisKey} (magnitudeChanged=${magnitudeChanged}, intervalPassed=${intervalPassed})`);
+                this.updateContinuousJogReduced(axis, direction, magnitude);
+                this.continuousJogState.lastMagnitudes[axisKey] = magnitude;
+                this.continuousJogState.lastUpdateTime[axisKey] = now;
+            }
         }
 
         return true; // Handled by continuous jogging
@@ -337,6 +365,25 @@ class GamepadWidget extends PureComponent {
         }
     };
 
+    // Reduced frequency update method - avoids constant cancel/restart cycles
+    updateContinuousJogReduced = (axis, direction, magnitude) => {
+        const axisKey = `${axis}${direction}`;
+        
+        console.log(`[Gamepad] updateContinuousJogReduced: ${axisKey}, new magnitude=${magnitude.toFixed(3)}`);
+        
+        // For reduced frequency updates, we cancel the current jog and start a new one
+        // but only when significant changes occur (as determined by handleContinuousJog)
+        this.stopContinuousJog(axisKey, false);
+        
+        // Start new jog command with updated magnitude
+        // Small delay to ensure cancel command is processed
+        setTimeout(() => {
+            if (this.continuousJogState.activeAxes.has(axisKey)) {
+                this.startContinuousJog(axis, direction, magnitude);
+            }
+        }, 25);
+    };
+
     stopContinuousJog = (axisKey, removeFromActive = true) => {
         console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
 
@@ -381,6 +428,9 @@ class GamepadWidget extends PureComponent {
             controller.command('jogCancel');
             this.continuousJogState.activeAxes.clear();
             this.continuousJogState.lastCommandTime = {};
+            // Clear reduced frequency tracking data
+            this.continuousJogState.lastMagnitudes = {};
+            this.continuousJogState.lastUpdateTime = {};
         }
     };
 
