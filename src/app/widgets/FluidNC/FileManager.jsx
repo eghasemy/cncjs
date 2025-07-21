@@ -38,18 +38,36 @@ class FileManager extends PureComponent {
   subscribe() {
     const tokens = [
       controller.addListener('fluidnc:deviceInfo', (deviceInfo) => {
+        console.log('FileManager: Device info received:', deviceInfo);
         this.setState({ deviceInfo });
+
+        // Check if we have a valid IP address
+        if (deviceInfo.ip) {
+          const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+          if (ipPattern.test(deviceInfo.ip)) {
+            console.log(`FileManager: Valid IP address detected: ${deviceInfo.ip}`);
+          } else {
+            console.warn(`FileManager: Invalid IP address format: ${deviceInfo.ip}`);
+          }
+        } else {
+          console.log('FileManager: No IP address in device info');
+        }
       }),
       controller.addListener('fluidnc:activeConfig', (activeConfig) => {
+        console.log('FileManager: Active config received:', activeConfig);
         this.setState({ activeConfig });
       }),
       controller.addListener('fluidnc:fileList', (files) => {
+        console.log('FileManager: File list received:', files);
         // Clear timeout if we receive a response
         if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = null;
         }
         this.setState({ files, loading: false });
+      }),
+      controller.addListener('fluidnc:localfs', (data) => {
+        console.log('FileManager: LocalFS event received:', data);
       })
     ];
     this.subscriptionTokens = tokens;
@@ -73,12 +91,14 @@ class FileManager extends PureComponent {
   };
 
   loadFiles = () => {
+    console.log('FileManager: Loading files...');
     this.setState({ loading: true, loadingMessage: 'Loading files...' });
     // Request file list from FluidNC
     controller.command('fluidnc:listFiles');
 
     // Add timeout to clear loading state if no response
     this.loadingTimeout = setTimeout(() => {
+      console.log('FileManager: File loading timed out after 5 seconds');
       this.setState({
         loading: false,
         files: [] // Empty list instead of hanging

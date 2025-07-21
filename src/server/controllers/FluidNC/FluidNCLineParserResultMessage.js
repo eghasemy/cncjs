@@ -25,6 +25,15 @@ class FluidNCLineParserResultMessage {
       // If we found structured data, include it
       if (Object.keys(data).length > 0) {
         payload.data = data;
+
+        // Validate IP address format if present
+        if (data.IP) {
+          const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+          if (!ipPattern.test(data.IP)) {
+            // Mark as invalid IP but still include it
+            payload.invalidIP = true;
+          }
+        }
       }
     }
 

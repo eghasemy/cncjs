@@ -1695,8 +1695,16 @@ class FluidNCController {
       'fluidnc:listFiles': () => {
         // Clear existing file list
         this.runner.clearFileList();
+        console.log('FluidNC Controller: Sending $LocalFS/List command');
         // Send LocalFS list command
         this.writeln('$LocalFS/List');
+
+        // Set a timer to emit the file list after a short delay to allow all files to be parsed
+        setTimeout(() => {
+          const fileList = this.runner.getFileList();
+          console.log(`FluidNC Controller: Emitting file list with ${fileList.length} files`);
+          this.emit('fluidnc:fileList', fileList);
+        }, 1000); // 1 second delay to allow all file entries to be parsed
       },
       'fluidnc:deleteFile': async () => {
         const [filename, callback = noop] = args;

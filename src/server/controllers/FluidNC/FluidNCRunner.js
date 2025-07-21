@@ -223,18 +223,25 @@ class FluidNCRunner extends events.EventEmitter {
     }
     if (type === FluidNCLineParserResultMessage) {
       // Handle FluidNC [MSG:...] messages
-      const { message, data } = payload;
+      const { message, data, invalidIP } = payload;
 
       // Parse device info from status messages
       if (data && data.IP) {
-        this.fluidnc.deviceInfo = {
-          ...this.fluidnc.deviceInfo,
-          ip: data.IP,
-          mode: data.Mode || this.fluidnc.deviceInfo.mode,
-          ssid: data.SSID || this.fluidnc.deviceInfo.ssid,
-          status: data.Status || this.fluidnc.deviceInfo.status,
-          mac: data.MAC || this.fluidnc.deviceInfo.mac
-        };
+        if (invalidIP) {
+          // Log warning about invalid IP but still process the message
+          console.warn(`FluidNC: Invalid IP address format detected: ${data.IP}`);
+        } else {
+          // Valid IP address found - update device info
+          this.fluidnc.deviceInfo = {
+            ...this.fluidnc.deviceInfo,
+            ip: data.IP,
+            mode: data.Mode || this.fluidnc.deviceInfo.mode,
+            ssid: data.SSID || this.fluidnc.deviceInfo.ssid,
+            status: data.Status || this.fluidnc.deviceInfo.status,
+            mac: data.MAC || this.fluidnc.deviceInfo.mac
+          };
+          console.log(`FluidNC: Device IP successfully parsed: ${data.IP}`);
+        }
       }
 
       // Extract machine name from messages like "Machine: Leroy"
@@ -257,6 +264,9 @@ class FluidNCRunner extends events.EventEmitter {
         } else {
           this.fluidnc.files.push(file);
         }
+        console.log(`FluidNC: File added to list: ${file.name} (${file.size} bytes, ${file.type})`);
+      } else {
+        console.log(`FluidNC: LocalFS response - command: ${command}, response: ${response}`);
       }
 
       this.emit('fluidnc:localfs', payload);
