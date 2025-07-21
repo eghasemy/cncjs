@@ -39,6 +39,7 @@ class FileManager extends PureComponent {
     const tokens = [
       controller.addListener('fluidnc:deviceInfo', (deviceInfo) => {
         console.log('FileManager: Device info received:', deviceInfo);
+        const prevDeviceInfo = this.state.deviceInfo;
         this.setState({ deviceInfo });
 
         // Check if we have a valid IP address
@@ -46,6 +47,14 @@ class FileManager extends PureComponent {
           const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
           if (ipPattern.test(deviceInfo.ip)) {
             console.log(`FileManager: Valid IP address detected: ${deviceInfo.ip}`);
+            
+            // If IP changed from empty/invalid to valid, automatically reload files
+            if (!prevDeviceInfo.ip || !ipPattern.test(prevDeviceInfo.ip)) {
+              console.log('FileManager: IP address newly available, reloading files...');
+              setTimeout(() => {
+                this.loadFiles();
+              }, 500); // Small delay to allow connection to stabilize
+            }
           } else {
             console.warn(`FileManager: Invalid IP address format: ${deviceInfo.ip}`);
           }

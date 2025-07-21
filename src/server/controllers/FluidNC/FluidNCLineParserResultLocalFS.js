@@ -1,5 +1,7 @@
 class FluidNCLineParserResultLocalFS {
   static parse(line) {
+    console.log(`FluidNC LocalFS Parser: Attempting to parse line: "${line}"`);
+    
     // Parse LocalFS command responses
     // Examples:
     // $LocalFS/List response: filename:size:type
@@ -10,6 +12,7 @@ class FluidNCLineParserResultLocalFS {
     const fileListMatch = line.match(/^(.+):(\d+):(file|dir)$/);
     if (fileListMatch) {
       const [, name, size, type] = fileListMatch;
+      console.log(`FluidNC LocalFS Parser: Parsed file entry - name: ${name}, size: ${size}, type: ${type}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -25,6 +28,7 @@ class FluidNCLineParserResultLocalFS {
 
     // Check for other LocalFS responses
     if (line.startsWith('$LocalFS/')) {
+      console.log(`FluidNC LocalFS Parser: Found LocalFS command response: ${line}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -34,6 +38,7 @@ class FluidNCLineParserResultLocalFS {
       };
     }
 
+    console.log(`FluidNC LocalFS Parser: Line does not match LocalFS pattern: "${line}"`);
     return null;
   }
 }
