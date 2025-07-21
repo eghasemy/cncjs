@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { Table, FormGroup, InputGroup, FormControl, Button } from 'react-bootstrap';
+import { ToastNotification } from 'app/components/Notifications';
 import controller from 'app/lib/controller';
 import i18n from 'app/lib/i18n';
 
@@ -12,7 +13,8 @@ class Info extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      manualIP: ''
+      manualIP: '',
+      errorMessage: ''
     };
   }
 
@@ -29,20 +31,36 @@ class Info extends PureComponent {
       const ipPattern = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
       if (ipPattern.test(manualIP.trim())) {
         console.log(`FluidNC Info: Setting manual IP address: ${manualIP.trim()}`);
+        // Clear any previous error message
+        this.setState({ errorMessage: '' });
         // Emit the manual IP to the controller
         controller.command('fluidnc:setManualIP', manualIP.trim());
       } else {
-        alert(i18n._('Invalid IP address format. Please enter a valid IP address (e.g., 192.168.1.100)'));
+        this.setState({
+          errorMessage: i18n._('Invalid IP address format. Please enter a valid IP address (e.g., 192.168.1.100)')
+        });
       }
     }
   };
 
   render() {
     const { state } = this.props;
+    const { errorMessage } = this.state;
     const deviceInfo = state.fluidnc ? state.fluidnc.deviceInfo : {};
 
     return (
       <div>
+        {errorMessage ? (
+          <ToastNotification
+            style={{ marginBottom: '10px' }}
+            type="error"
+            onDismiss={() => {
+              this.setState({ errorMessage: '' });
+            }}
+          >
+            {errorMessage}
+          </ToastNotification>
+        ) : null}
         <h5>{i18n._('Device Information')}</h5>
         <Table striped bordered>
           <tbody>
