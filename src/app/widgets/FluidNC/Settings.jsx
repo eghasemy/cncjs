@@ -5,6 +5,7 @@ import { Nav, NavItem } from '@trendmicro/react-navs';
 import i18n from 'app/lib/i18n';
 import FileManager from './FileManager';
 import Calibrate from './Calibrate';
+import Info from './Info';
 
 class Settings extends PureComponent {
   static propTypes = {
@@ -13,7 +14,7 @@ class Settings extends PureComponent {
   };
 
   state = {
-    activeTab: 'filemanager'
+    activeTab: 'info'
   };
 
   render() {
@@ -44,6 +45,9 @@ class Settings extends PureComponent {
               borderBottom: '1px solid #ddd'
             }}
           >
+            <NavItem eventKey="info">
+              {i18n._('Info')}
+            </NavItem>
             <NavItem eventKey="filemanager">
               {i18n._('File Manager')}
             </NavItem>
@@ -52,6 +56,12 @@ class Settings extends PureComponent {
             </NavItem>
           </Nav>
           <div style={{ padding: '20px' }}>
+            {activeTab === 'info' ? (
+              <Info
+                state={state}
+                actions={actions}
+              />
+            ) : null}
             {activeTab === 'filemanager' ? (
               <FileManager
                 state={state}

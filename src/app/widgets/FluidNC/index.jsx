@@ -153,6 +153,14 @@ class FluidNCWidget extends PureComponent {
           }
         }));
       }
+    },
+    'fluidnc:deviceInfo': (deviceInfo) => {
+      this.setState(state => ({
+        fluidnc: {
+          ...state.fluidnc,
+          deviceInfo: deviceInfo
+        }
+      }));
     }
   };
 
@@ -187,6 +195,16 @@ class FluidNCWidget extends PureComponent {
         type: controller.type,
         settings: controller.settings,
         state: controller.state
+      },
+      fluidnc: {
+        deviceInfo: {
+          ip: '',
+          machine: '',
+          mode: '',
+          ssid: '',
+          status: '',
+          mac: ''
+        }
       },
       modal: {
         name: MODAL_NONE,
