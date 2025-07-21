@@ -79,12 +79,12 @@ class FluidNCController {
       const dataStr = '' + data;
       console.log(`FluidNC Controller: Received data: "${dataStr}"`);
       log.silly(`< ${dataStr}`);
-      
+
       // Enhanced debugging for $I responses
       if (dataStr.includes('[MSG:') || dataStr.includes('MSG:')) {
         console.log(`FluidNC Controller: MSG data detected - passing to runner: "${dataStr}"`);
       }
-      
+
       this.runner.parse(dataStr);
     },
     close: (err) => {
@@ -713,8 +713,13 @@ class FluidNCController {
         };
         console.log(`FluidNC Controller: Adding file to list: ${filename} (${size} bytes)`);
         this.runner.addFile(file);
+
+        // Emit updated file list immediately after adding each file
+        const fileList = this.runner.getFileList();
+        console.log(`FluidNC Controller: Emitting updated file list with ${fileList.length} files after adding ${filename}`);
+        this.emit('fluidnc:fileList', fileList);
       }
-      
+
       this.emit('serialport:read', res.raw);
     });
 
@@ -1727,7 +1732,7 @@ class FluidNCController {
       'fluidnc:setManualIP': () => {
         const [ip] = args;
         console.log(`FluidNC Controller: Setting manual IP address: ${ip}`);
-        
+
         // Update the device info with manual IP
         this.runner.fluidnc.deviceInfo.ip = ip;
         const deviceInfo = this.runner.getDeviceInfo();

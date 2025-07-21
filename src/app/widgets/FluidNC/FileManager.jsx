@@ -36,6 +36,7 @@ class FileManager extends PureComponent {
   }
 
   subscribe() {
+    console.log('FileManager: Subscribing to controller events...');
     const tokens = [
       controller.addListener('fluidnc:deviceInfo', (deviceInfo) => {
         console.log('FileManager: Device info received:', deviceInfo);
@@ -66,7 +67,7 @@ class FileManager extends PureComponent {
         this.setState({ activeConfig });
       }),
       controller.addListener('fluidnc:fileList', (files) => {
-        console.log('FileManager: File list received:', files);
+        console.log('FileManager: File list received - count:', files ? files.length : 0, 'files:', files);
         // Clear timeout if we receive a response
         if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
@@ -79,6 +80,7 @@ class FileManager extends PureComponent {
       })
     ];
     this.subscriptionTokens = tokens;
+    console.log('FileManager: Subscribed to', tokens.length, 'controller events');
   }
 
   unsubscribe() {
