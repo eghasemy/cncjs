@@ -10,8 +10,16 @@ class FluidNCLineParserResultFeedback {
       return null;
     }
 
+    const message = r[1];
+
+    // Skip FluidNC-specific structured messages (those with key=value pairs)
+    // Let FluidNCLineParserResultMessage handle those
+    if (message.includes('=') && (message.includes('IP=') || message.includes('Mode=') || message.includes('Status='))) {
+      return null;
+    }
+
     const payload = {
-      message: r[1]
+      message: message
     };
 
     return {

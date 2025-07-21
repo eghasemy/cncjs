@@ -62,12 +62,12 @@ class FluidNCLineParser {
       // [echo:] (v1.1)
       FluidNCLineParserResultEcho,
 
+      // FluidNC [MSG:...] format messages (must come before generic feedback parser)
+      FluidNCLineParserResultMessage,
+
       // [] (v0.9)
       // [MSG:] (v1.1)
       FluidNCLineParserResultFeedback,
-
-      // FluidNC [MSG:...] format messages
-      FluidNCLineParserResultMessage,
 
       // LocalFS responses
       FluidNCLineParserResultLocalFS,

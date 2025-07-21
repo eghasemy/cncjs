@@ -89,6 +89,12 @@ class FluidNCRunner extends events.EventEmitter {
     const { type, payload } = result;
     console.log(`FluidNC Runner: Parse result - type: ${type ? type.name : 'null'}, payload:`, payload);
 
+    // Enhanced debugging for message parsing
+    if (data.includes('[MSG:') || data.includes('MSG:')) {
+      console.log(`FluidNC Runner: MSG data being parsed: "${data}"`);
+      console.log(`FluidNC Runner: Parse result for MSG: type=${type ? type.name : 'null'}`);
+    }
+
     if (type === FluidNCLineParserResultStatus) {
       // Grbl v1.1
       // WCO:0.000,10.000,2.500
@@ -250,6 +256,10 @@ class FluidNCRunner extends events.EventEmitter {
           };
           console.log(`FluidNC Runner: Device IP changed from "${oldIP}" to "${data.IP}"`);
           console.log('FluidNC Runner: Current device info:', this.fluidnc.deviceInfo);
+          
+          // Emit device info update
+          console.log('FluidNC Runner: Emitting fluidnc:deviceInfo event');
+          this.emit('fluidnc:deviceInfo', this.fluidnc.deviceInfo);
         }
       }
 
@@ -258,6 +268,10 @@ class FluidNCRunner extends events.EventEmitter {
         const machineName = message.substring(9);
         console.log(`FluidNC Runner: Setting machine name to: ${machineName}`);
         this.fluidnc.deviceInfo.machine = machineName;
+        
+        // Emit device info update when machine name changes
+        console.log('FluidNC Runner: Emitting fluidnc:deviceInfo event for machine name update');
+        this.emit('fluidnc:deviceInfo', this.fluidnc.deviceInfo);
       }
 
       console.log(`FluidNC Runner: Emitting fluidnc:message event`);

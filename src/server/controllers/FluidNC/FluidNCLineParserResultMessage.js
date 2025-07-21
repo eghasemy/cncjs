@@ -1,12 +1,16 @@
 class FluidNCLineParserResultMessage {
   static parse(line) {
+    console.log(`FluidNC Message Parser: Attempting to parse line: "${line}"`);
+    
     // Parse FluidNC [MSG:...] format messages
     // Example: [MSG:Mode=STA:SSID=G&E:Status=Connected:IP=10.0.0.80:MAC=F0-24-F9-F8-72-5C]
     const r = line.match(/^\[MSG:(.+)\]$/);
     if (!r) {
+      console.log(`FluidNC Message Parser: Line does not match MSG pattern: "${line}"`);
       return null;
     }
 
+    console.log(`FluidNC Message Parser: MSG pattern matched!`);
     const message = r[1];
     const payload = { message };
 
@@ -24,6 +28,7 @@ class FluidNCLineParserResultMessage {
     // Try to parse structured message data using regex to properly handle key=value pairs
     // This handles cases like Mode=STA:SSID=G&E:Status=Connected:IP=10.0.0.80:MAC=F0-24-F9-F8-72-5C
     if (message.includes('=')) {
+      console.log(`FluidNC Message Parser: Found structured data in message`);
       const data = {};
 
       // Use regex to find key=value patterns, where value continues until : or end of string
@@ -55,6 +60,11 @@ class FluidNCLineParserResultMessage {
         }
       }
     }
+
+    console.log(`FluidNC Message Parser: Returning parsed result:`, {
+      type: FluidNCLineParserResultMessage,
+      payload: payload
+    });
 
     return {
       type: FluidNCLineParserResultMessage,

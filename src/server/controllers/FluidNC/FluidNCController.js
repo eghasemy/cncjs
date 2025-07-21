@@ -76,9 +76,16 @@ class FluidNCController {
 
   connectionEventListener = {
     data: (data) => {
-      console.log(`FluidNC Controller: Received data: "${data}"`);
-      log.silly(`< ${data}`);
-      this.runner.parse('' + data);
+      const dataStr = '' + data;
+      console.log(`FluidNC Controller: Received data: "${dataStr}"`);
+      log.silly(`< ${dataStr}`);
+      
+      // Enhanced debugging for $I responses
+      if (dataStr.includes('[MSG:') || dataStr.includes('MSG:')) {
+        console.log(`FluidNC Controller: MSG data detected - passing to runner: "${dataStr}"`);
+      }
+      
+      this.runner.parse(dataStr);
     },
     close: (err) => {
       this.ready = false;
@@ -737,11 +744,12 @@ class FluidNCController {
 
     this.runner.on('fluidnc:message', (res) => {
       console.log('FluidNC Controller: Message event received:', res);
-      // Emit device info when it changes
-      const deviceInfo = this.runner.getDeviceInfo();
-      console.log('FluidNC Controller: Device info updated, emitting to clients:', deviceInfo);
-      this.emit('fluidnc:deviceInfo', deviceInfo);
       this.emit('fluidnc:message', res);
+    });
+
+    this.runner.on('fluidnc:deviceInfo', (deviceInfo) => {
+      console.log('FluidNC Controller: Device info event received from runner:', deviceInfo);
+      this.emit('fluidnc:deviceInfo', deviceInfo);
     });
 
     this.runner.on('fluidnc:localfs', (res) => {
