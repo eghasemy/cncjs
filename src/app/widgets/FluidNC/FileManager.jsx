@@ -160,6 +160,18 @@ class FileManager extends PureComponent {
     });
   };
 
+  handleDebugAddFile = () => {
+    console.log('FileManager: Adding debug test file');
+    const testFile = {
+      name: 'debug-test.yaml',
+      size: 1024,
+      type: 'file'
+    };
+    const currentFiles = [...this.state.files, testFile];
+    this.setState({ files: currentFiles });
+    console.log('FileManager: Debug file added to state');
+  };
+
   handleDownload = (file) => {
     // Request file download from FluidNC device
     controller.command('fluidnc:downloadFile', file.name, (error, fileData) => {
@@ -321,6 +333,14 @@ class FileManager extends PureComponent {
           >
             <i className="fa fa-plus" />
             <span style={{ marginLeft: '5px' }}>Add Mock</span>
+          </Button>
+          <Button
+            bsStyle="warning"
+            onClick={this.handleDebugAddFile}
+            style={{ marginLeft: '10px' }}
+          >
+            <i className="fa fa-wrench" />
+            <span style={{ marginLeft: '5px' }}>Add Test File</span>
           </Button>
         </div>
 

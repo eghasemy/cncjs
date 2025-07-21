@@ -86,7 +86,7 @@ class FluidNCController {
         console.log(`Trimmed: "${dataStr.trim()}"`);
         console.log(`Contains known keywords: LocalFS=${dataStr.includes('LocalFS')}, FILE=${dataStr.includes('FILE')}, yaml=${dataStr.includes('.yaml')}, gcode=${dataStr.includes('.gcode')}`);
         console.log(`Raw bytes:`, Array.from(dataStr).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
-        
+
         // Store each line of response for later analysis
         if (dataStr.includes('\n')) {
           dataStr.split('\n').forEach((line, index) => {
@@ -104,6 +104,17 @@ class FluidNCController {
             this.localFSResponseLines.push(trimmed);
           }
         }
+
+        // Immediately test if any captured lines look like file listings
+        if (this.localFSResponseLines && this.localFSResponseLines.length > 0) {
+          console.log(`\n=== IMMEDIATE PATTERN TESTING ===`);
+          this.localFSResponseLines.slice(-1).forEach((line, index) => { // Test only the newest line
+            console.log(`\nTesting newest line for file patterns: "${line}"`);
+            this.testFilePatterns(line);
+          });
+          console.log(`=== END IMMEDIATE PATTERN TESTING ===\n`);
+        }
+
         console.log(`!!! END DATA CAPTURE (total lines captured: ${this.localFSResponseLines?.length || 0}) !!!\n`);
       }
 
@@ -1175,6 +1186,105 @@ class FluidNCController {
     };
   }
 
+  // Test file patterns for debugging LocalFS responses
+  testFilePatterns(line) {
+    console.log(`    Testing patterns for: "${line}"`);
+
+    // All known FluidNC file listing patterns
+    const patterns = [
+      // [FILE: filename|SIZE:size] format
+      { name: '[FILE: |SIZE:]', regex: /^\[FILE:\s*([^|]+)\|SIZE:(\d+)\]$/ },
+
+      // Tab-separated values (filename<TAB>size<TAB>type)
+      { name: 'tab-separated', regex: /^(\S+\.\w+)\s*\t+\s*(\d+)\s*(?:\t+\s*(\w+))?$/ },
+
+      // Space-separated values
+      { name: 'space-separated', regex: /^(\S+\.\w+)\s+(\d+)\s*(\w*)$/ },
+
+      // Colon-separated format (filename:size:type)
+      { name: 'colon-separated', regex: /^(.+):(\d+):(file|dir)$/ },
+
+      // Plain filename (just the filename on its own line)
+      { name: 'plain-filename', regex: /^([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))$/ },
+
+      // Filenames with whitespace
+      { name: 'filename-with-spaces', regex: /^\s*([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\s*$/ },
+
+      // Any line containing a filename
+      { name: 'contains-filename', regex: /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))/ },
+
+      // Quoted filenames
+      { name: 'quoted-filename', regex: /"([^"]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))"/ },
+
+      // Directory listing format (ls -la style)
+      { name: 'ls-style', regex: /^[-rwx]{10}\s+\d+\s+\w+\s+\w+\s+(\d+)\s+.+?\s+([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))$/ },
+
+      // Alternative formats
+      { name: 'filename-size-bytes', regex: /^([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))\s+(\d+)\s*bytes?/ },
+      { name: 'size-filename', regex: /^(\d+)\s+([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex))/ }
+    ];
+
+    patterns.forEach((pattern, index) => {
+      const match = line.match(pattern.regex);
+      if (match) {
+        console.log(`    ✓ Pattern ${index} (${pattern.name}) MATCHED!`);
+        console.log(`      Match groups:`, match);
+
+        // Try to extract filename and size
+        let filename = null;
+        let size = 0;
+
+        if (pattern.name === '[FILE: |SIZE:]') {
+          filename = match[1]?.trim();
+          size = parseInt(match[2], 10) || 0;
+        } else if (pattern.name === 'colon-separated') {
+          filename = match[1];
+          size = parseInt(match[2], 10) || 0;
+        } else if (pattern.name.includes('space') || pattern.name.includes('tab')) {
+          filename = match[1];
+          size = parseInt(match[2], 10) || 0;
+        } else if (pattern.name.includes('filename')) {
+          filename = match[1] || match[2]; // Try both capture groups
+          // Look for size in the line
+          const sizeMatch = line.match(/(\d+)/);
+          size = sizeMatch ? parseInt(sizeMatch[1], 10) : 0;
+        }
+
+        if (filename) {
+          console.log(`      → Extracted: filename="${filename}", size=${size}`);
+
+          // Try to add this file to the runner immediately
+          const file = {
+            name: filename,
+            size: size,
+            type: 'file'
+          };
+
+          this.runner.addFile(file);
+          console.log(`      → Added file to runner list: ${filename}`);
+
+          // Emit the updated file list immediately
+          const currentFiles = this.runner.getFileList();
+          console.log(`      → Emitting file list with ${currentFiles.length} files`);
+          this.emit('fluidnc:fileList', [...currentFiles]);
+        }
+      }
+    });
+
+    if (!patterns.some(p => line.match(p.regex))) {
+      console.log(`    ✗ No patterns matched for: "${line}"`);
+      console.log(`    Line analysis:`);
+      console.log(`      - Length: ${line.length}`);
+      console.log(`      - Has dots: ${line.includes('.')}`);
+      console.log(`      - Has spaces: ${line.includes(' ')}`);
+      console.log(`      - Has tabs: ${line.includes('\t')}`);
+      console.log(`      - Has colons: ${line.includes(':')}`);
+      console.log(`      - Has pipes: ${line.includes('|')}`);
+      console.log(`      - Has brackets: ${line.includes('[')}`);
+      console.log(`      - Char codes: [${Array.from(line).map(c => c.charCodeAt(0)).join(', ')}]`);
+    }
+  }
+
   open(callback = noop) {
     const { port, baudrate, pin } = this.options;
 
@@ -1833,7 +1943,7 @@ class FluidNCController {
           this.localFSResponseLines.forEach((line, index) => {
             console.log(`  Response ${index}: "${line}"`);
           });
-          
+
           if (fileList.length > 0) {
             console.log('FluidNC Controller: Files found:');
             fileList.forEach((file, index) => {
@@ -1843,11 +1953,11 @@ class FluidNCController {
             console.log('FluidNC Controller: No files found in list!');
             console.log('FluidNC Controller: This suggests parsing failed or device returned no files');
             console.log('FluidNC Controller: Attempting emergency re-parse of all captured lines...');
-            
+
             // Emergency re-parsing attempt
             this.localFSResponseLines.forEach((line, index) => {
               console.log(`\nEmergency parsing attempt ${index} for: "${line}"`);
-              
+
               // Try to manually extract file information
               const patterns = [
                 // Basic filename detection
@@ -1859,7 +1969,7 @@ class FluidNCController {
                 // Colon separated
                 /([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg|bin|hex)):(\d+)/gi
               ];
-              
+
               patterns.forEach((pattern, patternIndex) => {
                 const matches = [...line.matchAll(pattern)];
                 if (matches.length > 0) {
@@ -1868,7 +1978,7 @@ class FluidNCController {
                     const filename = match[1];
                     const size = match[3] || match[2] || '0';
                     console.log(`    Match ${matchIndex}: filename="${filename}", size="${size}"`);
-                    
+
                     // Manually add to file list
                     const mockFile = {
                       name: filename,
@@ -1881,7 +1991,7 @@ class FluidNCController {
                 }
               });
             });
-            
+
             // Check if emergency parsing found anything
             const newFileList = this.runner.getFileList();
             if (newFileList.length > 0) {
