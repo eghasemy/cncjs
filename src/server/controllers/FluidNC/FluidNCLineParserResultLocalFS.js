@@ -1,7 +1,7 @@
 class FluidNCLineParserResultLocalFS {
   static parse(line) {
     console.log(`FluidNC LocalFS Parser: Attempting to parse line: "${line}"`);
-    
+
     // Parse LocalFS command responses - try multiple formats
     // FluidNC may return files in various formats:
     // 1. filename:size:type (expected format)
@@ -103,7 +103,7 @@ class FluidNCLineParserResultLocalFS {
     if (line.includes('LocalFS') || line.includes('FILE:') || line.includes('.yaml') || line.includes('.gcode')) {
       console.log(`FluidNC LocalFS Parser: Line contains file-related keywords but doesn't match any pattern: "${line}"`);
     }
-    
+
     return null;
   }
 }

@@ -5,9 +5,6 @@ import {
 } from 'ensure-type';
 import * as gcodeParser from 'gcode-parser';
 import _ from 'lodash';
-import http from 'http';
-import https from 'https';
-import url from 'url';
 import SerialConnection from '../../lib/SerialConnection';
 import EventTrigger from '../../lib/EventTrigger';
 import Feeder from '../../lib/Feeder';
@@ -27,6 +24,7 @@ import config from '../../services/configstore';
 import monitor from '../../services/monitor';
 import taskRunner from '../../services/taskrunner';
 import store from '../../store';
+import XModem from '../../lib/XModem';
 import {
   GLOBAL_OBJECTS as globalObjects,
   // Builtin Commands
@@ -1815,118 +1813,94 @@ class FluidNCController {
     handler();
   }
 
-  // FluidNC HTTP file operations
+  // FluidNC XModem file operations
   async uploadFileToDevice(fileData, filename) {
-    const deviceInfo = this.runner.getDeviceInfo();
-    if (!deviceInfo.ip) {
-      throw new Error('Device IP not available. Send $I command first.');
+    console.log(`FluidNC Controller: Starting XModem upload of ${filename}, size: ${fileData.length}`);
+
+    if (!this.isOpen()) {
+      throw new Error('Serial port is not open');
     }
 
-    // Try different possible upload endpoints
-    const possiblePaths = ['/upload', '/files', '/localfs'];
+    try {
+      // Enter XModem mode
+      console.log('FluidNC Controller: Entering XModem mode');
+      this.connection.write('$X\r\n');
+      await this.delay(300);
 
-    for (const uploadPath of possiblePaths) {
-      try {
-        const boundary = '----formdata-cncjs-' + Math.random().toString(16);
-        const postData = this.createMultipartFormData(fileData, filename, boundary);
+      // Start XModem receive on device
+      console.log(`FluidNC Controller: Starting XModem receive for ${filename}`);
+      this.connection.write(`$Xmodem/Receive=${filename}\r\n`);
+      await this.delay(500);
 
-        const options = {
-          hostname: deviceInfo.ip,
-          port: 80,
-          path: uploadPath,
-          method: 'POST',
-          headers: {
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-            'Content-Length': Buffer.byteLength(postData)
-          }
-        };
+      // Use XModem to send the file
+      const xmodem = new XModem(this.connection);
+      await xmodem.send(Buffer.from(fileData));
 
-        await this.makeHttpRequest(options, postData);
-        return; // Success, exit early
-      } catch (error) {
-        // Try next endpoint
-        continue;
-      }
+      console.log('FluidNC Controller: XModem upload completed successfully');
+
+      // Wait for device to process the file
+      await this.delay(1000);
+
+    } catch (error) {
+      console.error('FluidNC Controller: XModem upload failed:', error);
+      throw new Error(`Failed to upload file via XModem: ${error.message}`);
     }
-
-    throw new Error('Failed to upload file to any endpoint');
   }
 
   async downloadFileFromDevice(filename) {
-    const deviceInfo = this.runner.getDeviceInfo();
-    if (!deviceInfo.ip) {
-      throw new Error('Device IP not available. Send $I command first.');
+    console.log(`FluidNC Controller: Starting XModem download of ${filename}`);
+
+    if (!this.isOpen()) {
+      throw new Error('Serial port is not open');
     }
 
-    const options = {
-      hostname: deviceInfo.ip,
-      port: 80,
-      path: `/files/${filename}`,
-      method: 'GET'
-    };
+    try {
+      // Enter XModem mode
+      console.log('FluidNC Controller: Entering XModem mode');
+      this.connection.write('$X\r\n');
+      await this.delay(300);
 
-    return this.makeHttpRequest(options);
+      // Start XModem send on device
+      console.log(`FluidNC Controller: Starting XModem send for ${filename}`);
+      this.connection.write(`$Xmodem/Send=${filename}\r\n`);
+      await this.delay(500);
+
+      // Use XModem to receive the file
+      const xmodem = new XModem(this.connection);
+      const fileData = await xmodem.receive();
+
+      console.log(`FluidNC Controller: XModem download completed, received ${fileData.length} bytes`);
+      return fileData;
+
+    } catch (error) {
+      console.error('FluidNC Controller: XModem download failed:', error);
+      throw new Error(`Failed to download file via XModem: ${error.message}`);
+    }
   }
 
   async deleteFileFromDevice(filename) {
-    const deviceInfo = this.runner.getDeviceInfo();
-    if (!deviceInfo.ip) {
-      throw new Error('Device IP not available. Send $I command first.');
+    console.log(`FluidNC Controller: Deleting file ${filename} via LocalFS command`);
+
+    if (!this.isOpen()) {
+      throw new Error('Serial port is not open');
     }
 
-    const options = {
-      hostname: deviceInfo.ip,
-      port: 80,
-      path: `/files/${filename}`,
-      method: 'DELETE'
-    };
+    try {
+      // Use LocalFS Delete command
+      this.connection.write(`$LocalFS/Delete=${filename}\r\n`);
+      console.log(`FluidNC Controller: Sent delete command for ${filename}`);
 
-    return this.makeHttpRequest(options);
+      // Wait for command to process
+      await this.delay(500);
+
+    } catch (error) {
+      console.error('FluidNC Controller: File deletion failed:', error);
+      throw new Error(`Failed to delete file: ${error.message}`);
+    }
   }
 
-  createMultipartFormData(fileData, filename, boundary) {
-    const header = `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
-        `Content-Type: application/octet-stream\r\n\r\n`;
-
-    const footer = `\r\n--${boundary}--\r\n`;
-
-    return Buffer.concat([
-      Buffer.from(header, 'utf8'),
-      Buffer.from(fileData),
-      Buffer.from(footer, 'utf8')
-    ]);
-  }
-
-  makeHttpRequest(options, postData = null) {
-    return new Promise((resolve, reject) => {
-      const protocol = options.port === 443 ? https : http;
-      const req = protocol.request(options, (res) => {
-        let data = '';
-
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        res.on('end', () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(data);
-          } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-          }
-        });
-      });
-
-      req.on('error', (error) => {
-        reject(error);
-      });
-
-      if (postData) {
-        req.write(postData);
-      }
-
-      req.end();
-    });
+  async delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   write(data, context) {

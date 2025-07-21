@@ -1,7 +1,7 @@
 class FluidNCLineParserResultMessage {
   static parse(line) {
     console.log(`FluidNC Message Parser: Attempting to parse line: "${line}"`);
-    
+
     // Parse FluidNC [MSG:...] format messages
     // Example: [MSG:Mode=STA:SSID=G&E:Status=Connected:IP=10.0.0.80:MAC=F0-24-F9-F8-72-5C]
     const r = line.match(/^\[MSG:(.+)\]$/);
