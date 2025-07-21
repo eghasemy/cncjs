@@ -203,7 +203,10 @@ class Settings extends PureComponent {
             <Modal.Body>
               <div className="form-group">
                 <label>{i18n._('Profile Name')}</label>
-                <input type="text" className="form-control" value={name} onChange={this.handleChangeName} />
+                <input
+                  type="text" className="form-control" value={name}
+                  onChange={this.handleChangeName}
+                />
               </div>
               {buttons > 0 && (
                 <div className="form-group">

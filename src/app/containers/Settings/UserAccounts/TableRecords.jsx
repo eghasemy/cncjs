@@ -165,7 +165,7 @@ class TableRecords extends PureComponent {
                               <Modal.Title>
                                 {i18n._('Settings')}
                                 <Space width="8" />
-                                                            &rsaquo;
+                                &rsaquo;
                                 <Space width="8" />
                                 {i18n._('My Account')}
                               </Modal.Title>

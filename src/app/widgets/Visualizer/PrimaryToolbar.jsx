@@ -260,7 +260,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G54');
                   }}
                 >
-                                G54 (P1)
+                  G54 (P1)
                 </MenuItem>
                 <MenuItem
                   active={wcs === 'G55'}
@@ -268,7 +268,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G55');
                   }}
                 >
-                                G55 (P2)
+                  G55 (P2)
                 </MenuItem>
                 <MenuItem
                   active={wcs === 'G56'}
@@ -276,7 +276,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G56');
                   }}
                 >
-                                G56 (P3)
+                  G56 (P3)
                 </MenuItem>
                 <MenuItem
                   active={wcs === 'G57'}
@@ -284,7 +284,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G57');
                   }}
                 >
-                                G57 (P4)
+                  G57 (P4)
                 </MenuItem>
                 <MenuItem
                   active={wcs === 'G58'}
@@ -292,7 +292,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G58');
                   }}
                 >
-                                G58 (P5)
+                  G58 (P5)
                 </MenuItem>
                 <MenuItem
                   active={wcs === 'G59'}
@@ -300,7 +300,7 @@ class PrimaryToolbar extends PureComponent {
                     controller.command('gcode', 'G59');
                   }}
                 >
-                                G59 (P6)
+                  G59 (P6)
                 </MenuItem>
               </Dropdown.Menu>
             </Dropdown>
@@ -312,14 +312,12 @@ class PrimaryToolbar extends PureComponent {
                 btnStyle="flat"
                 title={(!WebGL.isWebGLAvailable() || disabled)
                   ? i18n._('Enable 3D View')
-                  : i18n._('Disable 3D View')
-                }
+                  : i18n._('Disable 3D View')}
                 onClick={actions.toggle3DView}
               >
                 {(!WebGL.isWebGLAvailable() || disabled)
                   ? <i className="fa fa-toggle-off" />
-                  : <i className="fa fa-toggle-on" />
-                }
+                  : <i className="fa fa-toggle-on" />}
                 {i18n._('3D View')}
               </Button>
               <Dropdown.Toggle btnSize="sm" />
@@ -332,7 +330,7 @@ class PrimaryToolbar extends PureComponent {
                     <I18n>
                       {'WebGL: '}
                       <span style={{ color: colornames('royalblue') }}>
-                                        Enabled
+                        Enabled
                       </span>
                     </I18n>
                   )}
@@ -340,7 +338,7 @@ class PrimaryToolbar extends PureComponent {
                     <I18n>
                       {'WebGL: '}
                       <span style={{ color: colornames('crimson') }}>
-                                        Disabled
+                        Disabled
                       </span>
                     </I18n>
                   )}
@@ -372,8 +370,7 @@ class PrimaryToolbar extends PureComponent {
                 >
                   {gcode.displayName
                     ? <i className="fa fa-toggle-on fa-fw" />
-                    : <i className="fa fa-toggle-off fa-fw" />
-                  }
+                    : <i className="fa fa-toggle-off fa-fw" />}
                   <Space width={8} />
                   {i18n._('Display G-code Filename')}
                 </MenuItem>
@@ -383,13 +380,11 @@ class PrimaryToolbar extends PureComponent {
                 >
                   {objects.limits.visible
                     ? <i className="fa fa-toggle-on fa-fw" />
-                    : <i className="fa fa-toggle-off fa-fw" />
-                  }
+                    : <i className="fa fa-toggle-off fa-fw" />}
                   <Space width={8} />
                   {objects.limits.visible
                     ? i18n._('Hide Limits')
-                    : i18n._('Show Limits')
-                  }
+                    : i18n._('Show Limits')}
                 </MenuItem>
                 <MenuItem
                   disabled={!canToggleOptions}
@@ -397,13 +392,11 @@ class PrimaryToolbar extends PureComponent {
                 >
                   {objects.coordinateSystem.visible
                     ? <i className="fa fa-toggle-on fa-fw" />
-                    : <i className="fa fa-toggle-off fa-fw" />
-                  }
+                    : <i className="fa fa-toggle-off fa-fw" />}
                   <Space width={8} />
                   {objects.coordinateSystem.visible
                     ? i18n._('Hide Coordinate System')
-                    : i18n._('Show Coordinate System')
-                  }
+                    : i18n._('Show Coordinate System')}
                 </MenuItem>
                 <MenuItem
                   disabled={!canToggleOptions}
@@ -411,13 +404,11 @@ class PrimaryToolbar extends PureComponent {
                 >
                   {objects.gridLineNumbers.visible
                     ? <i className="fa fa-toggle-on fa-fw" />
-                    : <i className="fa fa-toggle-off fa-fw" />
-                  }
+                    : <i className="fa fa-toggle-off fa-fw" />}
                   <Space width={8} />
                   {objects.gridLineNumbers.visible
                     ? i18n._('Hide Grid Line Numbers')
-                    : i18n._('Show Grid Line Numbers')
-                  }
+                    : i18n._('Show Grid Line Numbers')}
                 </MenuItem>
                 <MenuItem
                   disabled={!canToggleOptions}
@@ -425,13 +416,11 @@ class PrimaryToolbar extends PureComponent {
                 >
                   {objects.cuttingTool.visible
                     ? <i className="fa fa-toggle-on fa-fw" />
-                    : <i className="fa fa-toggle-off fa-fw" />
-                  }
+                    : <i className="fa fa-toggle-off fa-fw" />}
                   <Space width={8} />
                   {objects.cuttingTool.visible
                     ? i18n._('Hide Cutting Tool')
-                    : i18n._('Show Cutting Tool')
-                  }
+                    : i18n._('Show Cutting Tool')}
                 </MenuItem>
               </Dropdown.Menu>
             </Dropdown>

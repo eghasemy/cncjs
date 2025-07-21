@@ -51,6 +51,16 @@ class GamepadWidget extends PureComponent {
     modifierPrev = false;
     raf = 0;
 
+    // Continuous jogging state
+    continuousJogState = {
+        activeAxes: new Set(), // Set of active axis keys (e.g., 'X+', 'Y-')
+        lastCommandTime: {},
+        jogCancelTimeout: null,
+        pendingStarts: {}, // Track pending setTimeout calls for axis starts
+        lastMagnitudes: {}, // Track previous magnitude for each axis direction
+        lastUpdateTime: {} // Track when each axis was last updated
+    };
+
     actions = {
         toggleFullscreen: () => {
             const { minimized, isFullscreen } = this.state;
@@ -183,6 +193,8 @@ class GamepadWidget extends PureComponent {
     }
 
     componentWillUnmount() {
+        // Stop any active continuous jogging
+        this.stopAllContinuousJogging();
         cancelAnimationFrame(this.raf);
     }
 
@@ -220,6 +232,228 @@ class GamepadWidget extends PureComponent {
         const custom = ensureArray(store.get('widgets.axes.jog.metric.distances', []));
         const steps = [...custom, ...METRIC_STEPS];
         return Number(steps[step]) || 0;
+    };
+
+    // Get jog feed rate for continuous jogging
+    getJogFeedRate = (axis = 'XY') => {
+        const units = this.getUnits();
+        // Use feed rates similar to OpenBuilds CONTROL
+        const baseRates = {
+            X: units === IMPERIAL_UNITS ? 157 : 4000, // ~157 IPM = 4000 mm/min
+            Y: units === IMPERIAL_UNITS ? 157 : 4000,
+            Z: units === IMPERIAL_UNITS ? 79 : 2000, // ~79 IPM = 2000 mm/min
+            A: units === IMPERIAL_UNITS ? 79 : 2000
+        };
+
+        if (axis.includes('X') || axis.includes('Y')) {
+            return Math.max(baseRates.X, baseRates.Y);
+        }
+        if (axis.includes('Z')) {
+            return baseRates.Z;
+        }
+        if (axis.includes('A')) {
+            return baseRates.A;
+        }
+        return baseRates.X; // Default
+    };
+
+    // Enhanced continuous jogging implementation with reduced frequency updates
+    handleContinuousJog = (axis, direction, magnitude) => {
+        const { continuousJog } = this.state;
+        if (!continuousJog) {
+            return false; // Let normal jogging handle it
+        }
+
+        const axisKey = `${axis}${direction}`;
+        const isActive = magnitude > 0.2; // Threshold for active jogging
+        const wasActive = this.continuousJogState.activeAxes.has(axisKey);
+        const now = Date.now();
+        
+        // Get previous magnitude and update time for this axis
+        const lastMagnitude = this.continuousJogState.lastMagnitudes[axisKey] || 0;
+        const lastUpdateTime = this.continuousJogState.lastUpdateTime[axisKey] || 0;
+        
+        // Constants for reduced frequency updates
+        const MAGNITUDE_THRESHOLD = 0.1; // Minimum change in magnitude to trigger update
+        const MIN_UPDATE_INTERVAL = 250; // Minimum time between updates (250ms)
+        
+        // Calculate if magnitude has changed significantly
+        const magnitudeChanged = Math.abs(magnitude - lastMagnitude) > MAGNITUDE_THRESHOLD;
+        const timeElapsed = now - lastUpdateTime;
+        const intervalPassed = timeElapsed > MIN_UPDATE_INTERVAL;
+
+        // Debug logging for significant events
+        if (magnitude > 0.1 || wasActive || magnitudeChanged) {
+            console.log(`[Gamepad] handleContinuousJog: ${axisKey}, magnitude=${magnitude.toFixed(3)}, ` +
+                       `lastMag=${lastMagnitude.toFixed(3)}, magnitudeChanged=${magnitudeChanged}, ` +
+                       `intervalPassed=${intervalPassed}, timeElapsed=${timeElapsed}ms`);
+        }
+
+        if (isActive && !wasActive) {
+            // Start continuous jog
+            console.log(`[Gamepad] Starting continuous jog: ${axisKey}`);
+            this.startContinuousJog(axis, direction, magnitude);
+            this.continuousJogState.activeAxes.add(axisKey);
+            this.continuousJogState.lastMagnitudes[axisKey] = magnitude;
+            this.continuousJogState.lastUpdateTime[axisKey] = now;
+        } else if (!isActive && wasActive) {
+            // Stop continuous jog
+            console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
+            this.stopContinuousJog(axisKey);
+            this.continuousJogState.activeAxes.delete(axisKey);
+            // Clear tracking data for this axis
+            delete this.continuousJogState.lastMagnitudes[axisKey];
+            delete this.continuousJogState.lastUpdateTime[axisKey];
+        } else if (isActive && wasActive) {
+            // Only update if magnitude changed significantly OR minimum interval has passed
+            if (magnitudeChanged || intervalPassed) {
+                console.log(`[Gamepad] Updating continuous jog: ${axisKey} (magnitudeChanged=${magnitudeChanged}, intervalPassed=${intervalPassed})`);
+                this.updateContinuousJogReduced(axis, direction, magnitude);
+                this.continuousJogState.lastMagnitudes[axisKey] = magnitude;
+                this.continuousJogState.lastUpdateTime[axisKey] = now;
+            }
+        }
+
+        return true; // Handled by continuous jogging
+    };
+
+    startContinuousJog = (axis, direction, magnitude) => {
+        // Calculate variable feed rate based on stick magnitude (0.5 to 1.0 maps to 50% to 100% of max rate)
+        const baseFeedRate = this.getJogFeedRate(axis);
+        const feedRateMultiplier = Math.min(1.0, Math.max(0.3, (magnitude - 0.5) * 2)); // 30% to 100% based on stick position
+        const feedRate = Math.round(baseFeedRate * feedRateMultiplier);
+
+        // Use large distance for continuous jogging (similar to OpenBuilds CONTROL)
+        const units = this.getUnits();
+        const distance = units === IMPERIAL_UNITS ? 39.37 : 1000; // 1000mm or ~39 inches
+
+        const directionSign = direction === '+' ? '' : '-';
+
+        // Use $J command for GRBL real-time jogging
+        const jogCommand = `$J=G91 G21 ${axis}${directionSign}${distance} F${feedRate}`;
+
+        console.log(`[Gamepad] Starting continuous jog: ${jogCommand}`);
+        controller.command('gcode', jogCommand);
+
+        this.continuousJogState.lastCommandTime[`${axis}${direction}`] = Date.now();
+    };
+
+    updateContinuousJog = (axis, direction, magnitude) => {
+        const axisKey = `${axis}${direction}`;
+        const lastCommandTime = this.continuousJogState.lastCommandTime[axisKey] || 0;
+        const now = Date.now();
+
+        // Only update if enough time has passed to avoid spamming commands
+        if (now - lastCommandTime > 100) { // 100ms throttle
+            // Cancel current jog and start new one with updated feed rate
+            this.stopContinuousJog(axisKey, false);
+
+            // Cancel any pending start for this axis
+            if (this.continuousJogState.pendingStarts[axisKey]) {
+                clearTimeout(this.continuousJogState.pendingStarts[axisKey]);
+                delete this.continuousJogState.pendingStarts[axisKey];
+            }
+
+            // Schedule new start with proper tracking
+            this.continuousJogState.pendingStarts[axisKey] = setTimeout(() => {
+                // Only start if the axis is still supposed to be active
+                if (this.continuousJogState.activeAxes.has(axisKey)) {
+                    this.startContinuousJog(axis, direction, magnitude);
+                }
+                delete this.continuousJogState.pendingStarts[axisKey];
+            }, 10);
+        }
+    };
+
+    // Reduced frequency update method - avoids constant cancel/restart cycles
+    updateContinuousJogReduced = (axis, direction, magnitude) => {
+        const axisKey = `${axis}${direction}`;
+        
+        console.log(`[Gamepad] updateContinuousJogReduced: ${axisKey}, new magnitude=${magnitude.toFixed(3)}`);
+        
+        // For reduced frequency updates, we cancel the current jog and start a new one
+        // but only when significant changes occur (as determined by handleContinuousJog)
+        this.stopContinuousJog(axisKey, false);
+        
+        // Start new jog command with updated magnitude
+        // Small delay to ensure cancel command is processed
+        setTimeout(() => {
+            if (this.continuousJogState.activeAxes.has(axisKey)) {
+                this.startContinuousJog(axis, direction, magnitude);
+            }
+        }, 25);
+    };
+
+    stopContinuousJog = (axisKey, removeFromActive = true) => {
+        console.log(`[Gamepad] Stopping continuous jog: ${axisKey}`);
+
+        // Cancel any pending start for this axis
+        if (this.continuousJogState.pendingStarts[axisKey]) {
+            console.log(`[Gamepad] Canceling pending start for: ${axisKey}`);
+            clearTimeout(this.continuousJogState.pendingStarts[axisKey]);
+            delete this.continuousJogState.pendingStarts[axisKey];
+        }
+
+        // Send jog cancel command
+        controller.command('jogCancel');
+
+        if (removeFromActive) {
+            this.continuousJogState.activeAxes.delete(axisKey);
+        }
+
+        // Clear the timeout if it exists
+        if (this.continuousJogState.jogCancelTimeout) {
+            clearTimeout(this.continuousJogState.jogCancelTimeout);
+            this.continuousJogState.jogCancelTimeout = null;
+        }
+    };
+
+    // Stop all continuous jogging (useful for emergency stops)
+    stopAllContinuousJogging = () => {
+        const hasActiveAxes = this.continuousJogState.activeAxes.size > 0;
+        const hasPendingStarts = this.continuousJogState.pendingStarts &&
+            Object.keys(this.continuousJogState.pendingStarts).length > 0;
+
+        if (hasActiveAxes || hasPendingStarts) {
+            console.log('[Gamepad] Emergency stop - canceling all continuous jogs');
+
+            // Cancel all pending starts
+            if (hasPendingStarts) {
+                Object.values(this.continuousJogState.pendingStarts).forEach(timeout => {
+                    clearTimeout(timeout);
+                });
+                this.continuousJogState.pendingStarts = {};
+            }
+
+            controller.command('jogCancel');
+            this.continuousJogState.activeAxes.clear();
+            this.continuousJogState.lastCommandTime = {};
+            // Clear reduced frequency tracking data
+            this.continuousJogState.lastMagnitudes = {};
+            this.continuousJogState.lastUpdateTime = {};
+        }
+    };
+
+    // Extract axis and direction from jog action (e.g., 'jog-x+' -> { axis: 'X', direction: '+' })
+    getAxisAndDirectionFromAction = (action) => {
+        if (typeof action !== 'string') {
+            return null;
+        }
+
+        const jogMatch = action.match(/^jog-([xyzabc])([+-])$/i);
+        if (jogMatch) {
+            return {
+                axis: jogMatch[1].toUpperCase(),
+                direction: jogMatch[2]
+            };
+        }
+        return null;
+    };
+
+    // Legacy method for backward compatibility
+    getAxisFromAction = (action) => {
+        const result = this.getAxisAndDirectionFromAction(action);
+        return result ? result.axis : null;
     };
 
     stepForward = () => {
@@ -262,35 +496,48 @@ class GamepadWidget extends PureComponent {
             pad.axes.forEach((val, i) => {
                 const map = (profile.axisMap || {})[i] || {};
                 const prev = this.prevAxes[i] || 0;
-                const now = Date.now();
-                const posKey = `${i}-pos`;
-                const negKey = `${i}-neg`;
-                if (map.positive && val > 0.5) {
-                    if (continuousJog) {
-                        if (!this.lastJogTime) {
-                            this.lastJogTime = {};
+
+                if (continuousJog) {
+                    // Enhanced continuous jogging mode
+
+                    // Debug: Log significant axis changes
+                    if (Math.abs(val - prev) > 0.1 || Math.abs(val) > 0.1) {
+                        console.log(`[Gamepad] Axis ${i}: val=${val.toFixed(3)}, prev=${prev.toFixed(3)}, positive=${map.positive}, negative=${map.negative}`);
+                    }
+
+                    // Handle positive direction
+                    if (map.positive) {
+                        const actionInfo = this.getAxisAndDirectionFromAction(map.positive);
+                        if (actionInfo) {
+                            // Only process if axis value indicates movement in this direction
+                            const magnitude = val > 0 ? val : 0;
+                            this.handleContinuousJog(actionInfo.axis, actionInfo.direction, magnitude);
                         }
-                        if (now - (this.lastJogTime[posKey] || 0) > 200) {
-                            this.handleAction(map.positive);
-                            this.lastJogTime[posKey] = now;
+                    }
+
+                    // Handle negative direction
+                    if (map.negative) {
+                        const actionInfo = this.getAxisAndDirectionFromAction(map.negative);
+                        if (actionInfo) {
+                            // Only process if axis value indicates movement in this direction
+                            const magnitude = val < 0 ? Math.abs(val) : 0;
+                            this.handleContinuousJog(actionInfo.axis, actionInfo.direction, magnitude);
                         }
-                    } else if (prev <= 0.5) {
+                    }
+                } else {
+                    // Traditional step jogging mode
+
+                    // Handle positive direction
+                    if (map.positive && val > 0.5 && prev <= 0.5) {
                         this.handleAction(map.positive);
                     }
-                }
-                if (map.negative && val < -0.5) {
-                    if (continuousJog) {
-                        if (!this.lastJogTime) {
-                            this.lastJogTime = {};
-                        }
-                        if (now - (this.lastJogTime[negKey] || 0) > 200) {
-                            this.handleAction(map.negative);
-                            this.lastJogTime[negKey] = now;
-                        }
-                    } else if (prev >= -0.5) {
+
+                    // Handle negative direction
+                    if (map.negative && val < -0.5 && prev >= -0.5) {
                         this.handleAction(map.negative);
                     }
                 }
+
                 this.prevAxes[i] = val;
             });
         }
@@ -350,12 +597,14 @@ class GamepadWidget extends PureComponent {
                 controller.command('gcode', 'M9');
                 break;
             case 'feedhold':
+                this.stopAllContinuousJogging(); // Stop any continuous jogging before feedhold
                 controller.command('feedhold');
                 break;
             case 'resume':
                 controller.command('cyclestart');
                 break;
             case 'reset':
+                this.stopAllContinuousJogging(); // Stop any continuous jogging before reset
                 controller.command('reset');
                 break;
             case 'feed-decrease-10':
@@ -565,6 +814,16 @@ class GamepadWidget extends PureComponent {
                 </div>
               </div>
               <Gamepad selectedIndex={selectedGamepad} onSelectIndex={actions.selectGamepad} />
+
+              {/* Continuous Jog Status - shows when enhanced mode is active */}
+              {this.state.continuousJog && this.continuousJogState.activeAxes.size > 0 ? (
+                <div style={{ marginTop: 10, padding: 10, border: '1px solid #28a745', borderRadius: 3, backgroundColor: '#d4edda' }}>
+                  <div style={{ fontSize: '12px', color: '#155724' }}>
+                    <i className="fa fa-circle" style={{ marginRight: 4 }} />
+                    {i18n._('Enhanced Continuous Jogging Active: {{axes}}', { axes: Array.from(this.continuousJogState.activeAxes).join(', ') })}
+                  </div>
+                </div>
+              ) : null}
             </Widget.Content>
           </Widget>
         );

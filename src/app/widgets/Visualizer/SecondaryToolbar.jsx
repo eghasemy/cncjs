@@ -183,7 +183,7 @@ class SecondaryToolbar extends PureComponent {
             }}
           >
             <Col width="auto">
-              {is3DView && (
+              {is3DView ? (
                 <ButtonToolbar>
                   <ButtonGroup btnSize="sm">
                     <IconButton
@@ -313,11 +313,9 @@ class SecondaryToolbar extends PureComponent {
                       componentClass={IconButton}
                     >
                       {(cameraMode === CAMERA_MODE_PAN) &&
-                        <Image src={iconMoveCamera} width="20" height="20" />
-                      }
+                      <Image src={iconMoveCamera} width="20" height="20" />}
                       {(cameraMode === CAMERA_MODE_ROTATE) &&
-                        <Image src={iconRotateCamera} width="20" height="20" />
-                      }
+                      <Image src={iconRotateCamera} width="20" height="20" />}
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
                       <MenuItem eventKey={CAMERA_MODE_PAN}>
@@ -333,7 +331,7 @@ class SecondaryToolbar extends PureComponent {
                     </Dropdown.Menu>
                   </Dropdown>
                 </ButtonToolbar>
-              )}
+) : null}
             </Col>
             <Col width="auto">
               {(machineProfiles.length > 0) && (
