@@ -248,6 +248,7 @@ class FluidNCRunner extends events.EventEmitter {
       if (type === FluidNCLineParserResultLocalFS) {
         // Handle LocalFS responses
         const { command, file, response } = payload;
+        console.log('FluidNC Runner: Received LocalFS response:', { command, file, response });
         
         if (command === 'list' && file) {
           // Add or update file in the list
@@ -257,6 +258,7 @@ class FluidNCRunner extends events.EventEmitter {
           } else {
             this.fluidnc.files.push(file);
           }
+          console.log('FluidNC Runner: File list updated:', this.fluidnc.files);
         }
         
         this.emit('fluidnc:localfs', payload);

@@ -28,6 +28,11 @@ class FileManager extends PureComponent {
 
     componentWillUnmount() {
       this.unsubscribe();
+      // Clear any pending timeout
+      if (this.loadingTimeout) {
+        clearTimeout(this.loadingTimeout);
+        this.loadingTimeout = null;
+      }
     }
 
     subscribe() {
@@ -39,6 +44,12 @@ class FileManager extends PureComponent {
           this.setState({ activeConfig });
         }),
         controller.addListener('fluidnc:fileList', (files) => {
+          console.log('FileManager: Received file list:', files);
+          // Clear timeout if we receive a response
+          if (this.loadingTimeout) {
+            clearTimeout(this.loadingTimeout);
+            this.loadingTimeout = null;
+          }
           this.setState({ files, loading: false });
         })
       ];
@@ -65,7 +76,17 @@ class FileManager extends PureComponent {
     loadFiles = () => {
       this.setState({ loading: true, loadingMessage: 'Loading files...' });
       // Request file list from FluidNC
+      console.log('FileManager: Requesting file list from FluidNC');
       controller.command('fluidnc:listFiles');
+      
+      // Add timeout to clear loading state if no response
+      this.loadingTimeout = setTimeout(() => {
+        console.log('FileManager: Timeout waiting for file list response');
+        this.setState({ 
+          loading: false, 
+          files: [] // Empty list instead of hanging
+        });
+      }, 5000); // 5 second timeout
     };
 
     handleDownload = (file) => {
@@ -223,7 +244,7 @@ class FileManager extends PureComponent {
                 const isActive = file.name === activeConfig;
                 return (
                   <tr key={index}>
-                  <td>
+                    <td>
                     {file.name}
                     {isActive ? (
                       <span
@@ -233,10 +254,10 @@ class FileManager extends PureComponent {
                         {i18n._('Active')}
                       </span>
                     ) : null}
-                  </td>
-                  <td>{(file.size / 1024).toFixed(1)} KB</td>
-                  <td>{file.type.toUpperCase()}</td>
-                  <td>
+                    </td>
+                    <td>{(file.size / 1024).toFixed(1)} KB</td>
+                    <td>{file.type.toUpperCase()}</td>
+                    <td>
                     {isActive ? (
                       <span className="text-success">
                         <i className="fa fa-check-circle" />
@@ -245,8 +266,8 @@ class FileManager extends PureComponent {
                     ) : (
                       <span className="text-muted">{i18n._('Available')}</span>
                     )}
-                  </td>
-                  <td>
+                    </td>
+                    <td>
                     <Button
                       bsSize="xs"
                       bsStyle="primary"
@@ -273,7 +294,7 @@ class FileManager extends PureComponent {
                     >
                       <i className="fa fa-trash" />
                     </Button>
-                  </td>
+                    </td>
                   </tr>
                 );
               })}

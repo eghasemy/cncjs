@@ -1696,6 +1696,7 @@ class FluidNCController {
           // Clear existing file list
           this.runner.clearFileList();
           // Send LocalFS list command
+          console.log('FluidNC Controller: Sending $LocalFS/List command');
           this.writeln('$LocalFS/List');
         },
         'fluidnc:deleteFile': async () => {
