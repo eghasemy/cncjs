@@ -87,13 +87,33 @@ class FluidNCRunner extends events.EventEmitter {
     // Enhanced debugging for file-related responses
     if (data.includes('LocalFS') || data.includes('FILE:') || data.includes('.yaml') || data.includes('.gcode') || data.includes('.nc') || data.includes('.txt')) {
       console.log(`FluidNC Runner: POTENTIAL FILE DATA detected: "${data}"`);
+      console.log(`FluidNC Runner: Data analysis - length: ${data.length}, first 100 chars: "${data.substring(0, 100)}"`);
+      console.log(`FluidNC Runner: Contains patterns - LocalFS: ${data.includes('LocalFS')}, FILE: ${data.includes('FILE:')}, [FILE: ${data.includes('[FILE:')}`);
     }
 
     this.emit('raw', { raw: data });
 
+    // Process multiline responses line by line for better parsing
+    const lines = data.split(/\r?\n/);
+    if (lines.length > 1) {
+      console.log(`FluidNC Runner: Processing ${lines.length} lines separately`);
+      lines.forEach((line, index) => {
+        if (line.trim()) {
+          console.log(`FluidNC Runner: Processing line ${index}: "${line}"`);
+          this.parseSingleLine(line.trim());
+        }
+      });
+      return;
+    }
+
+    // Single line processing
+    this.parseSingleLine(data);
+  }
+
+  parseSingleLine(data) {
     const result = this.parser.parse(data) || {};
     const { type, payload } = result;
-    console.log(`FluidNC Runner: Parse result - type: ${type ? type.name : 'null'}, payload:`, payload);
+    console.log(`FluidNC Runner: Parse result for "${data}" - type: ${type ? type.name : 'null'}, payload:`, payload);
 
     // Enhanced debugging for message parsing
     if (data.includes('[MSG:') || data.includes('MSG:')) {
@@ -318,7 +338,6 @@ class FluidNCRunner extends events.EventEmitter {
       return;
     }
   }
-
   getMachinePosition(state = this.state) {
     return _.get(state, 'status.mpos', {});
   }

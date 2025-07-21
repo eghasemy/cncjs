@@ -83,6 +83,18 @@ class FluidNCController {
         console.log(`FluidNC Controller: MSG data detected - passing to runner: "${dataStr}"`);
       }
 
+      // Enhanced debugging for LocalFS responses
+      if (dataStr.includes('LocalFS') || dataStr.includes('FILE:') || dataStr.includes('.yaml') || dataStr.includes('.gcode') || dataStr.includes('.nc') || dataStr.includes('.txt')) {
+        console.log(`FluidNC Controller: POTENTIAL LocalFS/FILE data detected: "${dataStr}"`);
+        console.log(`FluidNC Controller: Data length: ${dataStr.length}, Contains newlines: ${dataStr.includes('\n')}`);
+        if (dataStr.includes('\n')) {
+          console.log(`FluidNC Controller: Splitting multiline response for analysis:`);
+          dataStr.split('\n').forEach((line, index) => {
+            console.log(`FluidNC Controller: Line ${index}: "${line}"`);
+          });
+        }
+      }
+
       this.runner.parse(dataStr);
     },
     close: (err) => {

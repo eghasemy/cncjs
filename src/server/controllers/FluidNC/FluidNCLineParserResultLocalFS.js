@@ -1,6 +1,7 @@
 class FluidNCLineParserResultLocalFS {
   static parse(line) {
     console.log(`FluidNC LocalFS Parser: Attempting to parse line: "${line}"`);
+    console.log(`FluidNC LocalFS Parser: Line analysis - length: ${line.length}, has brackets: ${line.includes('[')}, has colons: ${line.includes(':')}, has pipe: ${line.includes('|')}`);
 
     // Parse LocalFS command responses - try multiple formats
     // FluidNC may return files in various formats:
@@ -13,7 +14,7 @@ class FluidNCLineParserResultLocalFS {
     const fileFormatMatch = line.match(/^\[FILE:\s*([^|]+)\|SIZE:(\d+)\]$/);
     if (fileFormatMatch) {
       const [, name, size] = fileFormatMatch;
-      console.log(`FluidNC LocalFS Parser: Parsed FILE format - name: ${name.trim()}, size: ${size}`);
+      console.log(`FluidNC LocalFS Parser: MATCHED FILE format - name: ${name.trim()}, size: ${size}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -31,7 +32,7 @@ class FluidNCLineParserResultLocalFS {
     const fileListMatch = line.match(/^(.+):(\d+):(file|dir)$/);
     if (fileListMatch) {
       const [, name, size, type] = fileListMatch;
-      console.log(`FluidNC LocalFS Parser: Parsed colon format - name: ${name}, size: ${size}, type: ${type}`);
+      console.log(`FluidNC LocalFS Parser: MATCHED colon format - name: ${name}, size: ${size}, type: ${type}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -45,12 +46,45 @@ class FluidNCLineParserResultLocalFS {
       };
     }
 
+    // Try to match any format that might contain file information
+    // Look for patterns like "filename size" or just "filename" for common extensions
+    const filePatterns = [
+      // Pattern: "filename size" (space separated)
+      /^([^\/\\\s:]+\.(yaml|yml|gcode|nc|txt|json|cfg))\s+(\d+)$/i,
+      // Pattern: "filename,size" (comma separated)
+      /^([^\/\\\s:]+\.(yaml|yml|gcode|nc|txt|json|cfg)),(\d+)$/i,
+      // Pattern: "filename\tsize" (tab separated)
+      /^([^\/\\\s:]+\.(yaml|yml|gcode|nc|txt|json|cfg))\t+(\d+)$/i,
+      // Pattern: just filename with extension
+      /^([^\/\\\s:,\[\]]+\.(yaml|yml|gcode|nc|txt|json|cfg))$/i
+    ];
+
+    for (let i = 0; i < filePatterns.length; i++) {
+      const pattern = filePatterns[i];
+      const match = line.match(pattern);
+      if (match) {
+        const [, name, , size] = match;
+        console.log(`FluidNC LocalFS Parser: MATCHED pattern ${i} - name: ${name}, size: ${size || 'unknown'}`);
+        return {
+          type: FluidNCLineParserResultLocalFS,
+          payload: {
+            command: 'list',
+            file: {
+              name: name,
+              size: size ? parseInt(size, 10) : 0,
+              type: 'file'
+            }
+          }
+        };
+      }
+    }
+
     // Check for simple filename listing (no size/type info)
     // Look for common file extensions
     const simpleFileMatch = line.match(/^([^:\/\[\]]+\.(yaml|yml|gcode|nc|txt|json|cfg))$/i);
     if (simpleFileMatch) {
       const [, name] = simpleFileMatch;
-      console.log(`FluidNC LocalFS Parser: Parsed simple filename format - name: ${name}`);
+      console.log(`FluidNC LocalFS Parser: MATCHED simple filename format - name: ${name}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -62,6 +96,50 @@ class FluidNCLineParserResultLocalFS {
           }
         }
       };
+    }
+
+    // Try to detect any format that might be a directory listing
+    // Some devices might return simple lists like:
+    // config.yaml
+    // test.gcode
+    // etc.
+    const directoryListPattern = /^([a-zA-Z0-9_.-]+\.(yaml|yml|gcode|nc|txt|json|cfg))$/i;
+    if (directoryListPattern.test(line.trim())) {
+      const name = line.trim();
+      console.log(`FluidNC LocalFS Parser: DETECTED possible directory listing item: ${name}`);
+      return {
+        type: FluidNCLineParserResultLocalFS,
+        payload: {
+          command: 'list',
+          file: {
+            name: name,
+            size: 0,
+            type: 'file'
+          }
+        }
+      };
+    }
+
+    // Ultra-liberal pattern: ANY line that contains a file extension and looks like a filename
+    // This will catch almost anything that looks like a file
+    const ultraLiberalPattern = /([a-zA-Z0-9_.-]*\.(yaml|yml|gcode|nc|txt|json|cfg))/i;
+    if (ultraLiberalPattern.test(line)) {
+      const match = line.match(ultraLiberalPattern);
+      if (match) {
+        const [, name] = match;
+        console.log(`FluidNC LocalFS Parser: ULTRA-LIBERAL match detected filename: ${name}`);
+        return {
+          type: FluidNCLineParserResultLocalFS,
+          payload: {
+            command: 'list',
+            file: {
+              name: name,
+              size: 0,
+              type: 'file'
+            }
+          }
+        };
+      }
     }
 
     // Check for any line that might contain a filename
