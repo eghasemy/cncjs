@@ -17,7 +17,8 @@ class FileManager extends PureComponent {
     loading: false,
     loadingMessage: 'Loading files...',
     editingFile: null,
-    deviceInfo: {}
+    deviceInfo: {},
+    webInterfaceUrl: null
   };
 
   componentDidMount() {
@@ -89,6 +90,23 @@ class FileManager extends PureComponent {
       }),
       controller.addListener('fluidnc:localfs', (data) => {
         console.log('FileManager: LocalFS event received:', data);
+      }),
+      // Handle messages from FluidNC controller
+      controller.addListener('fluidnc:message', (messageData) => {
+        console.log('FileManager: Message received:', messageData);
+        if (messageData && messageData.type === 'info' && messageData.url) {
+          // Show information about web interface access
+          this.setState({
+            loading: false,
+            loadingMessage: messageData.message,
+            webInterfaceUrl: messageData.url
+          });
+        } else if (messageData && messageData.type === 'warning') {
+          this.setState({
+            loading: false,
+            loadingMessage: messageData.message
+          });
+        }
       }),
       // Add debug listener for all controller events
       controller.addListener('*', (eventName, ...args) => {
@@ -268,7 +286,7 @@ class FileManager extends PureComponent {
   };
 
   render() {
-    const { files, loading, loadingMessage, editingFile, activeConfig } = this.state;
+    const { files, loading, loadingMessage, editingFile, activeConfig, webInterfaceUrl } = this.state;
 
     if (editingFile) {
       return (
@@ -419,9 +437,25 @@ class FileManager extends PureComponent {
           </tbody>
         </Table>
 
-        {files.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-            {i18n._('No files found')}
+        {files.length === 0 && !loading && (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            <div style={{ marginBottom: '10px' }}>
+              <i className="fa fa-info-circle" style={{ marginRight: '5px' }} />
+              {loadingMessage || i18n._('No files found')}
+            </div>
+            {webInterfaceUrl && (
+              <div>
+                <a 
+                  href={webInterfaceUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: '#337ab7', textDecoration: 'none' }}
+                >
+                  <i className="fa fa-external-link" style={{ marginRight: '5px' }} />
+                  {i18n._('Open FluidNC Web Interface')}
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>

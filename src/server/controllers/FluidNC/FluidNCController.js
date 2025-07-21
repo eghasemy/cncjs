@@ -5,6 +5,8 @@ import {
 } from 'ensure-type';
 import * as gcodeParser from 'gcode-parser';
 import _ from 'lodash';
+import http from 'http';
+import { URL } from 'url';
 import SerialConnection from '../../lib/SerialConnection';
 import EventTrigger from '../../lib/EventTrigger';
 import Feeder from '../../lib/Feeder';
@@ -256,6 +258,16 @@ class FluidNCController {
       baudRate: baudrate,
       rtscts: rtscts,
       writeFilter: (data) => {
+        // Handle binary data from XModem (no string operations on binary data)
+        if (data instanceof Buffer || (typeof data === 'object' && data.constructor === Uint8Array)) {
+          return data;
+        }
+        
+        // Handle string data normally
+        if (typeof data !== 'string') {
+          return data;
+        }
+        
         const line = data.trim();
 
         if (!line) {
@@ -602,11 +614,6 @@ class FluidNCController {
 
     // Grbl
     this.runner = new FluidNCRunner();
-
-    // Initialize LocalFS response tracking
-    this.expectingLocalFSResponse = false;
-    this.localFSResponseStartTime = 0;
-    this.localFSResponseLines = [];
 
     this.runner.on('raw', noop);
 
@@ -1919,32 +1926,29 @@ class FluidNCController {
         this.emit('fluidnc:deviceInfo', deviceInfo);
       },
       'fluidnc:listFiles': () => {
-        // Clear existing file list
-        this.runner.clearFileList();
-        console.log('\n======= FluidNC Controller: Starting File List Operation =======');
-        console.log('FluidNC Controller: Clearing existing file list');
-
-        // Set flag to track LocalFS response
-        this.expectingLocalFSResponse = true;
-        this.localFSResponseStartTime = Date.now();
-        this.localFSResponseLines = []; // Track all responses
-
-        console.log('FluidNC Controller: Sending $LocalFS/List command');
+        console.log('\n======= FluidNC Controller: File List Request =======');
         
-        // Send LocalFS list command and log the exact bytes sent
-        const command = '$LocalFS/List';
-        this.writeln(command);
-        console.log(`FluidNC Controller: Sent exact command: "${command}"`);
-        console.log(`FluidNC Controller: Command bytes: [${Array.from(command).map(c => c.charCodeAt(0)).join(', ')}]`);
-        console.log('FluidNC Controller: Command sent, waiting for response...');
-
-        // Try alternative commands if the primary one doesn't work
-        setTimeout(() => {
-          console.log('FluidNC Controller: Trying alternative LocalFS commands...');
-          this.writeln('$LocalFS/Dir');  // Alternative command
-          this.writeln('$LS');           // Short version
-          this.writeln('$Dir');          // Directory command
-        }, 500);
+        // Check if we have device IP for HTTP access
+        const deviceInfo = this.runner.getDeviceInfo();
+        const deviceIP = deviceInfo.ip;
+        
+        if (deviceIP && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(deviceIP)) {
+          console.log(`FluidNC Controller: Device IP available: ${deviceIP}`);
+          console.log('FluidNC Controller: Attempting HTTP-based file listing...');
+          
+          // Try HTTP API for file listing (FluidNC's primary interface)
+          this.listFilesViaHTTP(deviceIP);
+        } else {
+          console.log('FluidNC Controller: No valid IP available for HTTP access');
+          console.log('FluidNC Controller: FluidNC file operations require web interface access');
+          
+          // Emit empty file list with information message
+          this.emit('fluidnc:fileList', []);
+          this.emit('fluidnc:message', {
+            message: 'FluidNC file operations require web interface access. Connect to FluidNC web interface for file management.',
+            type: 'info'
+          });
+        }
 
         // Set a timer to analyze results
         setTimeout(() => {
@@ -2124,87 +2128,80 @@ class FluidNCController {
 
   // FluidNC XModem file operations
   async uploadFileToDevice(fileData, filename) {
-    console.log(`FluidNC Controller: Starting XModem upload of ${filename}, size: ${fileData.length}`);
+    console.log(`FluidNC Controller: Starting HTTP upload of ${filename}, size: ${fileData.length}`);
 
-    if (!this.isOpen()) {
-      throw new Error('Serial port is not open');
+    const deviceInfo = this.runner.getDeviceInfo();
+    const deviceIP = deviceInfo.ip;
+    
+    if (!deviceIP || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(deviceIP)) {
+      throw new Error('Device IP address required for file upload. Use FluidNC web interface.');
     }
 
     try {
-      // Enter XModem mode
-      console.log('FluidNC Controller: Entering XModem mode');
-      this.connection.write('$X\r\n');
-      await this.delay(300);
-
-      // Start XModem receive on device
-      console.log(`FluidNC Controller: Starting XModem receive for ${filename}`);
-      this.connection.write(`$Xmodem/Receive=${filename}\r\n`);
-      await this.delay(500);
-
-      // Use XModem to send the file
-      const xmodem = new XModem(this.connection);
-      await xmodem.send(Buffer.from(fileData));
-
-      console.log('FluidNC Controller: XModem upload completed successfully');
-
-      // Wait for device to process the file
-      await this.delay(1000);
-
+      // FluidNC typically accepts file uploads at /upload endpoint
+      const result = await this.httpPost(deviceIP, '/upload', fileData, filename);
+      
+      if (result.success) {
+        console.log(`FluidNC Controller: Successfully uploaded ${filename}`);
+        return { success: true, message: 'File uploaded successfully' };
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
     } catch (error) {
-      console.error('FluidNC Controller: XModem upload failed:', error);
-      throw new Error(`Failed to upload file via XModem: ${error.message}`);
+      console.error(`FluidNC Controller: Upload failed:`, error);
+      throw new Error(`Upload failed: ${error.message}. Use FluidNC web interface for file operations.`);
     }
   }
 
   async downloadFileFromDevice(filename) {
-    console.log(`FluidNC Controller: Starting XModem download of ${filename}`);
+    console.log(`FluidNC Controller: Starting HTTP download of ${filename}`);
 
-    if (!this.isOpen()) {
-      throw new Error('Serial port is not open');
+    const deviceInfo = this.runner.getDeviceInfo();
+    const deviceIP = deviceInfo.ip;
+    
+    if (!deviceIP || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(deviceIP)) {
+      throw new Error('Device IP address required for file download. Use FluidNC web interface.');
     }
 
     try {
-      // Enter XModem mode
-      console.log('FluidNC Controller: Entering XModem mode');
-      this.connection.write('$X\r\n');
-      await this.delay(300);
-
-      // Start XModem send on device
-      console.log(`FluidNC Controller: Starting XModem send for ${filename}`);
-      this.connection.write(`$Xmodem/Send=${filename}\r\n`);
-      await this.delay(500);
-
-      // Use XModem to receive the file
-      const xmodem = new XModem(this.connection);
-      const fileData = await xmodem.receive();
-
-      console.log(`FluidNC Controller: XModem download completed, received ${fileData.length} bytes`);
-      return fileData;
-
+      // FluidNC typically serves files at /files endpoint
+      const result = await this.httpGet(deviceIP, `/files/${filename}`);
+      
+      if (result.success) {
+        console.log(`FluidNC Controller: Successfully downloaded ${filename}, size: ${result.data.length}`);
+        return result.data;
+      } else {
+        throw new Error(result.error || 'Download failed');
+      }
     } catch (error) {
-      console.error('FluidNC Controller: XModem download failed:', error);
-      throw new Error(`Failed to download file via XModem: ${error.message}`);
+      console.error(`FluidNC Controller: Download failed:`, error);
+      throw new Error(`Download failed: ${error.message}. Use FluidNC web interface for file operations.`);
     }
   }
 
   async deleteFileFromDevice(filename) {
-    console.log(`FluidNC Controller: Deleting file ${filename} via LocalFS command`);
+    console.log(`FluidNC Controller: Deleting file ${filename} via HTTP`);
 
-    if (!this.isOpen()) {
-      throw new Error('Serial port is not open');
+    const deviceInfo = this.runner.getDeviceInfo();
+    const deviceIP = deviceInfo.ip;
+    
+    if (!deviceIP || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(deviceIP)) {
+      throw new Error('Device IP address required for file deletion. Use FluidNC web interface.');
     }
 
     try {
-      // Use LocalFS Delete command
-      this.connection.write(`$LocalFS/Delete=${filename}\r\n`);
-      console.log(`FluidNC Controller: Sent delete command for ${filename}`);
-
-      // Wait for command to process
-      await this.delay(500);
-
+      // FluidNC typically accepts file deletions at /files endpoint
+      const result = await this.httpDelete(deviceIP, `/files/${filename}`);
+      
+      if (result.success) {
+        console.log(`FluidNC Controller: Successfully deleted ${filename}`);
+        return { success: true, message: 'File deleted successfully' };
+      } else {
+        throw new Error(result.error || 'Delete failed');
+      }
     } catch (error) {
-      console.error('FluidNC Controller: File deletion failed:', error);
-      throw new Error(`Failed to delete file: ${error.message}`);
+      console.error(`FluidNC Controller: Delete failed:`, error);
+      throw new Error(`Delete failed: ${error.message}. Use FluidNC web interface for file operations.`);
     }
   }
 
@@ -2229,6 +2226,314 @@ class FluidNCController {
     });
     this.connection.write(data);
     log.silly(`> ${data}`);
+  }
+
+  // HTTP-based file operations for FluidNC
+  async listFilesViaHTTP(deviceIP) {
+    try {
+      console.log(`FluidNC Controller: Attempting HTTP file list from ${deviceIP}`);
+      
+      // FluidNC typically serves file listings at /files or /api/files
+      const paths = [
+        '/files',
+        '/api/files',
+        '/upload',
+        '/filesystem'
+      ];
+      
+      for (const path of paths) {
+        try {
+          console.log(`FluidNC Controller: Trying path: ${path}`);
+          
+          const result = await this.httpGet(deviceIP, path);
+          
+          if (result.success) {
+            console.log(`FluidNC Controller: Success! Content-Type: ${result.contentType}`);
+            
+            if (result.contentType && result.contentType.includes('application/json')) {
+              console.log('FluidNC Controller: Received JSON response:', result.data);
+              this.parseHTTPFileList(JSON.parse(result.data));
+              return;
+            } else {
+              console.log('FluidNC Controller: Received HTML/text response (length):', result.data.length);
+              this.parseHTMLFileList(result.data, `http://${deviceIP}${path}`);
+              return;
+            }
+          } else {
+            console.log(`FluidNC Controller: HTTP error from ${path}:`, result.error);
+          }
+        } catch (pathError) {
+          console.log(`FluidNC Controller: Error with ${path}:`, pathError.message);
+        }
+      }
+      
+      // If no HTTP endpoints work, provide web interface link
+      console.log('FluidNC Controller: No HTTP file API found, directing to web interface');
+      this.emit('fluidnc:fileList', []);
+      this.emit('fluidnc:message', {
+        message: `FluidNC web interface available at http://${deviceIP}/ for file management`,
+        type: 'info',
+        url: `http://${deviceIP}/`
+      });
+      
+    } catch (error) {
+      console.error('FluidNC Controller: HTTP file listing failed:', error);
+      this.emit('fluidnc:fileList', []);
+      this.emit('fluidnc:message', {
+        message: 'FluidNC file listing failed. Use FluidNC web interface for file management.',
+        type: 'warning'
+      });
+    }
+  }
+
+  // HTTP GET helper using Node.js http module
+  httpGet(hostname, path, port = 80) {
+    return new Promise((resolve) => {
+      const options = {
+        hostname,
+        port,
+        path,
+        method: 'GET',
+        timeout: 5000,
+        headers: {
+          'Accept': 'application/json, text/html, */*',
+          'User-Agent': 'CNCjs FluidNC Client'
+        }
+      };
+
+      const req = http.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({
+              success: true,
+              data,
+              contentType: res.headers['content-type'],
+              statusCode: res.statusCode
+            });
+          } else {
+            resolve({
+              success: false,
+              error: `HTTP ${res.statusCode}`,
+              statusCode: res.statusCode
+            });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        resolve({
+          success: false,
+          error: err.message
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({
+          success: false,
+          error: 'Request timeout'
+        });
+      });
+
+      req.end();
+    });
+  }
+  
+  parseHTTPFileList(data) {
+    console.log('FluidNC Controller: Parsing JSON file list:', data);
+    
+    let files = [];
+    
+    // Handle different JSON response formats
+    if (Array.isArray(data)) {
+      files = data;
+    } else if (data.files && Array.isArray(data.files)) {
+      files = data.files;
+    } else if (data.items && Array.isArray(data.items)) {
+      files = data.items;
+    }
+    
+    const fileList = files.map(file => ({
+      name: file.name || file.filename || file.path || String(file),
+      size: file.size || file.length || 0,
+      type: this.getFileType(file.name || file.filename || file.path || String(file)),
+      modified: file.modified || file.mtime || file.lastModified
+    }));
+    
+    console.log(`FluidNC Controller: Parsed ${fileList.length} files from JSON`);
+    this.emit('fluidnc:fileList', fileList);
+  }
+  
+  parseHTMLFileList(html, baseUrl) {
+    console.log('FluidNC Controller: Parsing HTML file list...');
+    
+    // Extract file links from HTML
+    const fileRegex = /<a[^>]+href=["']([^"']+\.(yaml|yml|gcode|nc|txt|json|cfg|bin))["'][^>]*>([^<]+)<\/a>/gi;
+    const files = [];
+    let match;
+    
+    while ((match = fileRegex.exec(html)) !== null) {
+      const [, href, extension, text] = match;
+      files.push({
+        name: text.trim(),
+        size: 0,
+        type: this.getFileType(text.trim()),
+        url: new URL(href, baseUrl).href
+      });
+    }
+    
+    console.log(`FluidNC Controller: Parsed ${files.length} files from HTML`);
+    this.emit('fluidnc:fileList', files);
+  }
+  
+  // HTTP POST helper using Node.js http module
+  httpPost(hostname, path, fileData, filename, port = 80) {
+    return new Promise((resolve) => {
+      // Create multipart form data for file upload
+      const boundary = '----FluidNCUpload' + Date.now();
+      const formData = Buffer.concat([
+        Buffer.from(`--${boundary}\r\n`),
+        Buffer.from(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`),
+        Buffer.from(`Content-Type: application/octet-stream\r\n\r\n`),
+        Buffer.from(fileData),
+        Buffer.from(`\r\n--${boundary}--\r\n`)
+      ]);
+
+      const options = {
+        hostname,
+        port,
+        path,
+        method: 'POST',
+        timeout: 10000,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': formData.length,
+          'User-Agent': 'CNCjs FluidNC Client'
+        }
+      };
+
+      const req = http.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({
+              success: true,
+              data,
+              statusCode: res.statusCode
+            });
+          } else {
+            resolve({
+              success: false,
+              error: `HTTP ${res.statusCode}`,
+              statusCode: res.statusCode
+            });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        resolve({
+          success: false,
+          error: err.message
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({
+          success: false,
+          error: 'Request timeout'
+        });
+      });
+
+      req.write(formData);
+      req.end();
+    });
+  }
+
+  // HTTP DELETE helper using Node.js http module
+  httpDelete(hostname, path, port = 80) {
+    return new Promise((resolve) => {
+      const options = {
+        hostname,
+        port,
+        path,
+        method: 'DELETE',
+        timeout: 5000,
+        headers: {
+          'User-Agent': 'CNCjs FluidNC Client'
+        }
+      };
+
+      const req = http.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({
+              success: true,
+              data,
+              statusCode: res.statusCode
+            });
+          } else {
+            resolve({
+              success: false,
+              error: `HTTP ${res.statusCode}`,
+              statusCode: res.statusCode
+            });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        resolve({
+          success: false,
+          error: err.message
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({
+          success: false,
+          error: 'Request timeout'
+        });
+      });
+
+      req.end();
+    });
+  }
+
+  getFileType(filename) {
+    if (!filename) return 'unknown';
+    const ext = filename.toLowerCase().split('.').pop();
+    
+    const typeMap = {
+      'yaml': 'config',
+      'yml': 'config', 
+      'gcode': 'gcode',
+      'nc': 'gcode',
+      'txt': 'text',
+      'json': 'config',
+      'cfg': 'config'
+    };
+    
+    return typeMap[ext] || 'file';
   }
 
   writeln(data, context) {
