@@ -1,20 +1,32 @@
 class FluidNCLineParserResultLocalFS {
   static parse(line) {
-    console.log(`FluidNC LocalFS Parser: Attempting to parse line: "${line}"`);
-    console.log(`FluidNC LocalFS Parser: Line analysis - length: ${line.length}, has brackets: ${line.includes('[')}, has colons: ${line.includes(':')}, has pipe: ${line.includes('|')}`);
+    // Enhanced debugging to capture exact format
+    console.log(`FluidNC LocalFS Parser: ===============================`);
+    console.log(`FluidNC LocalFS Parser: RAW LINE: "${line}"`);
+    console.log(`FluidNC LocalFS Parser: Line length: ${line.length}`);
+    console.log(`FluidNC LocalFS Parser: Char codes:`, Array.from(line).map(c => `${c}(${c.charCodeAt(0)})`).join(' '));
+    console.log(`FluidNC LocalFS Parser: Has brackets: ${line.includes('[')}`);
+    console.log(`FluidNC LocalFS Parser: Has colons: ${line.includes(':')}`);
+    console.log(`FluidNC LocalFS Parser: Has pipe: ${line.includes('|')}`);
+    console.log(`FluidNC LocalFS Parser: Has tabs: ${line.includes('\t')}`);
+    console.log(`FluidNC LocalFS Parser: Has spaces: ${line.includes(' ')}`);
+    console.log(`FluidNC LocalFS Parser: Starts with: "${line.substring(0, 10)}"`);
+    console.log(`FluidNC LocalFS Parser: Ends with: "${line.substring(line.length - 10)}"`);
 
     // Parse LocalFS command responses - try multiple formats
     // FluidNC may return files in various formats:
     // 1. filename:size:type (expected format)
     // 2. [FILE: filename|SIZE:size] (feedback format)
     // 3. Simple filename listing
-    // 4. Other proprietary formats
+    // 4. Tab-separated values
+    // 5. Space-separated values
+    // 6. Other proprietary formats
 
-    // Check for [FILE: ...] format in feedback messages
+    // Pattern 1: [FILE: filename|SIZE:size] format
     const fileFormatMatch = line.match(/^\[FILE:\s*([^|]+)\|SIZE:(\d+)\]$/);
     if (fileFormatMatch) {
       const [, name, size] = fileFormatMatch;
-      console.log(`FluidNC LocalFS Parser: MATCHED FILE format - name: ${name.trim()}, size: ${size}`);
+      console.log(`FluidNC LocalFS Parser: ✓ MATCHED [FILE:] format - name: ${name.trim()}, size: ${size}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {
@@ -28,11 +40,76 @@ class FluidNCLineParserResultLocalFS {
       };
     }
 
-    // Check if this is a LocalFS list response (simple filename with size)
+    // Pattern 2: Tab-separated values (filename<TAB>size<TAB>type)
+    if (line.includes('\t')) {
+      const parts = line.split('\t');
+      if (parts.length >= 2) {
+        const name = parts[0].trim();
+        const size = parseInt(parts[1].trim(), 10) || 0;
+        const type = parts[2] ? parts[2].trim() : 'file';
+        if (name && name.includes('.')) {
+          console.log(`FluidNC LocalFS Parser: ✓ MATCHED tab-separated format - name: ${name}, size: ${size}, type: ${type}`);
+          return {
+            type: FluidNCLineParserResultLocalFS,
+            payload: {
+              command: 'list',
+              file: {
+                name: name,
+                size: size,
+                type: type
+              }
+            }
+          };
+        }
+      }
+    }
+
+    // Pattern 3: Space-separated values (common format)
+    const spaceMatch = line.match(/^(\S+\.\w+)\s+(\d+)\s*(\w*)$/);
+    if (spaceMatch) {
+      const [, name, size, type] = spaceMatch;
+      console.log(`FluidNC LocalFS Parser: ✓ MATCHED space-separated format - name: ${name}, size: ${size}, type: ${type || 'file'}`);
+      return {
+        type: FluidNCLineParserResultLocalFS,
+        payload: {
+          command: 'list',
+          file: {
+            name: name,
+            size: parseInt(size, 10),
+            type: type || 'file'
+          }
+        }
+      };
+    }
+
+    // Pattern 4: Plain filename on its own line (simple format)
+    const cleanLine = line.trim();
+    if (cleanLine && cleanLine.includes('.') && !cleanLine.includes(' ') && cleanLine.length < 100) {
+      // Check if it looks like a filename with known extensions
+      const knownExtensions = ['yaml', 'yml', 'gcode', 'nc', 'txt', 'json', 'cfg', 'bin', 'hex'];
+      const hasKnownExtension = knownExtensions.some(ext => cleanLine.toLowerCase().endsWith('.' + ext));
+
+      if (hasKnownExtension) {
+        console.log(`FluidNC LocalFS Parser: ✓ MATCHED plain filename format - name: ${cleanLine}`);
+        return {
+          type: FluidNCLineParserResultLocalFS,
+          payload: {
+            command: 'list',
+            file: {
+              name: cleanLine,
+              size: 0, // Size unknown in this format
+              type: 'file'
+            }
+          }
+        };
+      }
+    }
+
+    // Pattern 5: Colon-separated format (filename:size:type)
     const fileListMatch = line.match(/^(.+):(\d+):(file|dir)$/);
     if (fileListMatch) {
       const [, name, size, type] = fileListMatch;
-      console.log(`FluidNC LocalFS Parser: MATCHED colon format - name: ${name}, size: ${size}, type: ${type}`);
+      console.log(`FluidNC LocalFS Parser: ✓ MATCHED colon format - name: ${name}, size: ${size}, type: ${type}`);
       return {
         type: FluidNCLineParserResultLocalFS,
         payload: {

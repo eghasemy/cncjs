@@ -78,15 +78,38 @@ class FluidNCController {
       console.log(`FluidNC Controller: Received data: "${dataStr}"`);
       log.silly(`< ${dataStr}`);
 
+      // Log ALL data when expecting LocalFS response to catch any format
+      if (this.expectingLocalFSResponse && dataStr.trim()) {
+        console.log(`\n!!! FluidNC Controller: DATA RECEIVED WHILE EXPECTING LocalFS !!!`);
+        console.log(`Data: "${dataStr}"`);
+        console.log(`Length: ${dataStr.length}`);
+        console.log(`Trimmed: "${dataStr.trim()}"`);
+        console.log(`Contains known keywords: LocalFS=${dataStr.includes('LocalFS')}, FILE=${dataStr.includes('FILE')}, yaml=${dataStr.includes('.yaml')}, gcode=${dataStr.includes('.gcode')}`);
+        console.log(`Raw bytes:`, Array.from(dataStr).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
+        if (dataStr.includes('\n')) {
+          dataStr.split('\n').forEach((line, index) => {
+            if (line.trim()) {
+              console.log(`Line ${index}: "${line.trim()}" (${line.trim().length} chars)`);
+            }
+          });
+        }
+        console.log(`!!! END DATA CAPTURE !!!\n`);
+      }
+
       // Enhanced debugging for $I responses
       if (dataStr.includes('[MSG:') || dataStr.includes('MSG:')) {
         console.log(`FluidNC Controller: MSG data detected - passing to runner: "${dataStr}"`);
       }
 
       // Enhanced debugging for LocalFS responses
-      if (dataStr.includes('LocalFS') || dataStr.includes('FILE:') || dataStr.includes('.yaml') || dataStr.includes('.gcode') || dataStr.includes('.nc') || dataStr.includes('.txt')) {
+      if (dataStr.includes('LocalFS') || dataStr.includes('FILE:') || dataStr.includes('.yaml') || dataStr.includes('.gcode') || dataStr.includes('.nc') || dataStr.includes('.txt') || this.expectingLocalFSResponse) {
         console.log(`\n======= FluidNC LocalFS DATA ANALYSIS =======`);
         console.log(`FluidNC Controller: POTENTIAL LocalFS/FILE data detected: "${dataStr}"`);
+        console.log(`FluidNC Controller: Expecting LocalFS response: ${this.expectingLocalFSResponse}`);
+        if (this.expectingLocalFSResponse) {
+          const elapsed = Date.now() - this.localFSResponseStartTime;
+          console.log(`FluidNC Controller: Time since $LocalFS/List sent: ${elapsed}ms`);
+        }
         console.log(`FluidNC Controller: Data length: ${dataStr.length}, Contains newlines: ${dataStr.includes('\n')}`);
         console.log(`FluidNC Controller: Raw bytes:`, Array.from(dataStr).map(c => `${c.charCodeAt(0)}(${c})`).join(' '));
         if (dataStr.includes('\n')) {
@@ -99,6 +122,13 @@ class FluidNCController {
               // Try to identify file patterns in this line
               if (trimmed.includes('.')) {
                 console.log(`FluidNC Controller: Line ${index} contains dot - potential file: "${trimmed}"`);
+              }
+              // Check for various possible file listing formats
+              if (trimmed.includes('\t')) {
+                console.log(`FluidNC Controller: Line ${index} contains TAB - possibly tab-separated: parts = [${trimmed.split('\t').join(', ')}]`);
+              }
+              if (trimmed.match(/\S+\s+\d+/)) {
+                console.log(`FluidNC Controller: Line ${index} has filename-size pattern`);
               }
             }
           });
@@ -1765,15 +1795,36 @@ class FluidNCController {
       'fluidnc:listFiles': () => {
         // Clear existing file list
         this.runner.clearFileList();
+        console.log('\n======= FluidNC Controller: Starting File List Operation =======');
+        console.log('FluidNC Controller: Clearing existing file list');
         console.log('FluidNC Controller: Sending $LocalFS/List command');
+
+        // Set flag to track LocalFS response
+        this.expectingLocalFSResponse = true;
+        this.localFSResponseStartTime = Date.now();
+
         // Send LocalFS list command
         this.writeln('$LocalFS/List');
+        console.log('FluidNC Controller: $LocalFS/List command sent, waiting for response...');
 
         // Set a timer to emit the file list after a short delay to allow all files to be parsed
         setTimeout(() => {
           const fileList = this.runner.getFileList();
+          console.log(`\n======= FluidNC Controller: File List Timer Expired =======`);
+          console.log(`FluidNC Controller: Timer callback - found ${fileList.length} files`);
+          if (fileList.length > 0) {
+            console.log('FluidNC Controller: Files found:');
+            fileList.forEach((file, index) => {
+              console.log(`  File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
+            });
+          } else {
+            console.log('FluidNC Controller: No files found in list!');
+            console.log('FluidNC Controller: This suggests parsing failed or device returned no files');
+          }
           console.log(`FluidNC Controller: Emitting file list with ${fileList.length} files`);
           this.emit('fluidnc:fileList', fileList);
+          this.expectingLocalFSResponse = false;
+          console.log('======= End File List Operation =======\n');
         }, 1000); // 1 second delay to allow all file entries to be parsed
       },
       'fluidnc:deleteFile': async () => {
