@@ -3,22 +3,25 @@ class FluidNCLineParserResultMessage {
     console.log(`FluidNC Message Parser: Attempting to parse line: "${line}"`);
 
     // Parse FluidNC [MSG:...] format messages
-    // Example: [MSG:Mode=STA:SSID=G&E:Status=Connected:IP=10.0.0.80:MAC=F0-24-F9-F8-72-5C]
-    const r = line.match(/^\[MSG:(.+)\]$/);
+    // FluidNC v3.4+ includes a space after MSG: like [MSG: Machine: Slider] or [MSG: Mode=STA:...]
+    // Also handle legacy format without space [MSG:Mode=STA:...]
+    const r = line.match(/^\[MSG:\s*(.+)\]$/);
     if (!r) {
       console.log(`FluidNC Message Parser: Line does not match MSG pattern: "${line}"`);
       return null;
     }
 
     console.log(`FluidNC Message Parser: MSG pattern matched!`);
-    const message = r[1];
+    const message = r[1].trim(); // Remove any leading/trailing whitespace
     const payload = { message };
 
     console.log(`FluidNC Message Parser: Processing message: "${message}"`);
 
-    // Handle simple machine name messages like "Machine: Leroy"
+    // Handle machine name messages like "Machine: Slider" (with space after MSG:)
     if (message.startsWith('Machine: ')) {
-      console.log(`FluidNC Message Parser: Found machine name: ${message.substring(9)}`);
+      const machineName = message.substring(9).trim();
+      console.log(`FluidNC Message Parser: Found machine name: "${machineName}"`);
+      payload.machineName = machineName;
       return {
         type: FluidNCLineParserResultMessage,
         payload: payload
@@ -31,15 +34,16 @@ class FluidNCLineParserResultMessage {
       console.log(`FluidNC Message Parser: Found structured data in message`);
       const data = {};
 
-      // Use regex to find key=value patterns, where value continues until : or end of string
-      const keyValuePattern = /(\w+)=([^:]+)(?=:\w+=|$)/g;
+      // Enhanced regex to handle various key=value patterns, including special characters in values
+      // This pattern captures key=value where value can contain special chars until : or end
+      const keyValuePattern = /(\w+)=([^:]+?)(?=:\w+=|$)/g;
       let match;
 
       while ((match = keyValuePattern.exec(message)) !== null) {
         const key = match[1];
-        const value = match[2];
+        const value = match[2].trim(); // Trim whitespace from values
         data[key] = value;
-        console.log(`FluidNC Message Parser: Found ${key}=${value}`);
+        console.log(`FluidNC Message Parser: Found ${key}="${value}"`);
       }
 
       // If we found structured data, include it

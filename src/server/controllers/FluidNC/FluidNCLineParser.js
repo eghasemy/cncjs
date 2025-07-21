@@ -7,6 +7,7 @@ import FluidNCLineParserResultParserState from './FluidNCLineParserResultParserS
 import FluidNCLineParserResultParameters from './FluidNCLineParserResultParameters';
 import FluidNCLineParserResultHelp from './FluidNCLineParserResultHelp';
 import FluidNCLineParserResultVersion from './FluidNCLineParserResultVersion';
+import FluidNCLineParserResultBuildInfo from './FluidNCLineParserResultBuildInfo';
 import FluidNCLineParserResultOption from './FluidNCLineParserResultOption';
 import FluidNCLineParserResultEcho from './FluidNCLineParserResultEcho';
 import FluidNCLineParserResultFeedback from './FluidNCLineParserResultFeedback';
@@ -53,7 +54,11 @@ class FluidNCLineParser {
       // [HLP:] (v1.1)
       FluidNCLineParserResultHelp,
 
-      // [VER:] (v1.1)
+      // FluidNC BuildInfo parser - handles [VER:...] lines to start build info collection
+      // This should come before the general Version parser to handle FluidNC-specific format
+      FluidNCLineParserResultBuildInfo,
+
+      // [VER:] (v1.1) - General version parser for other version formats
       FluidNCLineParserResultVersion,
 
       // [OPT:] (v1.1)

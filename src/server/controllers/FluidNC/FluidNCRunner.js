@@ -11,6 +11,7 @@ import FluidNCLineParserResultParameters from './FluidNCLineParserResultParamete
 import FluidNCLineParserResultFeedback from './FluidNCLineParserResultFeedback';
 import FluidNCLineParserResultSettings from './FluidNCLineParserResultSettings';
 import FluidNCLineParserResultStartup from './FluidNCLineParserResultStartup';
+import FluidNCLineParserResultBuildInfo from './FluidNCLineParserResultBuildInfo';
 import FluidNCLineParserResultMessage from './FluidNCLineParserResultMessage';
 import FluidNCLineParserResultLocalFS from './FluidNCLineParserResultLocalFS';
 import {
@@ -255,13 +256,43 @@ class FluidNCRunner extends events.EventEmitter {
       this.emit('startup', payload);
       return;
     }
+    if (type === FluidNCLineParserResultBuildInfo) {
+      // Handle FluidNC BuildInfo [VER:...] responses
+      const { version, buildInfo } = payload;
+      console.log(`FluidNC Runner: Processing FluidNC BuildInfo - version: "${version}"`);
+      
+      // Update the settings with the version information
+      const nextSettings = {
+        ...this.settings,
+        version: version,
+        buildInfo: buildInfo
+      };
+      
+      if (!_.isEqual(this.settings.version, nextSettings.version)) {
+        this.settings = nextSettings; // enforce change
+      }
+      
+      this.emit('startup', payload);
+      return;
+    }
     if (type === FluidNCLineParserResultMessage) {
       // Handle FluidNC [MSG:...] messages
-      const { message, data, invalidIP } = payload;
+      const { message, data, invalidIP, machineName } = payload;
       console.log(`FluidNC Runner: Processing FluidNCLineParserResultMessage`);
       console.log(`FluidNC Runner: Message content: "${message}"`);
       console.log(`FluidNC Runner: Parsed data:`, data);
       console.log(`FluidNC Runner: Invalid IP flag:`, invalidIP);
+      console.log(`FluidNC Runner: Machine name:`, machineName);
+
+      // Handle machine name from messages like [MSG: Machine: Slider]
+      if (machineName) {
+        console.log(`FluidNC Runner: Setting machine name to: "${machineName}"`);
+        this.fluidnc.deviceInfo.machine = machineName;
+
+        // Emit device info update when machine name changes
+        console.log('FluidNC Runner: Emitting fluidnc:deviceInfo event for machine name update');
+        this.emit('fluidnc:deviceInfo', this.fluidnc.deviceInfo);
+      }
 
       // Parse device info from status messages
       if (data && data.IP) {
@@ -287,17 +318,6 @@ class FluidNCRunner extends events.EventEmitter {
           console.log('FluidNC Runner: Emitting fluidnc:deviceInfo event');
           this.emit('fluidnc:deviceInfo', this.fluidnc.deviceInfo);
         }
-      }
-
-      // Extract machine name from messages like "Machine: Leroy"
-      if (message.startsWith('Machine: ')) {
-        const machineName = message.substring(9);
-        console.log(`FluidNC Runner: Setting machine name to: ${machineName}`);
-        this.fluidnc.deviceInfo.machine = machineName;
-
-        // Emit device info update when machine name changes
-        console.log('FluidNC Runner: Emitting fluidnc:deviceInfo event for machine name update');
-        this.emit('fluidnc:deviceInfo', this.fluidnc.deviceInfo);
       }
 
       console.log(`FluidNC Runner: Emitting fluidnc:message event`);
