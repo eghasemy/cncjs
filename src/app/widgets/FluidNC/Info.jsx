@@ -14,8 +14,22 @@ class Info extends PureComponent {
     super(props);
     this.state = {
       manualIP: '',
-      errorMessage: ''
+      errorMessage: '',
+      deviceInfo: {}
     };
+  }
+
+  componentDidMount() {
+    this.token = controller.addListener(
+      'fluidnc:deviceInfo',
+      (info) => this.setState({ deviceInfo: info })
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.token) {
+      controller.removeListener(this.token);
+    }
   }
 
   handleManualIPChange = (event) => {
@@ -44,9 +58,7 @@ class Info extends PureComponent {
   };
 
   render() {
-    const { state } = this.props;
-    const { errorMessage } = this.state;
-    const deviceInfo = state.fluidnc ? state.fluidnc.deviceInfo : {};
+    const { errorMessage, deviceInfo } = this.state;
 
     return (
       <div>
