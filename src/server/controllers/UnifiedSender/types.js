@@ -31,8 +31,13 @@ export const PIN_STATES = {
   Y_LIMIT_MAX: 'yMax',
   Z_LIMIT_MIN: 'zMin',
   Z_LIMIT_MAX: 'zMax',
+  A_LIMIT: 'aLimit',
+  B_LIMIT: 'bLimit',
+  C_LIMIT: 'cLimit',
   PROBE: 'probe',
   DOOR: 'door',
+  HOLD: 'hold',
+  CYCLE_START: 'cycleStart',
   ESTOP: 'estop',
   RESET: 'reset'
 };
@@ -211,6 +216,7 @@ export class DeviceProfile {
 export class DeviceStatus {
   constructor() {
     this.state = CONTROLLER_STATES.IDLE;
+    this.subState = 0;
     this.position = {
       work: { x: 0, y: 0, z: 0 },
       machine: { x: 0, y: 0, z: 0 }
@@ -223,11 +229,21 @@ export class DeviceStatus {
     this.spindle = {
       rpm: 0,
       override: 100,
-      direction: 'CW'
+      direction: 'CW',
+      enabled: false
     };
     this.pins = {};
     this.modal = {};
     this.parser = {};
+    this.coolant = {
+      flood: false,
+      mist: false
+    };
+    this.buffer = {
+      planner: 0,
+      rx: 0
+    };
+    this.extended = {}; // For unknown/optional fields
     this.raw = '';
     this.timestamp = Date.now();
   }

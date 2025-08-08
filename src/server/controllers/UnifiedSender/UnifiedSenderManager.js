@@ -1,6 +1,7 @@
 import { DeviceProfile, CONNECTION_TYPES } from './types';
 import { SimulationAdapter } from './SimulationAdapter';
 import { LegacyAdapter } from './LegacyAdapter';
+import { GrblHALAdapter } from './GrblHALAdapter';
 import logger from '../../lib/logger';
 
 const log = logger('service:unified-sender');
@@ -65,12 +66,11 @@ export class UnifiedSenderManager {
 
       // Connect
       await this.activeAdapter.connect(options);
-      
+
       log.info(`Connected to device using profile: ${profile.name}`);
       this.emit('connected', { profile: profile.name });
-      
-      return true;
 
+      return true;
     } catch (error) {
       log.error('Connection failed:', error.message);
       this.emit('error', error.message);
@@ -94,9 +94,8 @@ export class UnifiedSenderManager {
 
       log.info('Disconnected from device');
       this.emit('disconnected');
-      
-      return true;
 
+      return true;
     } catch (error) {
       log.error('Disconnection failed:', error.message);
       this.emit('error', error.message);
@@ -114,7 +113,7 @@ export class UnifiedSenderManager {
       throw new Error('No active connection');
     }
 
-    return await this.activeAdapter.sendGCode(gcode);
+    return this.activeAdapter.sendGCode(gcode);
   }
 
   /**
@@ -134,7 +133,7 @@ export class UnifiedSenderManager {
       throw new Error('No active connection');
     }
 
-    return await this.activeAdapter.getConfig();
+    return this.activeAdapter.getConfig();
   }
 
   /**
@@ -147,7 +146,7 @@ export class UnifiedSenderManager {
       throw new Error('No active connection');
     }
 
-    return await this.activeAdapter.applyConfig(config);
+    return this.activeAdapter.applyConfig(config);
   }
 
   /**
@@ -160,7 +159,7 @@ export class UnifiedSenderManager {
       throw new Error('No active connection');
     }
 
-    return await this.activeAdapter.listFiles(path);
+    return this.activeAdapter.listFiles(path);
   }
 
   /**
@@ -174,7 +173,7 @@ export class UnifiedSenderManager {
       throw new Error('No active connection');
     }
 
-    return await this.activeAdapter.uploadFile(path, content);
+    return this.activeAdapter.uploadFile(path, content);
   }
 
   /**
@@ -203,25 +202,43 @@ export class UnifiedSenderManager {
    * @returns {DeviceAdapter} - Device adapter instance
    */
   createAdapter(profile) {
-    switch (profile.connection.type) {
-      case CONNECTION_TYPES.SIMULATION:
-        return new SimulationAdapter(profile);
-      
-      case CONNECTION_TYPES.SERIAL:
-      case CONNECTION_TYPES.TELNET:
-        // Use legacy adapter for now, later replace with specific adapters
-        return new LegacyAdapter(profile, this.cncEngine);
-      
-      default:
-        throw new Error(`Unsupported connection type: ${profile.connection.type}`);
+    // For simulation, always use simulation adapter
+    if (profile.connection.type === CONNECTION_TYPES.SIMULATION) {
+      return new SimulationAdapter(profile);
     }
+
+    // For real connections, choose based on controller type
+    switch (profile.type.toLowerCase()) {
+      case 'grblhal':
+        if (profile.connection.type === CONNECTION_TYPES.SERIAL ||
+            profile.connection.type === CONNECTION_TYPES.TELNET) {
+          return new GrblHALAdapter(profile);
+        }
+        break;
+
+      case 'grbl':
+      case 'marlin':
+      case 'smoothie':
+      case 'tinyg':
+      case 'g2core':
+        // Use legacy adapter for existing controllers
+        return new LegacyAdapter(profile, this.cncEngine);
+
+      default:
+        log.warn(`Unknown controller type: ${profile.type}, falling back to legacy adapter`);
+        return new LegacyAdapter(profile, this.cncEngine);
+    }
+
+    throw new Error(`Unsupported combination: ${profile.type} with ${profile.connection.type}`);
   }
 
   /**
    * Setup event listeners for the active adapter
    */
   setupAdapterListeners() {
-    if (!this.activeAdapter) return;
+    if (!this.activeAdapter) {
+      return;
+    }
 
     // Forward adapter events to our listeners
     this.activeAdapter.on('status', (status) => {
@@ -253,7 +270,9 @@ export class UnifiedSenderManager {
    * Remove adapter event listeners
    */
   removeAdapterListeners() {
-    if (!this.activeAdapter) return;
+    if (!this.activeAdapter) {
+      return;
+    }
 
     // Remove all listeners (simplified approach)
     this.activeAdapter.listeners.clear();
