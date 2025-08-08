@@ -23,7 +23,6 @@ import {
   authorizeIPAddress,
   validateUser
 } from '../../access-control';
-import { initializeUnifiedSender } from '../../api/api.unified';
 
 const log = logger('service:cncengine');
 
@@ -82,9 +81,6 @@ class CNCEngine {
     io = null;
 
     sockets = [];
-
-    // Unified Sender Manager
-    unifiedSender = null;
 
     // Event Trigger
     event = new EventTrigger((event, trigger, commands) => {
@@ -363,51 +359,9 @@ class CNCEngine {
           controller.writeln(data, context);
         });
       });
-
-      // Initialize Unified Sender
-      this.unifiedSender = initializeUnifiedSender(this);
-      if (this.unifiedSender) {
-        this.setupUnifiedSenderEvents();
-      }
-    }
-
-    setupUnifiedSenderEvents() {
-      if (!this.unifiedSender || !this.io) {
-        return;
-      }
-
-      // Forward unified sender events to all connected sockets
-      this.unifiedSender.on('status', (status) => {
-        this.io.emit('unified:status', status);
-      });
-
-      this.unifiedSender.on('message', (message) => {
-        this.io.emit('unified:message', { text: message });
-      });
-
-      this.unifiedSender.on('error', (error) => {
-        this.io.emit('unified:error', { text: error });
-      });
-
-      this.unifiedSender.on('alarm', (alarm) => {
-        this.io.emit('unified:alarm', alarm);
-      });
-
-      this.unifiedSender.on('connected', (data) => {
-        this.io.emit('unified:connected', data);
-      });
-
-      this.unifiedSender.on('disconnected', () => {
-        this.io.emit('unified:disconnected');
-      });
     }
 
     stop() {
-      if (this.unifiedSender) {
-        this.unifiedSender.cleanup();
-        this.unifiedSender = null;
-      }
-
       if (this.io) {
         this.io.close();
         this.io = null;

@@ -322,18 +322,6 @@ const appMain = () => {
     app.post(urljoin(settings.route, 'api/watch/files'), api.watch.getFiles);
     app.get(urljoin(settings.route, 'api/watch/file'), api.watch.readFile);
     app.post(urljoin(settings.route, 'api/watch/file'), api.watch.readFile);
-
-    // Unified Sender
-    app.get(urljoin(settings.route, 'api/unified/status'), api.unified.getStatus);
-    app.post(urljoin(settings.route, 'api/unified/connect'), api.unified.connect);
-    app.post(urljoin(settings.route, 'api/unified/disconnect'), api.unified.disconnect);
-    app.post(urljoin(settings.route, 'api/unified/send'), api.unified.sendGCode);
-    app.get(urljoin(settings.route, 'api/unified/config'), api.unified.getConfig);
-    app.post(urljoin(settings.route, 'api/unified/config'), api.unified.applyConfig);
-    app.get(urljoin(settings.route, 'api/unified/files'), api.unified.listFiles);
-    app.post(urljoin(settings.route, 'api/unified/files/upload'), api.unified.uploadFile);
-    app.get(urljoin(settings.route, 'api/unified/profiles'), api.unified.getProfiles);
-    app.post(urljoin(settings.route, 'api/unified/profiles'), api.unified.createProfile);
   }
 
   // page
