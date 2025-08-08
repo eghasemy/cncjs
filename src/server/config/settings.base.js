@@ -24,6 +24,9 @@ export default {
   // Allow Remote Access
   allowRemoteAccess: false,
 
+  // Unified Sender Feature Flag
+  enableUnifiedSender: false,
+
   // Express view engine
   view: {
     // Set html (w/o dot) as the default extension
