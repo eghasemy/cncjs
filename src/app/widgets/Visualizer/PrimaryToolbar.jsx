@@ -13,6 +13,7 @@ import * as WebGL from 'app/lib/three/WebGL';
 import {
   // Grbl
   GRBL,
+  FLUIDNC,
   GRBL_ACTIVE_STATE_IDLE,
   GRBL_ACTIVE_STATE_RUN,
   GRBL_ACTIVE_STATE_HOLD,
@@ -94,7 +95,7 @@ class PrimaryToolbar extends PureComponent {
       let stateStyle = '';
       let stateText = '';
 
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         const activeState = _.get(controllerState, 'status.activeState');
 
         stateStyle = {
@@ -205,7 +206,7 @@ class PrimaryToolbar extends PureComponent {
       const controllerState = state.controller.state;
       const defaultWCS = 'G54';
 
-      if (controllerType === GRBL) {
+      if (controllerType === GRBL || controllerType === FLUIDNC) {
         return _.get(controllerState, 'parserstate.modal.wcs') || defaultWCS;
       }
 

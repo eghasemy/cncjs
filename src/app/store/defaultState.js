@@ -16,7 +16,7 @@ const defaultState = {
       primary: {
         show: true,
         widgets: [
-          'connection', 'console', 'grbl', 'grblhal', 'marlin', 'smoothie', 'tinyg', 'webcam'
+          'connection', 'console', 'grbl', 'grblhal', 'fluidnc', 'marlin', 'smoothie', 'tinyg', 'webcam'
         ]
       },
       secondary: {
@@ -104,6 +104,20 @@ const defaultState = {
       }
     },
     grblhal: {
+      minimized: false,
+      panel: {
+        queueReports: {
+          expanded: true
+        },
+        statusReports: {
+          expanded: true
+        },
+        modalGroups: {
+          expanded: true
+        }
+      }
+    },
+    fluidnc: {
       minimized: false,
       panel: {
         queueReports: {
